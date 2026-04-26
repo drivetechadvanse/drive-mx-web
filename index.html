@@ -33,6 +33,9 @@
             background: transparent;
             border: none;
         }
+        
+        /* Efecto de bloqueo */
+        .blocked { filter: grayscale(1); opacity: 0.5; pointer-events: none; }
     </style>
 </head>
 <body class="bg-gray-900">
@@ -57,11 +60,9 @@
 
     <div id="overlay" class="absolute inset-0 z-[60] bg-black/40" onclick="toggleSidebar()"></div>
     <div id="sidebar" class="absolute inset-y-0 left-0 z-[70] w-72 bg-white flex flex-col">
-        <div class="p-8 bg-gray-900 text-white font-black italic">DRIVE MX</div>
+        <div class="p-8 bg-gray-900 text-white font-black italic text-xl">DRIVE MX</div>
         <nav class="flex-1 p-6 space-y-2">
             <button class="w-full flex items-center gap-4 p-4 font-bold text-gray-700"><i data-lucide="user"></i> Perfil</button>
-            <button class="w-full flex items-center gap-4 p-4 font-bold text-gray-700"><i data-lucide="wallet"></i> Billetera</button>
-            <hr>
             <button onclick="logout()" class="w-full flex items-center gap-4 p-4 text-red-600 font-bold"><i data-lucide="log-out"></i> Salir</button>
         </nav>
     </div>
@@ -77,28 +78,47 @@
             <i data-lucide="bell" class="w-6 h-6 text-gray-400"></i>
         </header>
 
-        <main class="flex-1 relative">
-            <div class="h-full map-bg relative overflow-hidden">
-                
+        <main class="flex-1 flex flex-col relative overflow-hidden">
+            <div class="flex-1 map-bg relative overflow-hidden">
                 <div class="absolute top-6 left-6 right-6 z-20 flex flex-col gap-3">
                     <div class="banner-minimal flex items-center gap-3">
                         <div class="w-2 h-2 bg-green-500 rounded-full shadow-[0_0_8px_rgba(34,197,94,0.6)]"></div>
-                        <div class="flex-1">
-                            <p class="text-xs font-black text-gray-800">Mi ubicación actual</p>
-                        </div>
+                        <p class="text-xs font-black text-gray-800">Mi ubicación actual</p>
                     </div>
-                    <div class="banner-minimal flex items-center gap-3">
+                    
+                    <div id="search-container" class="banner-minimal flex items-center gap-3 transition-all">
                         <div class="w-2 h-2 bg-red-600 rounded-full shadow-[0_0_8px_rgba(220,38,38,0.6)]"></div>
-                        <div class="flex-1">
-                            <input type="text" placeholder="¿A dónde vamos?" class="bg-transparent w-full outline-none font-black text-gray-900 text-sm placeholder:text-gray-400">
-                        </div>
-                        <i data-lucide="search" class="w-4 h-4 text-gray-400"></i>
+                        <input type="text" id="destination-input" placeholder="¿A dónde vamos?" 
+                            class="bg-transparent w-full outline-none font-black text-gray-900 text-sm placeholder:text-gray-400">
                     </div>
                 </div>
 
+                <div id="debt-alert" class="hidden absolute top-24 left-6 right-6 z-30 bg-red-600 text-white p-3 rounded-xl flex items-center gap-3 shadow-lg animate-bounce">
+                    <i data-lucide="alert-triangle" class="w-5 h-5"></i>
+                    <p class="text-[10px] font-bold uppercase tracking-tighter">Viajes bloqueados por saldo pendiente</p>
+                </div>
+
                 <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <div class="bg-red-600 p-3 rounded-2xl shadow-2xl border-4 border-white animate-pulse">
+                    <div id="map-marker" class="bg-red-600 p-3 rounded-2xl shadow-2xl border-4 border-white animate-pulse">
                         <i data-lucide="navigation" class="text-white w-6 h-6"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 border-t border-gray-100">
+                <div class="bg-gray-900 rounded-[2.5rem] p-6 text-white relative overflow-hidden shadow-xl">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <p class="text-[10px] text-gray-400 font-bold uppercase tracking-[0.2em] mb-1">Cartera Drive MX</p>
+                            <h3 class="text-4xl font-black italic tracking-tighter" id="user-balance">$500.00</h3>
+                        </div>
+                        <div class="bg-red-600/20 p-3 rounded-2xl border border-red-600/30">
+                            <i data-lucide="wallet" class="text-red-600 w-8 h-8"></i>
+                        </div>
+                    </div>
+                    <div class="mt-4 flex items-center gap-2">
+                        <div id="balance-indicator" class="w-2 h-2 rounded-full bg-green-500"></div>
+                        <p id="balance-status" class="text-[9px] font-bold text-gray-400 uppercase tracking-widest text-white/50">Saldo a favor</p>
                     </div>
                 </div>
             </div>
@@ -129,11 +149,54 @@
         if (email === 'admin@app.com' && pass === '123') {
             document.getElementById('login-screen').classList.add('hidden');
             document.getElementById('main-app').classList.remove('hidden');
+            // Al iniciar, probamos con saldo de $500
+            updateBalance(500);
             lucide.createIcons();
+        } else { alert("Acceso denegado"); }
+    }
+
+    // Lógica para actualizar saldo y bloquear/desbloquear pedidos
+    function updateBalance(newAmount) {
+        const balanceElement = document.getElementById('user-balance');
+        const statusElement = document.getElementById('balance-status');
+        const indicator = document.getElementById('balance-indicator');
+        const searchInput = document.getElementById('destination-input');
+        const searchContainer = document.getElementById('search-container');
+        const debtAlert = document.getElementById('debt-alert');
+        const mapMarker = document.getElementById('map-marker');
+
+        const formatted = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(newAmount);
+        balanceElement.innerText = formatted;
+
+        if (newAmount < 0) {
+            // BLOQUEO DE VIAJES
+            balanceElement.classList.add('text-red-500');
+            statusElement.innerText = "Saldo en contra";
+            indicator.className = "w-2 h-2 rounded-full bg-red-600 animate-pulse";
+            
+            // Inhabilitar búsqueda
+            searchInput.disabled = true;
+            searchInput.placeholder = "Viajes bloqueados";
+            searchContainer.classList.add('blocked');
+            debtAlert.classList.remove('hidden');
+            mapMarker.classList.add('grayscale');
         } else {
-            alert("Acceso denegado");
+            // DESBLOQUEO DE VIAJES
+            balanceElement.classList.remove('text-red-500');
+            statusElement.innerText = "Saldo a favor";
+            indicator.className = "w-2 h-2 rounded-full bg-green-500";
+            
+            // Habilitar búsqueda
+            searchInput.disabled = false;
+            searchInput.placeholder = "¿A dónde vamos?";
+            searchContainer.classList.remove('blocked');
+            debtAlert.classList.add('hidden');
+            mapMarker.classList.remove('grayscale');
         }
     }
+
+    // Ejemplo para que pruebes: escribe en consola updateBalance(-50)
+    // para ver cómo se bloquea el sistema.
 
     function toggleSidebar() {
         const sidebar = document.getElementById('sidebar');

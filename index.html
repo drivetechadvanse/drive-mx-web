@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Drive MX | Sistema Profesional</title>
+    <title>Drive MX | Global System</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
@@ -21,8 +21,6 @@
 
         #cost-sheet { transition: transform 0.5s cubic-bezier(0.32, 0.72, 0, 1); transform: translateY(100%); }
         #cost-sheet.active { transform: translateY(0); }
-
-        .vehicle-card.selected { border: 2px solid #ef4444; background: #fef2f2; }
     </style>
 </head>
 <body>
@@ -33,13 +31,16 @@
 
     <div id="sidebar" class="absolute inset-y-0 left-0 w-72 bg-white z-[110] shadow-2xl flex flex-col">
         <div class="p-6 bg-gray-900 text-white">
-            <div class="w-10 h-10 bg-red-600 rounded-xl flex items-center justify-center mb-3 shadow-lg shadow-red-600/30">
+            <div class="w-10 h-10 bg-red-600 rounded-xl flex items-center justify-center mb-3">
                 <i data-lucide="cpu" id="sidebar-icon" class="text-white w-5 h-5"></i>
             </div>
             <h2 class="text-lg font-black italic tracking-tighter uppercase">DRIVE <span class="text-red-600">MX</span></h2>
             <p id="sidebar-user-role" class="text-[8px] text-gray-500 font-bold mt-1 uppercase tracking-widest italic">Sistema Activo</p>
         </div>
-        <nav class="flex-1 p-4 space-y-1" id="sidebar-nav"></nav>
+        
+        <nav class="flex-1 p-4 space-y-1" id="sidebar-nav">
+            </nav>
+
         <div class="p-4 border-t">
             <button onclick="location.reload()" class="w-full flex items-center justify-center gap-2 py-3 bg-red-50 text-red-600 rounded-xl font-black text-[10px] uppercase italic">
                 <i data-lucide="power" class="w-3.5 h-3.5"></i> Cerrar Sesión
@@ -48,7 +49,7 @@
     </div>
 
     <div id="splash" class="absolute inset-0 z-[150] bg-white flex flex-col items-center justify-center">
-        <div class="w-20 h-20 bg-red-600 rounded-[2rem] flex items-center justify-center shadow-2xl animate-pulse">
+        <div class="w-20 h-20 bg-red-600 rounded-[2rem] flex items-center justify-center animate-pulse shadow-2xl">
             <i data-lucide="navigation" class="text-white w-10 h-10"></i>
         </div>
         <h1 class="text-3xl font-black mt-6 tracking-tighter italic uppercase">DRIVE <span class="text-red-600">MX</span></h1>
@@ -57,9 +58,9 @@
     <div id="login-screen" class="hidden absolute inset-0 z-40 bg-white p-10 flex flex-col justify-center">
         <h2 class="text-4xl font-black text-gray-900 italic leading-none tracking-tighter uppercase mb-10">LOGIN<br><span class="text-red-600">SISTEMA</span></h2>
         <div class="space-y-3">
-            <input type="email" id="email-input" placeholder="admin@app.com" class="w-full p-4 bg-gray-50 border-b-2 border-gray-100 rounded-xl outline-none focus:border-red-600 font-bold text-sm">
-            <input type="password" id="pass-input" placeholder="123" class="w-full p-4 bg-gray-50 border-b-2 border-gray-100 rounded-xl outline-none focus:border-red-600 font-bold text-sm">
-            <button onclick="handleLogin()" class="w-full bg-red-600 text-white py-4 rounded-[2rem] font-black uppercase tracking-widest active:scale-95 transition-all mt-4">Ingresar</button>
+            <input type="email" id="email-input" placeholder="Usuario (admin@app.com)" class="w-full p-4 bg-gray-50 border-b-2 border-gray-100 rounded-xl outline-none focus:border-red-600 font-bold text-sm">
+            <input type="password" id="pass-input" placeholder="Contraseña" class="w-full p-4 bg-gray-50 border-b-2 border-gray-100 rounded-xl outline-none focus:border-red-600 font-bold text-sm">
+            <button onclick="handleLogin()" class="w-full bg-red-600 text-white py-4 rounded-[2rem] font-black uppercase tracking-widest text-xs active:scale-95 transition-all mt-4 shadow-lg shadow-red-600/20">Ingresar</button>
         </div>
     </div>
 
@@ -73,12 +74,12 @@
         <main class="flex-1 relative map-sim">
             <div class="absolute top-4 left-4 right-4 z-20 space-y-2">
                 <div class="bg-white/90 backdrop-blur-md p-2.5 rounded-xl shadow-sm border border-black/5 flex items-center gap-2">
-                    <div class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse shadow-[0_0_5px_#22c55e]"></div>
-                    <p class="text-[9px] font-black text-gray-800 uppercase italic">Tu ubicación: <span class="text-gray-400 font-bold">Punto actual detectado</span></p>
+                    <div class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
+                    <p class="text-[9px] font-black text-gray-800 uppercase italic">Ubicación: <span class="text-gray-400 font-bold">Punto Actual Detectado</span></p>
                 </div>
-                <div onclick="openCostSheet()" class="bg-white p-1 rounded-xl shadow-xl flex items-center gap-3 cursor-pointer border border-black/5 active:scale-95 transition-transform">
-                    <div class="w-10 h-10 bg-red-600 rounded-lg flex items-center justify-center text-white shadow-lg shadow-red-600/30"><i data-lucide="search" class="w-5 h-5"></i></div>
-                    <span class="text-xs font-black text-gray-400 italic uppercase">¿A dónde vamos hoy?</span>
+                <div onclick="openCostSheet()" class="bg-white p-1 rounded-xl shadow-xl flex items-center gap-3 border border-black/5">
+                    <div class="w-10 h-10 bg-red-600 rounded-lg flex items-center justify-center text-white shadow-lg"><i data-lucide="search" class="w-5 h-5"></i></div>
+                    <span class="text-xs font-black text-gray-400 italic uppercase tracking-tighter">¿A dónde vamos hoy?</span>
                 </div>
             </div>
 
@@ -91,38 +92,14 @@
                 </div>
             </div>
         </main>
-
-        <div id="cost-sheet" class="absolute bottom-0 left-0 right-0 bg-white z-[120] rounded-t-[2.5rem] shadow-2xl p-6 space-y-4 border-t">
-            <div class="w-10 h-1 bg-gray-200 rounded-full mx-auto -mt-2 mb-2"></div>
-            <h3 class="text-lg font-black italic uppercase">Tipo de <span class="text-red-600">Servicio</span></h3>
-            <div id="vehicle-selection" class="space-y-2">
-                <div onclick="selectVehicle(this)" class="vehicle-card selected p-3 rounded-2xl flex items-center justify-between cursor-pointer border border-gray-100 transition-all">
-                    <div class="flex items-center gap-3"><i data-lucide="car" class="w-5 h-5"></i><span class="font-black italic text-xs uppercase">Drive Basic</span></div>
-                    <span class="font-black italic text-base">$45.00</span>
-                </div>
-            </div>
-            
-            <button id="btn-confirm-action" onclick="showPaymentMethods()" class="w-full bg-red-600 text-white py-4 rounded-[2rem] font-black shadow-lg uppercase tracking-widest text-xs italic">Confirmar Viaje</button>
-            
-            <div id="payment-input" class="hidden space-y-4 animate-fadeIn">
-                <p class="text-[9px] font-black text-gray-400 uppercase tracking-widest text-center">Selecciona Método de Pago</p>
-                <div class="grid grid-cols-3 gap-2">
-                    <button onclick="setPayment(this)" class="pay-opt p-3 border border-gray-200 rounded-xl flex flex-col items-center gap-1 hover:border-red-600 transition-all"><i data-lucide="landmark" class="w-4 h-4"></i><span class="text-[8px] font-black uppercase">SPEI</span></button>
-                    <button onclick="setPayment(this)" class="pay-opt p-3 border border-gray-200 rounded-xl flex flex-col items-center gap-1 hover:border-red-600 transition-all"><i data-lucide="wallet" class="w-4 h-4"></i><span class="text-[8px] font-black uppercase">Cartera</span></button>
-                    <button onclick="setPayment(this)" class="pay-opt p-3 border border-gray-200 rounded-xl flex flex-col items-center gap-1 hover:border-red-600 transition-all"><i data-lucide="banknote" class="w-4 h-4"></i><span class="text-[8px] font-black uppercase">Efectivo</span></button>
-                </div>
-                <button onclick="finalOrder()" class="w-full bg-black text-white py-4 rounded-[2rem] font-black uppercase text-[10px] italic">Pedir Ahora</button>
-            </div>
-        </div>
     </div>
 
     <div id="admin-app" class="hidden h-screen flex flex-col bg-gray-50">
-        <header class="p-4 bg-gray-900 text-white flex justify-between items-center z-10">
+        <header class="p-4 bg-gray-900 text-white flex justify-between items-center z-10 shadow-lg">
             <div class="flex items-center gap-3">
                 <button onclick="toggleMenu()" class="p-2 bg-white/10 rounded-lg"><i data-lucide="menu" class="w-5 h-5 text-red-600"></i></button>
-                <h2 class="text-base font-black italic tracking-tighter uppercase">CONTROL <span class="text-red-600">CENTER</span></h2>
+                <h2 class="text-base font-black italic tracking-tighter uppercase tracking-widest">CONTROL <span class="text-red-600">PANEL</span></h2>
             </div>
-            <div class="px-2 py-0.5 border border-red-600 rounded-full animate-pulse"><span class="text-[7px] font-black text-red-600 uppercase">Live</span></div>
         </header>
         <main id="admin-host" class="p-6 overflow-y-auto flex-1"></main>
     </div>
@@ -159,62 +136,45 @@
         }
     }
 
-    function showPaymentMethods() {
-        document.getElementById('btn-confirm-action').classList.add('hidden');
-        document.getElementById('payment-input').classList.remove('hidden');
-        lucide.createIcons();
-    }
-
-    function setPayment(el) {
-        document.querySelectorAll('.pay-opt').forEach(o => o.classList.remove('border-red-600', 'bg-red-50'));
-        el.classList.add('border-red-600', 'bg-red-50');
-    }
-
-    function finalOrder() {
-        alert("Enlazando con el conductor más cercano...");
-        closeAllModals();
-    }
-
-    function toggleMenu() {
-        document.getElementById('sidebar').classList.toggle('open');
-        document.getElementById('overlay').classList.toggle('opacity-100', 'pointer-events-auto');
-    }
-
-    function closeAllModals() {
-        document.getElementById('sidebar').classList.remove('open');
-        document.getElementById('cost-sheet').classList.remove('active');
-        document.getElementById('overlay').classList.remove('opacity-100', 'pointer-events-auto');
-    }
-
-    function openCostSheet() {
-        document.getElementById('cost-sheet').classList.add('active');
-        document.getElementById('overlay').classList.add('opacity-100', 'pointer-events-auto');
-    }
-
     function setupUI(role, icon) {
         document.getElementById('sidebar-user-role').innerText = role;
         document.getElementById('sidebar-icon').setAttribute('data-lucide', icon);
         const nav = document.getElementById('sidebar-nav');
+        
+        // OPCIÓN INICIO UNIFICADA (Para cerrar el menú)
+        const homeBtn = `<button onclick="closeAllModals()" class="w-full flex items-center gap-3 p-3 text-gray-900 font-black bg-gray-50 rounded-xl uppercase text-[10px] italic mb-4 border border-gray-100 shadow-sm"><i data-lucide="home" class="text-red-600 w-4 h-4"></i> INICIO</button>`;
+
         if(role === "ADMINISTRADOR") {
-            nav.innerHTML = `<button onclick="loadTool('users')" class="w-full flex items-center gap-3 p-3 text-gray-800 font-black hover:bg-red-50 rounded-xl uppercase text-[10px] italic"><i data-lucide="users" class="text-red-600 w-4 h-4"></i> Usuarios</button>`;
+            nav.innerHTML = homeBtn + `<button onclick="loadTool('users')" class="w-full flex items-center gap-3 p-3 text-gray-800 font-black hover:bg-red-50 rounded-xl uppercase text-[10px] italic"><i data-lucide="users" class="text-red-600 w-4 h-4"></i> Usuarios</button>`;
         } else {
-            nav.innerHTML = `<button class="w-full flex items-center gap-3 p-3 text-gray-800 font-black hover:bg-gray-50 rounded-xl uppercase text-[10px] italic"><i data-lucide="history" class="w-4 h-4"></i> Mis Viajes</button>`;
+            nav.innerHTML = homeBtn + `<button class="w-full flex items-center gap-3 p-3 text-gray-800 font-black hover:bg-gray-50 rounded-xl uppercase text-[10px] italic"><i data-lucide="history" class="w-4 h-4"></i> Mis Viajes</button>`;
         }
         lucide.createIcons();
     }
 
     function loadTool(tool) {
         const host = document.getElementById('admin-host');
-        closeAllModals();
+        closeAllModals(); // Cierra el menú al elegir una opción
         if(tool === 'users') {
-            host.innerHTML = `<div class="view-content space-y-4"><h3 class="text-lg font-black italic uppercase tracking-tighter">Gestión de <span class="text-red-600">Usuarios</span></h3><div class="bg-white p-4 rounded-2xl border flex items-center justify-between shadow-sm"><span class="font-bold text-xs uppercase">Juan Pasajero</span><button class="bg-red-600 text-white p-2 rounded-lg"><i data-lucide="edit-3" class="w-4 h-4"></i></button></div></div>`;
+            host.innerHTML = `<div class="view-content space-y-4"><h3 class="text-lg font-black italic uppercase tracking-tighter">Gestión de <span class="text-red-600">Usuarios</span></h3><div class="bg-white p-4 rounded-2xl border flex items-center justify-between"><span class="font-bold text-xs uppercase italic">Juan Pasajero</span><button class="bg-red-600 text-white p-2 rounded-lg shadow-md"><i data-lucide="edit-3" class="w-4 h-4"></i></button></div></div>`;
         }
         lucide.createIcons();
     }
 
-    function selectVehicle(el) {
-        document.querySelectorAll('.vehicle-card').forEach(c => c.classList.remove('selected'));
-        el.classList.add('selected');
+    function toggleMenu() {
+        document.getElementById('sidebar').classList.toggle('open');
+        document.getElementById('overlay').classList.toggle('opacity-100');
+        document.getElementById('overlay').classList.toggle('pointer-events-auto');
+    }
+
+    function closeAllModals() {
+        document.getElementById('sidebar').classList.remove('open');
+        document.getElementById('overlay').classList.remove('opacity-100', 'pointer-events-auto');
+    }
+
+    function openCostSheet() {
+        // En una app real aquí abriría el selector de destinos
+        alert("Buscador de destinos activado");
     }
 </script>
 </body>

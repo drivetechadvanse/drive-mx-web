@@ -5,167 +5,125 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Drive MX - Super App</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
         body { font-family: 'Inter', sans-serif; }
-        .animate-spin-slow { animation: spin 3s linear infinite; }
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .animate-pulse-slow { animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
     </style>
 </head>
 <body class="bg-gray-100">
     <div id="root"></div>
 
-    <script type="text/babel">
-        const { useState, useEffect, useReducer, createContext, useContext } = React;
-        
-        // Importación manual de iconos Lucide para este entorno
-        const Icon = ({ name, className }) => {
-            useEffect(() => { lucide.createIcons(); }, [name]);
-            return <i data-lucide={name} className={className}></i>;
-        };
+    <script type="module">
+        import React, { useState, useEffect, useReducer, createContext, useContext } from 'https://esm.sh/react@18.2.0';
+        import ReactDOM from 'https://esm.sh/react-dom@18.2.0/client';
 
-        // --- LÓGICA DEL SISTEMA (Basada en tu código) [cite: 5, 8, 30] ---
-        const generateId = () => Math.random().toString(36).substr(2, 9);
-        const generatePin = () => Math.floor(1000 + Math.random() * 9000).toString();
-
+        // --- CONFIGURACIÓN Y BASE DE DATOS SIMULADA [cite: 5, 7] ---
         const initialData = {
             users: [
-                { id: 'admin1', role: 'admin', name: 'Super Admin', email: 'admin@app.com', password: '123', status: 'active', balance: 0 },
-                { id: 'p1', role: 'passenger', name: 'Juan Pasajero', email: 'juan@app.com', password: '123', status: 'active', balance: 50 },
-                { id: 'd1', role: 'driver', name: 'Carlos Conductor', email: 'carlos@app.com', password: '123', status: 'available', balance: 200, vehicle: 'Toyota Yaris 2022' },
+                { id: 'admin1', role: 'admin', name: 'Super Admin', email: 'admin@app.com', password: '123', balance: 0 },
+                { id: 'p1', role: 'passenger', name: 'Juan Pasajero', email: 'juan@app.com', password: '123', balance: 50 },
+                { id: 'd1', role: 'driver', name: 'Carlos Conductor', email: 'carlos@app.com', password: '123', status: 'available', balance: 200, vehicle: 'Toyota Yaris 2022' }
             ],
             services: [
-                { id: 's1', name: 'Auto Básico', type: 'ride', baseRate: 20, kmRate: 10, minRate: 2, image: 'car', active: true, commission: 0.20 },
-                { id: 's2', name: 'Auto VIP', type: 'ride', baseRate: 50, kmRate: 15, minRate: 3, image: 'car', active: true, commission: 0.25 },
+                { id: 's1', name: 'Auto Básico', type: 'ride', baseRate: 20, image: 'car', active: true },
+                { id: 's2', name: 'Auto VIP', type: 'ride', baseRate: 50, image: 'car', active: true }
             ],
             trips: [],
             transactions: [],
-            notifications: [{ id: 'n1', target: 'all', title: '¡Bienvenido a Drive MX!', message: 'Gracias por formar parte de nuestra comunidad.', date: new Date() }],
-            supportTickets: [],
             settings: {
-                walletLegend: "Recuerda mantener saldo positivo en tu cartera para poder solicitar servicios.",
-                whatsappLink: "https://wa.me/521234567890",
-                referralActive: true
+                walletLegend: "Mantén saldo positivo para solicitar servicios.",
+                whatsappLink: "https://wa.me/521234567890"
             }
         };
 
-        const appReducer = (state, action) => {
-            switch (action.type) {
-                case 'LOGIN':
-                    const user = state.users.find(u => u.email === action.payload.email && u.password === action.payload.password);
-                    return { ...state, currentUser: user || null, loginError: !user };
-                case 'LOGOUT':
-                    return { ...state, currentUser: null };
-                case 'REQUEST_TRIP':
-                    const newTrip = { ...action.payload, id: generateId(), status: 'searching', pin: generatePin(), createdAt: new Date() };
-                    return { ...state, trips: [...state.trips, newTrip] };
-                // ... el resto de tus casos del reducer se mantienen igual [cite: 12-29]
-                default: return state;
-            }
-        };
+        // --- COMPONENTE DE MAPA SIMULADO  ---
+        const SimulatedMap = ({ children, height = 'h-64' }) => (
+            <div className={`w-full ${height} bg-gray-200 relative overflow-hidden rounded-b-3xl`}>
+                <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'linear-gradient(#000 1px, transparent 1px), linear-gradient(90deg, #000 1px, transparent 1px)', backgroundSize: '20px 20px' }}></div>
+                <svg className="absolute inset-0 w-full h-full" preserveAspectRatio="none">
+                    <path d="M 50 50 Q 150 150 250 100 T 350 200" fill="transparent" stroke="#EF4444" strokeWidth="4" strokeDasharray="5,5" className="animate-pulse" />
+                </svg>
+                {children}
+            </div>
+        );
 
-        const AppContext = createContext();
-
-        // --- COMPONENTES UI [cite: 30-33] ---
-        const Button = ({ children, onClick, variant = 'primary', className = '' }) => {
-            const variants = {
-                primary: "bg-red-600 text-white hover:bg-red-700 shadow-md",
-                secondary: "bg-gray-100 text-gray-800 hover:bg-gray-200",
-                outline: "border-2 border-red-600 text-red-600 hover:bg-red-50"
-            };
-            return (
-                <button onClick={onClick} className={`w-full py-3 rounded-xl font-bold transition-all flex items-center justify-center gap-2 ${variants[variant]} ${className}`}>
-                    {children}
-                </button>
-            );
-        };
+        // --- PANTALLA DE CARTERA / WALLET [cite: 34, 35] ---
+        const WalletScreen = ({ user, onBack }) => (
+            <div className="min-h-screen bg-white p-6">
+                <div className="bg-red-600 p-6 text-white rounded-3xl mb-6">
+                    <p className="text-sm opacity-80">Saldo Disponible</p>
+                    <h1 className="text-4xl font-black">$ {user.balance.toFixed(2)}</h1>
+                </div>
+                <h3 className="font-bold mb-4 text-gray-800">Movimientos Recientes</h3>
+                <div className="text-center text-gray-400 mt-10">No hay movimientos hoy.</div>
+                <button onClick={onBack} class="mt-8 w-full bg-gray-100 py-3 rounded-xl font-bold">Volver</button>
+            </div>
+        );
 
         // --- APP PRINCIPAL ---
-        const App = () => {
-            const [state, dispatch] = useReducer(appReducer, initialData);
-            const [showSplash, setShowSplash] = useState(true);
+        function App() {
+            const [view, setView] = useState('splash');
+            const [user, setUser] = useState(null);
 
             useEffect(() => {
-                const timer = setTimeout(() => setShowSplash(false), 2500);
-                return () => clearTimeout(timer);
+                setTimeout(() => setView('login'), 2000);
             }, []);
 
-            if (showSplash) {
-                return (
-                    <div className="h-screen w-full bg-white flex flex-col items-center justify-center">
-                        <div className="w-24 h-24 bg-red-600 rounded-3xl flex items-center justify-center shadow-2xl mb-6 animate-bounce">
-                            <Icon name="navigation" className="text-white w-12 h-12" />
-                        </div>
-                        <h1 className="text-4xl font-black text-gray-900">DRIVE <span className="text-red-600">MX</span></h1>
+            if (view === 'splash') return (
+                <div className="h-screen flex flex-col items-center justify-center bg-white">
+                    <div className="w-20 h-20 bg-red-600 rounded-3xl flex items-center justify-center shadow-xl animate-bounce">
+                        <i data-lucide="navigation" class="text-white w-10 h-10"></i>
                     </div>
-                );
-            }
-
-            return (
-                <AppContext.Provider value={{ state, dispatch }}>
-                    <div className="max-w-md mx-auto min-h-screen bg-white shadow-xl overflow-hidden relative">
-                        {!state.currentUser ? <AuthScreen /> : <MainView />}
-                    </div>
-                </AppContext.Provider>
-            );
-        };
-
-        const AuthScreen = () => {
-            const { state, dispatch } = useContext(AppContext);
-            const [email, setEmail] = useState('');
-            const [password, setPassword] = useState('');
-
-            return (
-                <div className="p-6 flex flex-col justify-center h-screen">
-                    <div className="text-center mb-10">
-                        <h2 className="text-3xl font-black text-gray-900">Bienvenido</h2>
-                        <p className="text-gray-500 mt-2">Ingresa a Drive MX para comenzar</p>
-                    </div>
-                    {state.loginError && <p className="text-red-600 text-sm mb-4 text-center bg-red-50 p-2 rounded">Correo o contraseña incorrectos</p>}
-                    <input type="email" placeholder="Email (admin@app.com)" className="w-full p-4 bg-gray-50 border rounded-xl mb-4 outline-none focus:ring-2 focus:ring-red-500" value={email} onChange={e => setEmail(e.target.value)} />
-                    <input type="password" placeholder="Contraseña (123)" className="w-full p-4 bg-gray-50 border rounded-xl mb-6 outline-none focus:ring-2 focus:ring-red-500" value={password} onChange={e => setPassword(e.target.value)} />
-                    <Button onClick={() => dispatch({ type: 'LOGIN', payload: { email, password } })}>Ingresar</Button>
+                    <h1 className="text-3xl font-black mt-4">DRIVE <span className="text-red-600">MX</span></h1>
                 </div>
             );
-        };
 
-        const MainView = () => {
-            const { state, dispatch } = useContext(AppContext);
+            if (view === 'login') return (
+                <div className="min-h-screen flex flex-col justify-center p-8 bg-white max-w-md mx-auto">
+                    <h2 className="text-3xl font-black mb-2">Bienvenido</h2>
+                    <p className="text-gray-500 mb-8">Ingresa tus credenciales</p>
+                    <input type="email" placeholder="Correo" class="w-full p-4 bg-gray-50 border rounded-2xl mb-4" />
+                    <input type="password" placeholder="Contraseña" class="w-full p-4 bg-gray-50 border rounded-2xl mb-6" />
+                    <button onClick={() => { setUser(initialData.users[1]); setView('home'); }} class="w-full bg-red-600 text-white py-4 rounded-2xl font-bold shadow-lg">Ingresar</button>
+                </div>
+            );
+
             return (
-                <div className="p-6">
-                    <div className="flex justify-between items-center mb-8">
-                        <h2 className="text-2xl font-black">Hola, {state.currentUser.name}</h2>
-                        <button onClick={() => dispatch({type: 'LOGOUT'})} className="text-red-600"><Icon name="log-out" /></button>
-                    </div>
-                    <div className="bg-red-600 text-white p-6 rounded-3xl shadow-lg mb-8">
-                        <p className="text-red-100 text-sm">Saldo en Cartera</p>
-                        <h3 className="text-4xl font-black mt-1">${state.currentUser.balance.toFixed(2)}</h3>
-                    </div>
-                    <h4 className="font-bold mb-4">Servicios Disponibles</h4>
-                    <div className="grid gap-4">
-                        {state.services.map(s => (
-                            <div key={s.id} className="border p-4 rounded-2xl flex justify-between items-center hover:border-red-600 cursor-pointer transition-all">
-                                <div>
-                                    <p className="font-black text-lg">{s.name}</p>
-                                    <p className="text-sm text-gray-500">Tarifa base: ${s.baseRate}</p>
+                <div className="max-w-md mx-auto bg-white min-h-screen relative shadow-2xl">
+                    {view === 'home' && (
+                        <>
+                            <SimulatedMap height="h-80" />
+                            <div className="p-6">
+                                <div className="flex justify-between items-center mb-6">
+                                    <h2 className="text-2xl font-black">¿A dónde vamos?</h2>
+                                    <button onClick={() => setView('wallet')} class="bg-gray-100 p-3 rounded-full"><i data-lucide="wallet"></i></button>
                                 </div>
-                                <Icon name="chevron-right" className="text-gray-400" />
+                                <div class="space-y-4">
+                                    {initialData.services.map(s => (
+                                        <div key={s.id} class="border-2 border-gray-100 p-4 rounded-2xl flex items-center justify-between hover:border-red-600 cursor-pointer transition-all">
+                                            <div class="flex items-center gap-4">
+                                                <div class="w-12 h-12 bg-red-50 rounded-xl flex items-center justify-center"><i data-lucide="car" class="text-red-600"></i></div>
+                                                <span class="font-bold">{s.name}</span>
+                                            </div>
+                                            <span class="font-black text-red-600">${s.baseRate}</span>
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
-                        ))}
-                    </div>
-                    <div className="mt-8">
-                        <Button variant="outline">Ver Historial de Viajes</Button>
-                    </div>
+                        </>
+                    )}
+                    {view === 'wallet' && <WalletScreen user={user} onBack={() => setView('home')} />}
                 </div>
             );
-        };
+        }
 
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(<App />);
+        
+        // Inicializar iconos después de cargar el componente
+        setTimeout(() => lucide.createIcons(), 100);
     </script>
 </body>
 </html>

@@ -1,70 +1,245 @@
-<div id="cost-sheet" class="absolute bottom-0 left-0 right-0 bg-white z-[120] rounded-t-[2rem] shadow-2xl p-6 space-y-4">
-    <div class="w-10 h-1 bg-gray-200 rounded-full mx-auto -mt-2 mb-2"></div>
-    <h3 class="text-lg font-black italic uppercase tracking-tighter">Tipo de <span class="text-red-600">Servicio</span></h3>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drive MX | Sistema Integral Global</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
+        
+        body { 
+            font-family: 'Inter', sans-serif; 
+            -webkit-tap-highlight-color: transparent; 
+            overflow: hidden; 
+            background-color: #000; 
+        }
+        
+        /* Animaciones y Transiciones */
+        #splash { transition: opacity 0.5s ease; }
+        .view-content { animation: fadeInUp 0.4s ease-out; }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Mapas y Fondos */
+        .map-sim { 
+            background-color: #f3f4f6; 
+            background-image: radial-gradient(#d1d5db 1px, transparent 1px); 
+            background-size: 30px 30px; 
+        }
+        
+        #sidebar { transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); transform: translateX(-100%); }
+        #sidebar.open { transform: translateX(0); }
+
+        #cost-sheet { transition: transform 0.5s cubic-bezier(0.32, 0.72, 0, 1); transform: translateY(100%); }
+        #cost-sheet.active { transform: translateY(0); }
+
+        .vehicle-card.selected { border: 2px solid #ef4444; background: #fef2f2; }
+    </style>
+</head>
+<body>
+
+<div id="app-container" class="max-w-md mx-auto min-h-screen bg-white shadow-2xl overflow-hidden relative">
     
-    <div class="space-y-2">
-        <div onclick="selectVehicle(this)" class="vehicle-card selected p-3 rounded-2xl flex items-center justify-between cursor-pointer transition-all border border-gray-100">
-            <div class="flex items-center gap-3">
-                <i data-lucide="car" class="w-5 h-5 text-gray-700"></i>
-                <span class="font-bold text-xs uppercase italic">Drive Basic</span>
+    <div id="overlay" onclick="closeAllModals()" class="absolute inset-0 bg-black/60 z-[100] opacity-0 pointer-events-none transition-opacity duration-300"></div>
+
+    <div id="sidebar" class="absolute inset-y-0 left-0 w-80 bg-white z-[110] shadow-2xl flex flex-col">
+        <div class="p-8 bg-gray-900 text-white">
+            <div class="w-14 h-14 bg-red-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-red-600/30">
+                <i data-lucide="cpu" id="sidebar-icon" class="text-white w-8 h-8"></i>
             </div>
-            <span class="font-black italic text-sm">$45.00</span>
+            <h2 class="text-2xl font-black italic tracking-tighter uppercase">DRIVE <span class="text-red-600">MX</span></h2>
+            <p id="sidebar-user-role" class="text-[10px] text-gray-500 font-bold mt-1 uppercase tracking-widest italic">Cargando Sistema...</p>
+        </div>
+        <nav class="flex-1 p-6 space-y-2" id="sidebar-nav"></nav>
+        <div class="p-6 border-t">
+            <button onclick="location.reload()" class="w-full flex items-center justify-center gap-3 p-4 bg-red-50 text-red-600 rounded-2xl font-black text-xs uppercase italic">
+                <i data-lucide="power" class="w-4 h-4"></i> Cerrar Sesión
+            </button>
         </div>
     </div>
 
-    <button id="btn-confirm-main" onclick="showPaymentMethods()" class="w-full bg-red-600 text-white py-4 rounded-2xl font-black text-xs uppercase tracking-[0.1em] italic shadow-lg shadow-red-600/20 active:scale-95 transition-all">
-        Confirmar Viaje
-    </button>
-
-    <div id="payment-methods" class="hidden space-y-3 animate-fadeIn">
-        <p class="text-[9px] font-black text-gray-400 uppercase tracking-widest text-center mb-2">Selecciona Método de Pago</p>
-        <div class="grid grid-cols-3 gap-2">
-            <button onclick="selectPayment(this)" class="payment-opt p-3 border border-gray-100 rounded-xl flex flex-col items-center gap-1 hover:border-red-600 transition-all">
-                <i data-lucide="landmark" class="w-4 h-4 text-gray-600"></i>
-                <span class="text-[8px] font-bold uppercase">SPEI</span>
-            </button>
-            <button onclick="selectPayment(this)" class="payment-opt p-3 border border-gray-100 rounded-xl flex flex-col items-center gap-1 hover:border-red-600 transition-all">
-                <i data-lucide="wallet" class="w-4 h-4 text-gray-600"></i>
-                <span class="text-[8px] font-bold uppercase">Cartera</span>
-            </button>
-            <button onclick="selectPayment(this)" class="payment-opt p-3 border border-gray-100 rounded-xl flex flex-col items-center gap-1 hover:border-red-600 transition-all">
-                <i data-lucide="banknote" class="w-4 h-4 text-gray-600"></i>
-                <span class="text-[8px] font-bold uppercase">Efectivo</span>
-            </button>
+    <div id="splash" class="absolute inset-0 z-[150] bg-white flex flex-col items-center justify-center">
+        <div class="w-24 h-24 bg-red-600 rounded-[2.5rem] flex items-center justify-center shadow-2xl animate-pulse">
+            <i data-lucide="navigation" class="text-white w-12 h-12"></i>
         </div>
-        <button onclick="finalOrder()" class="w-full bg-black text-white py-3 rounded-xl font-black text-[10px] uppercase italic tracking-widest mt-2">
-            Pedir Ahora
-        </button>
+        <h1 class="text-4xl font-black mt-8 tracking-tighter italic uppercase">DRIVE <span class="text-red-600">MX</span></h1>
+        <p class="text-[9px] font-bold text-gray-400 tracking-[0.5em] mt-2 uppercase">Iniciando Servidores Globales</p>
+    </div>
+
+    <div id="login-screen" class="hidden absolute inset-0 z-40 bg-white p-10 flex flex-col justify-center">
+        <h2 class="text-5xl font-black text-gray-900 italic leading-none tracking-tighter uppercase mb-10">LOGIN<br><span class="text-red-600">SISTEMA</span></h2>
+        <div class="space-y-4">
+            <input type="email" id="email-input" placeholder="Usuario" class="w-full p-4 bg-gray-50 border-b-2 border-gray-100 rounded-2xl outline-none focus:border-red-600 font-bold">
+            <input type="password" id="pass-input" placeholder="Contraseña" class="w-full p-4 bg-gray-50 border-b-2 border-gray-100 rounded-2xl outline-none focus:border-red-600 font-bold">
+            <button onclick="handleLogin()" class="w-full bg-red-600 text-white py-5 rounded-[2rem] font-black shadow-xl uppercase tracking-widest active:scale-95 transition-all">Ingresar</button>
+        </div>
+    </div>
+
+    <div id="passenger-app" class="hidden h-screen flex flex-col">
+        <header class="p-4 flex items-center justify-between border-b bg-white z-10">
+            <button onclick="toggleMenu()" class="p-2 bg-gray-100 rounded-xl"><i data-lucide="menu" class="w-6 h-6"></i></button>
+            <h2 class="text-2xl font-black italic tracking-tighter uppercase">DRIVE <span class="text-red-600">MX</span></h2>
+            <div class="w-10 h-10 rounded-full border bg-gray-50 overflow-hidden"><img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix"></div>
+        </header>
+
+        <main class="flex-1 relative map-sim">
+            <div class="absolute top-6 left-6 right-6 z-20 space-y-3">
+                <div class="bg-white/90 backdrop-blur p-3 rounded-2xl shadow-lg border flex items-center gap-3">
+                    <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse shadow-[0_0_8px_#22c55e]"></div>
+                    <p class="text-[10px] font-black text-gray-800 uppercase italic truncate">Origen: <span class="text-gray-400 font-bold">Punto de encuentro detectado</span></p>
+                </div>
+                <div onclick="openCostSheet()" class="bg-white p-1 rounded-2xl shadow-2xl flex items-center gap-3 cursor-pointer ring-2 ring-black/5 hover:ring-red-600/20 transition-all">
+                    <div class="w-12 h-12 bg-red-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-red-600/30"><i data-lucide="search" class="w-6 h-6"></i></div>
+                    <span class="text-sm font-black text-gray-400 italic uppercase">¿A dónde vamos hoy?</span>
+                </div>
+            </div>
+
+            <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div class="bg-red-600 p-4 rounded-3xl shadow-2xl border-4 border-white animate-bounce"><i data-lucide="navigation" class="text-white w-6 h-6"></i></div>
+            </div>
+
+            <div class="absolute bottom-6 left-6 right-6">
+                <div class="bg-black rounded-[2.5rem] p-6 flex items-center justify-between text-white shadow-2xl border border-white/10">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 bg-red-600/20 rounded-2xl flex items-center justify-center border border-red-600/30 text-red-600 shadow-inner"><i data-lucide="wallet"></i></div>
+                        <div><p class="text-[9px] text-gray-500 font-black uppercase tracking-widest">Mi Saldo</p><h3 id="p-balance" class="text-xl font-black italic">$0.00</h3></div>
+                    </div>
+                    <div id="p-status" class="w-3 h-3 bg-green-500 rounded-full shadow-[0_0_10px_#22c55e]"></div>
+                </div>
+            </div>
+        </main>
+
+        <div id="cost-sheet" class="absolute bottom-0 left-0 right-0 bg-white z-[120] rounded-t-[3.5rem] shadow-2xl p-8 space-y-6 border-t border-gray-100">
+            <div class="w-12 h-1.5 bg-gray-200 rounded-full mx-auto -mt-4 mb-4"></div>
+            <h3 class="text-2xl font-black italic uppercase tracking-tighter">ELIGE TU <span class="text-red-600">VIAJE</span></h3>
+            
+            <div id="vehicle-selection" class="space-y-3">
+                <div onclick="selectVehicle(this)" class="vehicle-card selected p-4 rounded-[2rem] flex items-center justify-between cursor-pointer transition-all">
+                    <div class="flex items-center gap-4"><i data-lucide="car" class="w-8 h-8 text-gray-800"></i><span class="font-black italic uppercase">Drive Basic</span></div>
+                    <span class="font-black italic text-xl">$45.00</span>
+                </div>
+            </div>
+
+            <button id="btn-confirm-order" onclick="showPaymentOptions()" class="w-full bg-red-600 text-white py-5 rounded-[2.5rem] font-black shadow-xl shadow-red-600/20 uppercase tracking-widest italic active:scale-95 transition-all">
+                Confirmar Viaje
+            </button>
+
+            <div id="payment-input-area" class="hidden space-y-4 animate-fadeIn">
+                <p class="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] text-center">Selecciona Método de Pago</p>
+                <div class="grid grid-cols-3 gap-3">
+                    <button onclick="setPayment(this, 'SPEI')" class="pay-btn p-4 border-2 border-gray-100 rounded-3xl flex flex-col items-center gap-2 hover:border-red-600 transition-all">
+                        <i data-lucide="landmark" class="w-5 h-5 text-gray-600"></i>
+                        <span class="text-[9px] font-black uppercase">SPEI</span>
+                    </button>
+                    <button onclick="setPayment(this, 'Cartera')" class="pay-btn p-4 border-2 border-gray-100 rounded-3xl flex flex-col items-center gap-2 hover:border-red-600 transition-all">
+                        <i data-lucide="wallet" class="w-5 h-5 text-gray-600"></i>
+                        <span class="text-[9px] font-black uppercase">Cartera</span>
+                    </button>
+                    <button onclick="setPayment(this, 'Efectivo')" class="pay-btn p-4 border-2 border-gray-100 rounded-3xl flex flex-col items-center gap-2 hover:border-red-600 transition-all">
+                        <i data-lucide="banknote" class="w-5 h-5 text-gray-600"></i>
+                        <span class="text-[9px] font-black uppercase">Efectivo</span>
+                    </button>
+                </div>
+                <button onclick="requestDrive()" class="w-full bg-black text-white py-5 rounded-[2.5rem] font-black shadow-2xl uppercase tracking-widest italic mt-2 animate-pulse">
+                    Pedir Ahora
+                </button>
+            </div>
+        </div>
     </div>
 </div>
 
 <script>
-    // Añade estas funciones a tu bloque de <script> existente
+    lucide.createIcons();
 
-    function showPaymentMethods() {
-        // Oculta el botón principal y muestra los pagos
-        document.getElementById('btn-confirm-main').classList.add('hidden');
-        const payPanel = document.getElementById('payment-methods');
-        payPanel.classList.remove('hidden');
-        payPanel.classList.add('view-content'); // Reutilizamos tu animación de entrada
+    // Splash Timer
+    setTimeout(() => {
+        const s = document.getElementById('splash');
+        s.style.opacity = '0';
+        setTimeout(() => {
+            s.style.display = 'none';
+            document.getElementById('login-screen').classList.remove('hidden');
+        }, 500);
+    }, 3000);
+
+    function toggleMenu() {
+        const side = document.getElementById('sidebar');
+        const over = document.getElementById('overlay');
+        side.classList.toggle('open');
+        over.classList.toggle('opacity-100');
+        over.classList.toggle('pointer-events-auto');
+    }
+
+    function closeAllModals() {
+        document.getElementById('sidebar').classList.remove('open');
+        document.getElementById('cost-sheet').classList.remove('active');
+        document.getElementById('overlay').classList.remove('opacity-100', 'pointer-events-auto');
+        // Resetear botones al cerrar
+        setTimeout(() => {
+            document.getElementById('btn-confirm-order').classList.remove('hidden');
+            document.getElementById('payment-input-area').classList.add('hidden');
+        }, 500);
+    }
+
+    function openCostSheet() {
+        document.getElementById('cost-sheet').classList.add('active');
+        document.getElementById('overlay').classList.add('opacity-100', 'pointer-events-auto');
+    }
+
+    // Funciones de Pago e Input
+    function showPaymentOptions() {
+        document.getElementById('btn-confirm-order').classList.add('hidden');
+        document.getElementById('payment-input-area').classList.remove('hidden');
         lucide.createIcons();
     }
 
-    function selectPayment(el) {
-        // Quita la selección de todos y se la pone al clicado
-        document.querySelectorAll('.payment-opt').forEach(opt => {
-            opt.classList.remove('border-red-600', 'bg-red-50');
-        });
+    function setPayment(el, method) {
+        document.querySelectorAll('.pay-btn').forEach(b => b.classList.remove('border-red-600', 'bg-red-50'));
         el.classList.add('border-red-600', 'bg-red-50');
     }
 
-    function finalOrder() {
-        alert("Buscando conductor... Tu solicitud de Drive MX ha sido enviada.");
+    function requestDrive() {
+        alert("Buscando tu Drive MX... Sistema Global Conectado.");
         closeAllModals();
-        // Aquí podrías resetear el botón para la próxima vez
-        setTimeout(() => {
-            document.getElementById('btn-confirm-main').classList.remove('hidden');
-            document.getElementById('payment-methods').classList.add('hidden');
-        }, 1000);
+    }
+
+    function handleLogin() {
+        const e = document.getElementById('email-input').value;
+        const p = document.getElementById('pass-input').value;
+        if (e === 'admin@app.com' && p === '123') {
+            setupUI("ADMINISTRADOR", "shield-check");
+            document.getElementById('login-screen').classList.add('hidden');
+            // Aquí iría la carga del admin app
+        } else if (e === 'juan@app.com' && p === '123') {
+            setupUI("JUAN PASAJERO", "user");
+            initPassenger(50);
+        } else {
+            alert("Credenciales incorrectas");
+        }
+    }
+
+    function setupUI(role, icon) {
+        document.getElementById('sidebar-user-role').innerText = role;
+        document.getElementById('sidebar-icon').setAttribute('data-lucide', icon);
+        const nav = document.getElementById('sidebar-nav');
+        if(role === "ADMINISTRADOR") {
+            nav.innerHTML = `<button class="w-full flex items-center gap-4 p-4 text-gray-700 font-black hover:bg-gray-50 rounded-2xl uppercase text-xs italic"><i data-lucide="users" class="text-red-600"></i> Pasajeros</button>`;
+        } else {
+            nav.innerHTML = `<button class="w-full flex items-center gap-4 p-4 text-gray-700 font-black hover:bg-gray-50 rounded-2xl uppercase text-xs italic"><i data-lucide="history"></i> Viajes</button>`;
+        }
+        lucide.createIcons();
+    }
+
+    function initPassenger(bal) {
+        document.getElementById('login-screen').classList.add('hidden');
+        document.getElementById('passenger-app').classList.remove('hidden');
+        document.getElementById('p-balance').innerText = `$${bal.toFixed(2)}`;
+    }
+
+    function selectVehicle(el) {
+        document.querySelectorAll('.vehicle-card').forEach(c => c.classList.remove('selected'));
+        el.classList.add('selected');
     }
 </script>
+</body>
+</html>

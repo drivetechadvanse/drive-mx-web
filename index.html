@@ -3,26 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Drive MX - Sistema Integral</title>
+    <title>Drive MX - Sistema Profesional</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
         body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; overflow: hidden; }
         
+        /* Mapa con diseño de rejilla */
         .map-bg { 
             background-color: #f3f4f6; 
             background-image: radial-gradient(#d1d5db 0.8px, transparent 0.8px); 
             background-size: 20px 20px; 
         }
 
+        /* Cartera Estilo Premium */
         .wallet-card {
             background: linear-gradient(135deg, #111827 0%, #000000 100%);
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
-        .admin-bg { background-color: #f8fafc; }
-        .is-blocked { filter: grayscale(1); opacity: 0.6; pointer-events: none; }
+        .admin-view-bg { background-color: #f8fafc; }
+        .blocked-element { filter: grayscale(1); opacity: 0.5; pointer-events: none; }
     </style>
 </head>
 <body class="bg-gray-900">
@@ -57,21 +59,26 @@
         <main class="flex-1 flex flex-col relative overflow-hidden">
             <div class="flex-1 map-bg relative">
                 <div class="absolute top-6 left-6 right-6 z-20 flex flex-col gap-2">
-                    <div id="search-bar" class="flex items-center gap-3 bg-white/80 backdrop-blur p-1 rounded-2xl shadow-sm">
-                        <div class="w-10 h-10 bg-red-600 rounded-xl flex items-center justify-center shadow-lg shadow-red-600/30">
+                    <div class="flex items-center gap-3 bg-white/90 backdrop-blur p-2 rounded-2xl shadow-sm border border-gray-100">
+                        <div class="w-2 h-2 bg-green-500 rounded-full mx-2 shadow-[0_0_8px_rgba(34,197,94,0.6)]"></div>
+                        <p class="text-[11px] font-black text-gray-800 uppercase tracking-tight truncate">Mi ubicación actual: <span class="text-gray-500">Detectando...</span></p>
+                    </div>
+                    
+                    <div id="search-container" class="flex items-center gap-3 bg-white p-1 rounded-2xl shadow-md border border-gray-50">
+                        <div class="w-10 h-10 bg-red-600 rounded-xl flex items-center justify-center shadow-lg shadow-red-600/20">
                             <i data-lucide="search" class="text-white w-5 h-5"></i>
                         </div>
-                        <input type="text" id="dest-field" placeholder="¿A dónde vamos?" class="bg-transparent flex-1 outline-none font-black text-gray-900 text-sm">
+                        <input type="text" id="dest-field" placeholder="¿A dónde vamos hoy?" class="bg-transparent flex-1 outline-none font-black text-gray-900 text-sm">
                     </div>
                 </div>
 
-                <div id="block-alert" class="hidden absolute top-24 left-6 right-6 z-30 bg-red-600 text-white p-3 rounded-xl flex items-center gap-3 shadow-lg">
-                    <i data-lucide="alert-octagon" class="w-5 h-5"></i>
-                    <p class="text-[10px] font-black uppercase">Viajes bloqueados: Liquidar saldo</p>
+                <div id="debt-block-msg" class="hidden absolute top-32 left-6 right-6 z-30 bg-red-600 text-white p-3 rounded-xl flex items-center gap-3 shadow-xl">
+                    <i data-lucide="alert-circle" class="w-5 h-5"></i>
+                    <p class="text-[10px] font-black uppercase">Servicio suspendido por falta de pago</p>
                 </div>
 
                 <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <div id="map-cursor" class="bg-red-600 p-3 rounded-2xl shadow-2xl border-2 border-white"><i data-lucide="navigation" class="text-white w-5 h-5"></i></div>
+                    <div id="main-pin" class="bg-red-600 p-3 rounded-2xl shadow-2xl border-2 border-white"><i data-lucide="navigation" class="text-white w-5 h-5"></i></div>
                 </div>
             </div>
 
@@ -80,83 +87,55 @@
                     <div class="flex items-center gap-4">
                         <div class="bg-red-600/10 p-2.5 rounded-xl border border-red-600/20"><i data-lucide="wallet" class="text-red-600 w-5 h-5"></i></div>
                         <div>
-                            <p class="text-[8px] text-gray-500 font-bold uppercase tracking-widest">Mi Saldo</p>
-                            <h3 class="text-xl font-black text-white italic tracking-tighter" id="balance-value">$0.00</h3>
+                            <p class="text-[8px] text-gray-500 font-bold uppercase tracking-widest">Saldo de cuenta</p>
+                            <h3 class="text-xl font-black text-white italic tracking-tighter" id="p-balance">$0.00</h3>
                         </div>
                     </div>
+                    <div class="w-2 h-2 rounded-full bg-green-500" id="status-dot"></div>
                 </div>
             </div>
         </main>
     </div>
 
-    <div id="admin-app" class="hidden h-screen flex flex-col admin-bg">
+    <div id="admin-app" class="hidden h-screen flex flex-col admin-view-bg">
         <header class="p-6 bg-gray-900 text-white">
             <div class="flex justify-between items-center">
-                <div>
-                    <h2 class="text-2xl font-black italic tracking-tighter uppercase text-red-600">PANEL MAESTRO</h2>
-                    <p class="text-[10px] font-bold text-gray-400 tracking-[0.3em]">DRIVE MX CONTROL</p>
-                </div>
-                <button onclick="location.reload()" class="p-2 bg-white/10 rounded-xl"><i data-lucide="log-out" class="w-5 h-5"></i></button>
+                <h2 class="text-2xl font-black italic text-red-600">SISTEMA <span class="text-white">CENTRAL</span></h2>
+                <button onclick="location.reload()" class="p-2 bg-white/10 rounded-xl"><i data-lucide="power" class="w-5 h-5 text-red-500"></i></button>
             </div>
         </header>
 
         <main class="flex-1 p-6 space-y-6 overflow-y-auto">
-            <div class="grid grid-cols-2 gap-4">
-                <div class="bg-white p-4 rounded-3xl shadow-sm border border-gray-100">
-                    <p class="text-[9px] font-black text-gray-400 uppercase mb-1">Usuarios</p>
-                    <p class="text-2xl font-black">248</p>
+            <h3 class="text-xs font-black text-gray-400 uppercase tracking-[0.2em]">Gestión de Pasajeros</h3>
+            
+            <div class="bg-white p-4 rounded-[2rem] shadow-sm border border-gray-100 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-gray-900 rounded-xl flex items-center justify-center text-white font-black text-xs uppercase">JP</div>
+                    <p class="text-sm font-black text-gray-900">Juan Pasajero</p>
                 </div>
-                <div class="bg-white p-4 rounded-3xl shadow-sm border border-gray-100">
-                    <p class="text-[9px] font-black text-gray-400 uppercase mb-1">Activos</p>
-                    <p class="text-2xl font-black text-green-500">12</p>
+                <div class="flex items-center gap-2">
+                    <input type="number" id="val-juan" placeholder="$" class="w-16 p-2 bg-gray-50 border rounded-xl text-xs font-black outline-none focus:ring-1 focus:ring-red-600 text-center">
+                    <button onclick="updateBalance('Juan', 'val-juan')" class="bg-red-600 text-white p-2 rounded-xl"><i data-lucide="check" class="w-4 h-4"></i></button>
                 </div>
             </div>
 
-            <div class="space-y-4">
-                <h3 class="text-xs font-black text-gray-900 uppercase tracking-widest">Gestión de Pasajeros</h3>
-                
-                <div class="bg-white p-4 rounded-[2rem] shadow-sm border border-gray-100 flex items-center justify-between">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 bg-gray-900 rounded-xl flex items-center justify-center text-white font-black">JP</div>
-                        <div>
-                            <p class="text-sm font-black text-gray-900">Juan Pasajero</p>
-                            <p class="text-[10px] font-bold text-green-500">Activo</p>
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <input type="number" id="input-juan" placeholder="$" class="w-16 p-2 bg-gray-50 border rounded-xl text-xs font-black outline-none focus:ring-1 focus:ring-red-600">
-                        <button onclick="updateBalance('juan', 'input-juan')" class="bg-red-600 text-white p-2 rounded-xl shadow-lg shadow-red-600/20"><i data-lucide="check" class="w-4 h-4"></i></button>
-                    </div>
+            <div class="bg-white p-4 rounded-[2rem] shadow-sm border border-gray-100 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-red-600 rounded-xl flex items-center justify-center text-white font-black text-xs uppercase italic">MM</div>
+                    <p class="text-sm font-black text-gray-900">Maria Morosa</p>
                 </div>
-
-                <div class="bg-red-50 p-4 rounded-[2rem] shadow-sm border border-red-100 flex items-center justify-between">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 bg-red-600 rounded-xl flex items-center justify-center text-white font-black italic">!</div>
-                        <div>
-                            <p class="text-sm font-black text-gray-900">Maria Morosa</p>
-                            <p class="text-[10px] font-bold text-red-600">Deuda / Bloqueado</p>
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <input type="number" id="input-maria" placeholder="-$" class="w-16 p-2 bg-white border border-red-200 rounded-xl text-xs font-black outline-none focus:ring-1 focus:ring-red-600">
-                        <button onclick="updateBalance('maria', 'input-maria')" class="bg-gray-900 text-white p-2 rounded-xl"><i data-lucide="refresh-cw" class="w-4 h-4"></i></button>
-                    </div>
+                <div class="flex items-center gap-2">
+                    <input type="number" id="val-maria" placeholder="-$" class="w-16 p-2 bg-gray-50 border rounded-xl text-xs font-black outline-none focus:ring-1 focus:ring-red-600 text-center">
+                    <button onclick="updateBalance('Maria', 'val-maria')" class="bg-gray-900 text-white p-2 rounded-xl"><i data-lucide="refresh-cw" class="w-4 h-4"></i></button>
                 </div>
             </div>
         </main>
-
-        <nav class="p-6 bg-white border-t flex justify-around">
-            <i data-lucide="users" class="text-red-600 w-6 h-6"></i>
-            <i data-lucide="activity" class="text-gray-300 w-6 h-6"></i>
-            <i data-lucide="settings" class="text-gray-300 w-6 h-6"></i>
-        </nav>
     </div>
 </div>
 
 <script>
     lucide.createIcons();
 
-    // Splash Screen Logic
     setTimeout(() => {
         document.getElementById('splash').style.opacity = '0';
         setTimeout(() => {
@@ -170,7 +149,8 @@
         const pass = document.getElementById('pass-input').value;
 
         if (email === 'admin@app.com' && pass === '123') {
-            showAdmin();
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('admin-app').classList.remove('hidden');
         } else if (email === 'juan@app.com' && pass === '123') {
             showPassenger(50);
         } else if (email === 'maria@app.com' && pass === '123') {
@@ -181,11 +161,6 @@
         lucide.createIcons();
     }
 
-    function showAdmin() {
-        document.getElementById('login-screen').classList.add('hidden');
-        document.getElementById('admin-app').classList.remove('hidden');
-    }
-
     function showPassenger(balance) {
         document.getElementById('login-screen').classList.add('hidden');
         document.getElementById('passenger-app').classList.remove('hidden');
@@ -193,35 +168,35 @@
     }
 
     function updatePassengerUI(amount) {
-        const display = document.getElementById('balance-value');
+        const display = document.getElementById('p-balance');
         const dest = document.getElementById('dest-field');
-        const alertBox = document.getElementById('block-alert');
-        const marker = document.getElementById('map-cursor');
+        const alertBox = document.getElementById('debt-block-msg');
+        const pin = document.getElementById('main-pin');
+        const dot = document.getElementById('status-dot');
 
         display.innerText = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(amount);
 
         if (amount < 0) {
-            display.classList.add('text-red-600');
+            display.classList.add('text-red-500');
             dest.disabled = true;
-            dest.placeholder = "SALDO DEUDOR";
+            dest.placeholder = "PAGO PENDIENTE";
             alertBox.classList.remove('hidden');
-            marker.classList.add('is-blocked');
+            pin.classList.add('blocked-element');
+            dot.classList.replace('bg-green-500', 'bg-red-600');
         } else {
-            display.classList.remove('text-red-600');
+            display.classList.remove('text-red-500');
             display.classList.add('text-white');
             dest.disabled = false;
-            dest.placeholder = "¿A dónde vamos?";
+            dest.placeholder = "¿A dónde vamos hoy?";
             alertBox.classList.add('hidden');
-            marker.classList.remove('is-blocked');
+            pin.classList.remove('blocked-element');
+            dot.classList.replace('bg-red-600', 'bg-green-500');
         }
     }
 
     function updateBalance(user, inputId) {
-        const newVal = document.getElementById(inputId).value;
-        if(newVal !== "") {
-            alert("Saldo de " + user + " actualizado a: $" + newVal);
-            // Aquí iría la conexión real a la base de datos
-        }
+        const val = document.getElementById(inputId).value;
+        if(val !== "") alert("Cambio de saldo para " + user + " enviado al sistema.");
     }
 </script>
 </body>

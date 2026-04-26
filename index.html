@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Drive MX - Sistema Unificado</title>
+    <title>Drive MX - Panel Dinámico</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
@@ -21,7 +21,6 @@
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
-        /* Sidebar Animación Única */
         #sidebar {
             transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             transform: translateX(-100%);
@@ -35,7 +34,9 @@
         }
         #overlay.show { opacity: 1; pointer-events: auto; }
 
-        .blocked-element { filter: grayscale(1); opacity: 0.5; pointer-events: none; }
+        /* Animación para el cambio de contenido */
+        .fade-in { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body class="bg-gray-900">
@@ -46,14 +47,16 @@
 
     <div id="sidebar" class="absolute inset-y-0 left-0 w-72 bg-white z-[110] shadow-2xl flex flex-col">
         <div class="p-8 bg-gray-900 text-white">
-            <div class="w-12 h-12 bg-red-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-red-600/30">
+            <div class="w-12 h-12 bg-red-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg">
                 <i data-lucide="shield-check" id="sidebar-icon" class="text-white w-6 h-6"></i>
             </div>
             <p class="font-black text-xl italic uppercase tracking-tighter">Drive <span class="text-red-600">MX</span></p>
-            <p id="sidebar-user-role" class="text-[10px] text-gray-400 font-bold mt-1 uppercase tracking-[0.2em]">Cargando...</p>
+            <p id="sidebar-user-role" class="text-[10px] text-gray-400 font-bold mt-1 uppercase tracking-widest">Cargando...</p>
         </div>
+        
         <nav class="flex-1 p-6 space-y-2" id="sidebar-options">
             </nav>
+
         <div class="p-6 border-t border-gray-100">
             <button onclick="location.reload()" class="w-full flex items-center gap-4 p-4 text-red-600 font-black hover:bg-red-50 rounded-2xl transition-colors uppercase text-xs italic">
                 <i data-lucide="power" class="w-5 h-5"></i> Cerrar Sesión
@@ -62,98 +65,49 @@
     </div>
 
     <div id="splash" class="absolute inset-0 z-[120] bg-white flex flex-col items-center justify-center transition-opacity duration-700">
-        <div class="w-24 h-24 bg-red-600 rounded-[2.5rem] flex items-center justify-center shadow-2xl animate-bounce">
+        <div class="w-24 h-24 bg-red-600 rounded-[2.5rem] flex items-center justify-center animate-bounce">
             <i data-lucide="navigation" class="text-white w-12 h-12"></i>
         </div>
         <h1 class="text-4xl font-black mt-6 tracking-tighter italic uppercase">DRIVE <span class="text-red-600">MX</span></h1>
     </div>
 
     <div id="login-screen" class="hidden absolute inset-0 z-40 bg-white p-8 flex flex-col justify-center">
-        <h2 class="text-4xl font-black text-gray-900 leading-none mb-10 italic uppercase tracking-tighter italic">ACCESO<br><span class="text-red-600">BIENVENIDO</span></h2>
+        <h2 class="text-4xl font-black text-gray-900 leading-none mb-10 italic uppercase tracking-tighter">ACCESO<br><span class="text-red-600">DRIVE MX</span></h2>
         <div class="space-y-4">
-            <input type="email" id="email-input" placeholder="Usuario / Correo" class="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:ring-2 focus:ring-red-600 font-medium">
+            <input type="email" id="email-input" placeholder="Usuario" class="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:ring-2 focus:ring-red-600 font-medium">
             <input type="password" id="pass-input" placeholder="Contraseña" class="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:ring-2 focus:ring-red-600 font-medium">
-            <button onclick="attemptLogin()" class="w-full bg-red-600 text-white py-4 rounded-2xl font-black shadow-lg hover:bg-red-700 transition-all uppercase tracking-widest">Entrar</button>
+            <button onclick="attemptLogin()" class="w-full bg-red-600 text-white py-4 rounded-2xl font-black shadow-lg uppercase tracking-widest">Entrar</button>
         </div>
     </div>
 
     <div id="passenger-app" class="hidden h-screen flex flex-col">
         <header class="p-4 flex items-center justify-between border-b bg-white z-10">
-            <div class="flex items-center gap-4">
-                <button onclick="toggleMenu()" class="p-2 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
-                    <i data-lucide="menu" class="w-6 h-6 text-gray-900"></i>
-                </button>
-                <h2 class="text-2xl font-black italic tracking-tighter uppercase">DRIVE <span class="text-red-600">MX</span></h2>
-            </div>
-            <div class="w-10 h-10 bg-gray-100 rounded-full border-2 border-white shadow-sm overflow-hidden">
-                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" alt="avatar">
-            </div>
+            <button onclick="toggleMenu()" class="p-2 bg-gray-50 rounded-xl"><i data-lucide="menu" class="w-6 h-6"></i></button>
+            <h2 class="text-2xl font-black italic tracking-tighter uppercase">DRIVE <span class="text-red-600">MX</span></h2>
+            <div class="w-8 h-8 bg-gray-200 rounded-full"></div>
         </header>
-
-        <main class="flex-1 flex flex-col relative overflow-hidden">
-            <div class="flex-1 map-bg relative">
-                <div class="absolute top-6 left-6 right-6 z-20 flex flex-col gap-2">
-                    <div class="flex items-center gap-3 bg-white/90 backdrop-blur p-2 rounded-2xl shadow-sm border border-gray-100">
-                        <div class="w-2 h-2 bg-green-500 rounded-full mx-2 animate-pulse"></div>
-                        <p class="text-[10px] font-black text-gray-800 uppercase tracking-tight">Ubicación: <span class="text-gray-400">Punto Actual</span></p>
-                    </div>
-                    <div class="flex items-center gap-3 bg-white p-1 rounded-2xl shadow-md">
-                        <div class="w-10 h-10 bg-red-600 rounded-xl flex items-center justify-center text-white"><i data-lucide="search" class="w-5 h-5"></i></div>
-                        <input type="text" id="dest-field" placeholder="¿A dónde vamos hoy?" class="bg-transparent flex-1 outline-none font-black text-gray-900 text-sm">
-                    </div>
-                </div>
-
-                <div id="debt-msg" class="hidden absolute top-32 left-6 right-6 z-30 bg-red-600 text-white p-3 rounded-xl flex items-center gap-3 shadow-xl">
-                    <i data-lucide="alert-circle" class="w-5 h-5"></i>
-                    <p class="text-[10px] font-black uppercase">Servicio bloqueado por adeudo</p>
-                </div>
-
-                <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <div id="main-pin" class="bg-red-600 p-3 rounded-2xl shadow-2xl border-2 border-white"><i data-lucide="navigation" class="text-white w-5 h-5"></i></div>
-                </div>
-            </div>
-
-            <div class="px-6 py-4 bg-white">
-                <div class="wallet-card rounded-[2rem] p-5 flex items-center justify-between shadow-xl">
-                    <div class="flex items-center gap-4">
-                        <div class="bg-red-600/10 p-2.5 rounded-xl border border-red-600/20"><i data-lucide="wallet" class="text-red-600 w-5 h-5"></i></div>
-                        <div>
-                            <p class="text-[8px] text-gray-500 font-bold uppercase tracking-widest">Saldo Disponible</p>
-                            <h3 class="text-xl font-black text-white italic tracking-tighter" id="p-balance">$0.00</h3>
-                        </div>
-                    </div>
-                    <div class="w-2 h-2 rounded-full bg-green-500" id="status-dot"></div>
-                </div>
-            </div>
+        <main class="flex-1 map-bg relative">
+            <div class="absolute inset-0 flex items-center justify-center"><div class="bg-red-600 p-3 rounded-2xl shadow-xl"><i data-lucide="navigation" class="text-white w-5 h-5"></i></div></div>
         </main>
+        <div class="p-4 bg-white shadow-xl">
+            <div class="wallet-card rounded-[2rem] p-5 text-white flex justify-between items-center">
+                <p class="text-xs font-bold uppercase">Saldo:</p>
+                <h3 id="p-balance" class="text-xl font-black italic">$0.00</h3>
+            </div>
+        </div>
     </div>
 
     <div id="admin-app" class="hidden h-screen flex flex-col bg-gray-50">
         <header class="p-4 flex items-center justify-between border-b bg-gray-900 text-white z-10">
             <div class="flex items-center gap-4">
-                <button onclick="toggleMenu()" class="p-2 bg-white/10 rounded-xl hover:bg-white/20 transition-colors">
-                    <i data-lucide="menu" class="w-6 h-6 text-white"></i>
-                </button>
-                <h2 class="text-xl font-black italic tracking-tighter uppercase text-red-600">PANEL <span class="text-white">MAESTRO</span></h2>
+                <button onclick="toggleMenu()" class="p-2 bg-white/10 rounded-xl hover:bg-white/20"><i data-lucide="menu" class="w-6 h-6"></i></button>
+                <h2 class="text-xl font-black italic uppercase text-red-600 tracking-tighter">SISTEMA <span class="text-white">MAESTRO</span></h2>
             </div>
-            <div class="w-2 h-2 bg-red-600 rounded-full animate-pulse shadow-[0_0_8px_red]"></div>
+            <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
         </header>
 
-        <main class="flex-1 p-6 space-y-6 overflow-y-auto">
-            <div class="bg-white p-6 rounded-[2.5rem] shadow-sm border border-gray-100">
-                <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">Gestión de Usuarios</p>
-                <div class="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-100">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 bg-gray-900 rounded-xl flex items-center justify-center text-white font-black">JP</div>
-                        <p class="font-black text-sm text-gray-900">Juan Pasajero</p>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <input type="number" id="val-juan" placeholder="$" class="w-16 p-2 bg-white border rounded-xl text-xs font-black text-center outline-none focus:ring-1 focus:ring-red-600">
-                        <button onclick="alert('Saldo actualizado')" class="bg-red-600 text-white p-2 rounded-xl"><i data-lucide="check" class="w-4 h-4"></i></button>
-                    </div>
-                </div>
-            </div>
-        </main>
+        <main id="admin-content" class="flex-1 p-6 overflow-y-auto fade-in">
+            </main>
     </div>
 
 </div>
@@ -161,13 +115,9 @@
 <script>
     lucide.createIcons();
 
-    // Splash
     setTimeout(() => {
-        document.getElementById('splash').style.opacity = '0';
-        setTimeout(() => {
-            document.getElementById('splash').style.display = 'none';
-            document.getElementById('login-screen').classList.remove('hidden');
-        }, 700);
+        document.getElementById('splash').style.display = 'none';
+        document.getElementById('login-screen').classList.remove('hidden');
     }, 2000);
 
     function toggleMenu() {
@@ -183,60 +133,81 @@
             setupSidebar("ADMINISTRADOR", "shield-check");
             document.getElementById('login-screen').classList.add('hidden');
             document.getElementById('admin-app').classList.remove('hidden');
+            switchAdminView('dashboard'); // Vista por defecto
         } else if (email === 'juan@app.com' && pass === '123') {
             setupSidebar("JUAN PASAJERO", "user");
-            showPassenger(50);
-        } else if (email === 'maria@app.com' && pass === '123') {
-            setupSidebar("MARIA MOROSA", "user-x");
-            showPassenger(-150);
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('passenger-app').classList.remove('hidden');
+            document.getElementById('p-balance').innerText = "$50.00";
         } else {
-            alert("Credenciales inválidas");
+            alert("Acceso denegado");
         }
         lucide.createIcons();
     }
 
-    function setupSidebar(roleName, iconName) {
-        document.getElementById('sidebar-user-role').innerText = roleName;
-        document.getElementById('sidebar-icon').setAttribute('data-lucide', iconName);
+    function setupSidebar(role, icon) {
+        document.getElementById('sidebar-user-role').innerText = role;
+        document.getElementById('sidebar-icon').setAttribute('data-lucide', icon);
         
         const options = document.getElementById('sidebar-options');
-        options.innerHTML = roleName === "ADMINISTRADOR" 
-            ? `<button class="w-full flex items-center gap-4 p-4 text-gray-700 font-bold hover:bg-gray-50 rounded-2xl"><i data-lucide="bar-chart-3" class="w-5 h-5"></i> Métricas</button>
-               <button class="w-full flex items-center gap-4 p-4 text-gray-700 font-bold hover:bg-gray-50 rounded-2xl"><i data-lucide="users" class="w-5 h-5"></i> Pasajeros</button>`
-            : `<button class="w-full flex items-center gap-4 p-4 text-gray-700 font-bold hover:bg-gray-50 rounded-2xl"><i data-lucide="history" class="w-5 h-5"></i> Mis Viajes</button>
-               <button class="w-full flex items-center gap-4 p-4 text-gray-700 font-bold hover:bg-gray-50 rounded-2xl"><i data-lucide="wallet" class="w-5 h-5"></i> Mi Cartera</button>`;
+        if(role === "ADMINISTRADOR") {
+            options.innerHTML = `
+                <button onclick="switchAdminView('dashboard')" class="w-full flex items-center gap-4 p-4 text-gray-700 font-bold hover:bg-gray-50 rounded-2xl"><i data-lucide="layout-dashboard"></i> Resumen</button>
+                <button onclick="switchAdminView('users')" class="w-full flex items-center gap-4 p-4 text-gray-700 font-bold hover:bg-gray-50 rounded-2xl"><i data-lucide="users"></i> Pasajeros</button>
+                <button onclick="switchAdminView('stats')" class="w-full flex items-center gap-4 p-4 text-gray-700 font-bold hover:bg-gray-50 rounded-2xl"><i data-lucide="bar-chart"></i> Métricas</button>
+            `;
+        } else {
+            options.innerHTML = `
+                <button class="w-full flex items-center gap-4 p-4 text-gray-700 font-bold hover:bg-gray-50 rounded-2xl"><i data-lucide="history"></i> Mis Viajes</button>
+            `;
+        }
         lucide.createIcons();
     }
 
-    function showPassenger(balance) {
-        document.getElementById('login-screen').classList.add('hidden');
-        document.getElementById('passenger-app').classList.remove('hidden');
-        updatePassengerUI(balance);
-    }
+    // FUNCIÓN PARA CAMBIAR EL CONTENIDO DEL PANEL DE CONTROL
+    function switchAdminView(view) {
+        const container = document.getElementById('admin-content');
+        container.innerHTML = ""; // Limpiar pantalla
+        toggleMenu(); // Cerrar sidebar al seleccionar
 
-    function updatePassengerUI(amount) {
-        const display = document.getElementById('p-balance');
-        const dest = document.getElementById('dest-field');
-        const alertBox = document.getElementById('debt-msg');
-        const pin = document.getElementById('main-pin');
-        const dot = document.getElementById('status-dot');
-
-        display.innerText = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(amount);
-
-        if (amount < 0) {
-            display.classList.add('text-red-500');
-            dest.disabled = true;
-            dest.placeholder = "PAGO REQUERIDO";
-            alertBox.classList.remove('hidden');
-            pin.classList.add('blocked-element');
-            dot.classList.replace('bg-green-500', 'bg-red-600');
-        } else {
-            display.classList.remove('text-red-500');
-            dest.disabled = false;
-            alertBox.classList.add('hidden');
-            pin.classList.remove('blocked-element');
-            dot.classList.replace('bg-red-600', 'bg-green-500');
+        if(view === 'dashboard') {
+            container.innerHTML = `
+                <div class="space-y-6">
+                    <h3 class="text-2xl font-black italic tracking-tighter uppercase">RESUMEN <span class="text-red-600">GENERAL</span></h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="bg-white p-5 rounded-3xl shadow-sm border border-gray-100">
+                            <p class="text-[10px] font-black text-gray-400 uppercase mb-1">Viajes Hoy</p>
+                            <p class="text-2xl font-black">42</p>
+                        </div>
+                        <div class="bg-white p-5 rounded-3xl shadow-sm border border-gray-100">
+                            <p class="text-[10px] font-black text-gray-400 uppercase mb-1">Ganancia</p>
+                            <p class="text-2xl font-black text-green-500">$2,450</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        } else if(view === 'users') {
+            container.innerHTML = `
+                <div class="space-y-6">
+                    <h3 class="text-2xl font-black italic tracking-tighter uppercase">GESTIÓN DE <span class="text-red-600">PASAJEROS</span></h3>
+                    <div class="bg-white p-4 rounded-[2rem] shadow-sm border border-gray-100 flex items-center justify-between">
+                        <p class="font-black text-sm">Juan Pasajero</p>
+                        <div class="flex gap-2">
+                            <input type="number" placeholder="$" class="w-12 bg-gray-50 border rounded-lg text-xs p-1 text-center">
+                            <button class="bg-red-600 text-white p-2 rounded-xl"><i data-lucide="check" class="w-3 h-3"></i></button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        } else if(view === 'stats') {
+            container.innerHTML = `
+                <div class="space-y-6">
+                    <h3 class="text-2xl font-black italic tracking-tighter uppercase text-center mt-20">MÉTRICAS <span class="text-red-600">PRÓXIMAMENTE</span></h3>
+                    <p class="text-center text-gray-400 text-sm">Estamos procesando los datos de la flota.</p>
+                </div>
+            `;
         }
+        lucide.createIcons();
     }
 </script>
 </body>

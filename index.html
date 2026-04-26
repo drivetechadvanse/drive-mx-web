@@ -3,253 +3,161 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Drive MX - Global Mobility</title>
+    <title>Drive MX | Prototipo de Flujo Global</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
-        body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; overflow: hidden; }
+        body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; overflow: hidden; background-color: #000; }
         
-        /* Mapa Estilo Moderno */
-        .map-bg { 
-            background-color: #f3f4f6; 
-            background-image: radial-gradient(#d1d5db 0.8px, transparent 0.8px); 
-            background-size: 20px 20px; 
+        .map-sim { 
+            background-color: #e5e7eb; 
+            background-image: 
+                linear-gradient(#d1d5db 1px, transparent 1px),
+                linear-gradient(90deg, #d1d5db 1px, transparent 1px);
+            background-size: 40px 40px; 
         }
 
-        .wallet-card {
-            background: linear-gradient(135deg, #111827 0%, #000000 100%);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+        /* Animación de la hoja de costos (Bottom Sheet) */
+        #cost-sheet {
+            transition: transform 0.5s cubic-bezier(0.32, 0.72, 0, 1);
+            transform: translateY(100%);
         }
+        #cost-sheet.active { transform: translateY(0); }
 
-        /* Sidebar Animación */
-        #sidebar {
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            transform: translateX(-100%);
-        }
-        #sidebar.open { transform: translateX(0); }
-        
-        #overlay {
-            transition: opacity 0.3s ease;
-            opacity: 0;
-            pointer-events: none;
-        }
-        #overlay.show { opacity: 1; pointer-events: auto; }
+        .vehicle-card { transition: all 0.2s; border: 2px solid transparent; }
+        .vehicle-card.selected { border-color: #ef4444; background-color: #fef2f2; }
 
-        /* Vistas Dinámicas */
-        .view-content { animation: fadeIn 0.4s ease-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-        .blocked { filter: grayscale(1); opacity: 0.5; pointer-events: none; }
+        .btn-press:active { transform: scale(0.96); }
     </style>
 </head>
-<body class="bg-black">
+<body>
 
 <div id="app-container" class="max-w-md mx-auto min-h-screen bg-white shadow-2xl overflow-hidden relative">
     
-    <div id="overlay" onclick="toggleMenu()" class="absolute inset-0 bg-black/40 z-[100]"></div>
+    <div id="main-overlay" onclick="closeCostSheet()" class="absolute inset-0 bg-black/40 z-[40] opacity-0 pointer-events-none transition-opacity"></div>
 
-    <div id="sidebar" class="absolute inset-y-0 left-0 w-72 bg-white z-[110] shadow-2xl flex flex-col">
-        <div class="p-8 bg-gray-900 text-white">
-            <div class="w-12 h-12 bg-red-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-red-600/30">
-                <i data-lucide="shield-check" id="sidebar-icon" class="text-white w-6 h-6"></i>
+    <div id="passenger-screen" class="h-screen flex flex-col relative">
+        <header class="p-4 flex items-center justify-between bg-white border-b z-10">
+            <div class="flex items-center gap-3">
+                <div class="p-2 bg-gray-900 rounded-lg text-white"><i data-lucide="menu" class="w-5 h-5"></i></div>
+                <h2 class="text-xl font-black italic tracking-tighter uppercase">DRIVE <span class="text-red-600">MX</span></h2>
             </div>
-            <p class="font-black text-xl italic uppercase tracking-tighter">Drive <span class="text-red-600">MX</span></p>
-            <p id="sidebar-user-role" class="text-[9px] text-gray-500 font-bold mt-1 uppercase tracking-widest">Identificando...</p>
-        </div>
-        <nav class="flex-1 p-6 space-y-2" id="sidebar-options">
-            </nav>
-        <div class="p-6 border-t border-gray-100">
-            <button onclick="location.reload()" class="w-full flex items-center gap-4 p-4 text-red-600 font-black hover:bg-red-50 rounded-2xl transition-all uppercase text-[10px] italic">
-                <i data-lucide="log-out" class="w-5 h-5"></i> Cerrar Sesión
-            </button>
-        </div>
-    </div>
-
-    <div id="splash" class="absolute inset-0 z-[120] bg-white flex flex-col items-center justify-center transition-opacity duration-700">
-        <div class="w-20 h-20 bg-red-600 rounded-[2rem] flex items-center justify-center animate-bounce shadow-2xl">
-            <i data-lucide="navigation" class="text-white w-10 h-10"></i>
-        </div>
-        <h1 class="text-3xl font-black mt-6 tracking-tighter italic uppercase">DRIVE <span class="text-red-600">MX</span></h1>
-    </div>
-
-    <div id="login-screen" class="hidden absolute inset-0 z-40 bg-white p-10 flex flex-col justify-center">
-        <h2 class="text-4xl font-black text-gray-900 leading-none mb-10 italic uppercase tracking-tighter">PLATAFORMA<br><span class="text-red-600">GLOBAL</span></h2>
-        <div class="space-y-4">
-            <input type="email" id="email-input" placeholder="Usuario" class="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:ring-2 focus:ring-red-600 font-bold">
-            <input type="password" id="pass-input" placeholder="Contraseña" class="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:ring-2 focus:ring-red-600 font-bold">
-            <button onclick="attemptLogin()" class="w-full bg-red-600 text-white py-4 rounded-2xl font-black shadow-xl uppercase tracking-[0.2em] hover:bg-red-700 transition-all">Ingresar</button>
-        </div>
-    </div>
-
-    <div id="passenger-app" class="hidden h-screen flex flex-col">
-        <header class="p-4 flex items-center justify-between border-b bg-white z-10">
-            <div class="flex items-center gap-4">
-                <button onclick="toggleMenu()" class="p-2 bg-gray-50 rounded-xl"><i data-lucide="menu" class="w-6 h-6"></i></button>
-                <h2 class="text-2xl font-black italic tracking-tighter uppercase">DRIVE <span class="text-red-600">MX</span></h2>
-            </div>
-            <div class="p-2 bg-gray-50 rounded-xl text-gray-400"><i data-lucide="bell" class="w-5 h-5"></i></div>
-        </header>
-
-        <main class="flex-1 flex flex-col relative overflow-hidden">
-            <div class="flex-1 map-bg relative">
-                <div class="absolute top-6 left-6 right-6 z-20 space-y-2">
-                    <div class="bg-white/95 backdrop-blur-md p-3 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-3">
-                        <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.8)]"></div>
-                        <p class="text-[10px] font-black text-gray-800 uppercase tracking-tight truncate">Mi ubicación: <span class="text-gray-400 font-bold">Av. Insurgentes Sur 1450</span></p>
-                    </div>
-                    <div id="search-box" class="bg-white p-1 rounded-2xl shadow-xl flex items-center gap-3">
-                        <div class="w-10 h-10 bg-red-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-red-600/30">
-                            <i data-lucide="map-pin" class="w-5 h-5"></i>
-                        </div>
-                        <input type="text" id="dest-input" placeholder="¿A dónde vamos hoy?" class="bg-transparent flex-1 outline-none font-black text-gray-900 text-sm placeholder:text-gray-400">
-                    </div>
-                </div>
-
-                <div id="debt-alert" class="hidden absolute top-36 left-6 right-6 z-30 bg-red-600 text-white p-3 rounded-xl flex items-center gap-3 animate-bounce shadow-2xl">
-                    <i data-lucide="alert-triangle" class="w-5 h-5"></i>
-                    <p class="text-[10px] font-black uppercase">Cuenta suspendida: Liquidar adeudo</p>
-                </div>
-
-                <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <div id="main-marker" class="bg-red-600 p-3 rounded-2xl shadow-2xl border-2 border-white"><i data-lucide="navigation" class="text-white w-5 h-5"></i></div>
-                </div>
-            </div>
-
-            <div class="px-6 py-4 bg-white border-t">
-                <div class="wallet-card rounded-[2.5rem] p-5 flex items-center justify-between shadow-2xl">
-                    <div class="flex items-center gap-4">
-                        <div class="bg-red-600/20 p-2.5 rounded-xl"><i data-lucide="wallet" class="text-red-600 w-5 h-5"></i></div>
-                        <div>
-                            <p class="text-[8px] text-gray-400 font-black uppercase tracking-widest">Saldo Drive MX</p>
-                            <h3 class="text-xl font-black text-white italic tracking-tighter" id="p-balance">$0.00</h3>
-                        </div>
-                    </div>
-                    <div id="status-light" class="w-2.5 h-2.5 bg-green-500 rounded-full shadow-[0_0_8px_#22c55e]"></div>
-                </div>
-            </div>
-        </main>
-    </div>
-
-    <div id="admin-app" class="hidden h-screen flex flex-col bg-gray-50">
-        <header class="p-4 flex items-center justify-between border-b bg-gray-900 text-white z-10">
-            <div class="flex items-center gap-4">
-                <button onclick="toggleMenu()" class="p-2 bg-white/10 rounded-xl"><i data-lucide="menu" class="w-6 h-6"></i></button>
-                <h2 class="text-xl font-black italic uppercase text-red-600 tracking-tighter">CENTRAL <span class="text-white">MAESTRO</span></h2>
-            </div>
-            <div class="flex items-center gap-2 bg-red-600/20 px-3 py-1 rounded-full border border-red-600/30">
-                <span class="text-[8px] font-black uppercase tracking-tighter">Live Ops</span>
+            <div class="w-10 h-10 bg-gray-100 rounded-full border-2 border-white shadow-sm overflow-hidden">
+                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Fernando" alt="avatar">
             </div>
         </header>
 
-        <main id="admin-main-container" class="flex-1 p-6 overflow-y-auto">
-            <div class="view-content flex flex-col items-center justify-center h-full text-center">
-                <i data-lucide="layers" class="w-12 h-12 text-gray-200 mb-4"></i>
-                <h3 class="text-lg font-black text-gray-300 uppercase italic">Selecciona una función<br>en el menú</h3>
+        <main class="flex-1 relative map-sim">
+            <div class="absolute top-6 left-6 right-6 z-20 space-y-3">
+                <div class="bg-white/90 backdrop-blur p-3 rounded-2xl shadow-lg border border-gray-100 flex items-center gap-3">
+                    <div class="w-2.5 h-2.5 bg-green-500 rounded-full shadow-[0_0_8px_#22c55e]"></div>
+                    <p class="text-[10px] font-black text-gray-800 uppercase">Origen: <span class="text-gray-400">Tu ubicación actual</span></p>
+                </div>
+                
+                <div onclick="openCostSheet()" class="bg-white p-1 rounded-2xl shadow-2xl flex items-center gap-3 cursor-pointer ring-2 ring-black/5 hover:ring-red-600/20 transition-all">
+                    <div class="w-12 h-12 bg-red-600 rounded-xl flex items-center justify-center text-white shadow-lg">
+                        <i data-lucide="search" class="w-6 h-6"></i>
+                    </div>
+                    <span class="text-sm font-black text-gray-400 italic">¿A dónde vamos hoy?</span>
+                </div>
+            </div>
+
+            <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div class="relative">
+                    <div class="absolute -bottom-1 left-1/2 -translate-x-1/2 w-8 h-2 bg-black/20 rounded-full blur-sm"></div>
+                    <div class="bg-red-600 p-4 rounded-3xl shadow-2xl border-4 border-white animate-bounce">
+                        <i data-lucide="navigation" class="text-white w-6 h-6"></i>
+                    </div>
+                </div>
             </div>
         </main>
-    </div>
 
+        <div id="cost-sheet" class="absolute bottom-0 left-0 right-0 bg-white z-[50] rounded-t-[3rem] shadow-[0_-20px_50px_rgba(0,0,0,0.15)] flex flex-col">
+            <div class="w-12 h-1.5 bg-gray-200 rounded-full mx-auto my-4"></div>
+            
+            <div class="px-8 pb-8 space-y-6">
+                <div class="flex justify-between items-end">
+                    <div>
+                        <h3 class="text-2xl font-black italic uppercase tracking-tighter text-gray-900">COSTOS <span class="text-red-600">ESTIMADOS</span></h3>
+                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Selecciona tu categoría</p>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-[10px] font-black text-green-500 bg-green-50 px-2 py-1 rounded-md uppercase">Mejor Precio</span>
+                    </div>
+                </div>
+
+                <div class="space-y-3">
+                    <div onclick="selectVehicle(this)" class="vehicle-card selected p-4 rounded-[2rem] flex items-center justify-between cursor-pointer">
+                        <div class="flex items-center gap-4">
+                            <div class="w-14 h-14 bg-gray-100 rounded-2xl flex items-center justify-center">
+                                <i data-lucide="car" class="text-gray-900 w-8 h-8"></i>
+                            </div>
+                            <div>
+                                <p class="font-black text-gray-900 uppercase italic">Drive <span class="text-red-600">Basic</span></p>
+                                <p class="text-[10px] text-gray-400 font-bold uppercase">4 Asientos • 5 min</p>
+                            </div>
+                        </div>
+                        <p class="text-xl font-black text-gray-900 italic">$45.50</p>
+                    </div>
+
+                    <div onclick="selectVehicle(this)" class="vehicle-card p-4 rounded-[2rem] flex items-center justify-between cursor-pointer">
+                        <div class="flex items-center gap-4">
+                            <div class="w-14 h-14 bg-gray-900 rounded-2xl flex items-center justify-center">
+                                <i data-lucide="zap" class="text-red-600 w-8 h-8"></i>
+                            </div>
+                            <div>
+                                <p class="font-black text-gray-900 uppercase italic">Drive <span class="text-red-600">Flash</span></p>
+                                <p class="text-[10px] text-gray-400 font-bold uppercase">Moto • 2 min</p>
+                            </div>
+                        </div>
+                        <p class="text-xl font-black text-gray-900 italic">$28.00</p>
+                    </div>
+                </div>
+
+                <button onclick="requestTrip()" class="w-full bg-red-600 text-white py-5 rounded-[2.5rem] font-black shadow-2xl shadow-red-600/40 uppercase tracking-[0.2em] italic btn-press transition-all flex items-center justify-center gap-3">
+                    Solicitar Viaje
+                    <i data-lucide="chevron-right" class="w-5 h-5"></i>
+                </button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
+    // Inicializar Iconos
     lucide.createIcons();
 
-    setTimeout(() => {
-        document.getElementById('splash').style.display = 'none';
-        document.getElementById('login-screen').classList.remove('hidden');
-    }, 2000);
-
-    function toggleMenu() {
-        document.getElementById('sidebar').classList.toggle('open');
-        document.getElementById('overlay').classList.toggle('show');
+    function openCostSheet() {
+        document.getElementById('cost-sheet').classList.add('active');
+        document.getElementById('main-overlay').classList.add('opacity-100', 'pointer-events-auto');
     }
 
-    function attemptLogin() {
-        const email = document.getElementById('email-input').value;
-        const pass = document.getElementById('pass-input').value;
+    function closeCostSheet() {
+        document.getElementById('cost-sheet').classList.remove('active');
+        document.getElementById('main-overlay').classList.remove('opacity-100', 'pointer-events-auto');
+    }
 
-        if (email === 'admin@app.com' && pass === '123') {
-            setupSidebar("ADMINISTRADOR", "shield-check");
-            document.getElementById('login-screen').classList.add('hidden');
-            document.getElementById('admin-app').classList.remove('hidden');
-        } else if (email === 'juan@app.com' && pass === '123') {
-            setupSidebar("JUAN PASAJERO", "user");
-            loadPassengerUI(50, "Juan Pasajero");
-        } else if (email === 'maria@app.com' && pass === '123') {
-            setupSidebar("MARIA MOROSA", "user-x");
-            loadPassengerUI(-150, "Maria Morosa");
-        } else {
-            alert("Acceso inválido");
-        }
+    function selectVehicle(element) {
+        // Quitar selección previa
+        document.querySelectorAll('.vehicle-card').forEach(card => {
+            card.classList.remove('selected');
+        });
+        // Seleccionar actual
+        element.classList.add('selected');
+    }
+
+    function requestTrip() {
+        const btn = event.currentTarget;
+        btn.innerHTML = `<i data-lucide="loader-2" class="w-6 h-6 animate-spin"></i> BUSCANDO SOCIO...`;
         lucide.createIcons();
-    }
-
-    function setupSidebar(role, icon) {
-        document.getElementById('sidebar-user-role').innerText = role;
-        document.getElementById('sidebar-icon').setAttribute('data-lucide', icon);
         
-        const options = document.getElementById('sidebar-options');
-        if(role === "ADMINISTRADOR") {
-            options.innerHTML = `
-                <button onclick="switchView('users')" class="w-full flex items-center gap-4 p-4 text-gray-700 font-bold hover:bg-gray-50 rounded-2xl"><i data-lucide="users"></i> Pasajeros</button>
-                <button onclick="switchView('stats')" class="w-full flex items-center gap-4 p-4 text-gray-700 font-bold hover:bg-gray-50 rounded-2xl"><i data-lucide="bar-chart-3"></i> Estadísticas</button>
-                <button onclick="switchView('config')" class="w-full flex items-center gap-4 p-4 text-gray-700 font-bold hover:bg-gray-50 rounded-2xl"><i data-lucide="settings"></i> Sistema</button>
-            `;
-        } else {
-            options.innerHTML = `<button class="w-full flex items-center gap-4 p-4 text-gray-700 font-bold hover:bg-gray-50 rounded-2xl"><i data-lucide="history"></i> Mis Viajes</button>`;
-        }
-        lucide.createIcons();
-    }
-
-    function switchView(view) {
-        const main = document.getElementById('admin-main-container');
-        toggleMenu();
-        
-        let content = "";
-        if(view === 'users') {
-            content = `
-                <div class="view-content space-y-6">
-                    <h3 class="text-2xl font-black italic tracking-tighter uppercase">GESTIÓN DE <span class="text-red-600">CUENTAS</span></h3>
-                    <div class="bg-white p-4 rounded-[2rem] shadow-sm border border-gray-100 flex items-center justify-between">
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 bg-gray-900 rounded-xl flex items-center justify-center text-white font-black text-xs">JP</div>
-                            <p class="font-black text-sm">Juan Pasajero</p>
-                        </div>
-                        <button class="bg-red-600 text-white p-2 rounded-xl"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
-                    </div>
-                </div>
-            `;
-        } else if(view === 'stats') {
-            content = `<div class="view-content text-center mt-20"><h3 class="text-xl font-black uppercase text-gray-300 italic">Métricas de Flota<br><span class="text-red-600">En Tiempo Real</span></h3></div>`;
-        }
-        
-        main.innerHTML = content;
-        lucide.createIcons();
-    }
-
-    function loadPassengerUI(balance, name) {
-        document.getElementById('login-screen').classList.add('hidden');
-        document.getElementById('passenger-app').classList.remove('hidden');
-        
-        const balDisp = document.getElementById('p-balance');
-        const dest = document.getElementById('dest-input');
-        const alert = document.getElementById('debt-alert');
-        const light = document.getElementById('status-light');
-        const marker = document.getElementById('main-marker');
-
-        balDisp.innerText = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(balance);
-
-        if(balance < 0) {
-            balDisp.classList.add('text-red-500');
-            dest.disabled = true;
-            dest.placeholder = "BLOQUEO POR FALTA DE PAGO";
-            alert.classList.remove('hidden');
-            light.classList.replace('bg-green-500', 'bg-red-600');
-            marker.classList.add('blocked');
-        } else {
-            balDisp.classList.add('text-white');
-        }
+        setTimeout(() => {
+            alert("¡Viaje solicitado con éxito en Drive MX!");
+            closeCostSheet();
+            btn.innerHTML = `Solicitar Viaje <i data-lucide="chevron-right" class="w-5 h-5"></i>`;
+            lucide.createIcons();
+        }, 3000);
     }
 </script>
 </body>

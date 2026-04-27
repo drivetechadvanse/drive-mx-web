@@ -154,8 +154,8 @@
                 <h2 class="text-base font-black italic uppercase tracking-widest">CONTROL <span class="text-red-600">PANEL</span></h2>
             </div>
         </header>
-        <main id="admin-host" class="p-6 overflow-y-auto flex-1 flex flex-col items-center justify-center">
-            <div id="admin-empty-state" class="opacity-10 text-center">
+        <main id="admin-host" class="p-6 overflow-y-auto flex-1 bg-gray-50">
+            <div id="admin-empty-state" class="h-full flex flex-col items-center justify-center opacity-10 text-center">
                 <i data-lucide="layout-dashboard" class="w-20 h-20 mx-auto mb-4"></i>
                 <p class="font-black uppercase italic">Sistema en Espera</p>
             </div>
@@ -169,17 +169,14 @@
     let selectedMethod = null;
     const tripCost = 45.00;
 
-    // Lógica de Registro de Conductor (ACTUALIZADA CON VEHÍCULO)
     let currentRegStep = 1;
     const regSteps = [
-        // FASE 1: PERSONAL
         { title: "CURP", type: "text", placeholder: "Ingresa tu CURP", icon: "search" },
         { title: "WhatsApp", type: "tel", placeholder: "Número de 10 dígitos", icon: "message-circle" },
         { title: "INE Frontal", type: "file", placeholder: "", icon: "image" },
         { title: "INE Reversa", type: "file", placeholder: "", icon: "image" },
         { title: "Seguridad Social (NSS)", type: "text", placeholder: "Ingresa tu NSS", icon: "shield-check" },
         { title: "Licencia de Manejo", type: "file", placeholder: "", icon: "file-text" },
-        // FASE 2: VEHÍCULO
         { title: "Marca del Vehículo", type: "text", placeholder: "Ej. Volkswagen, Nissan...", icon: "car" },
         { title: "Año y Modelo", type: "text", placeholder: "Ej. 2022 Jetta", icon: "calendar" },
         { title: "Color del Vehículo", type: "text", placeholder: "Ej. Rojo, Blanco...", icon: "palette" },
@@ -231,7 +228,65 @@
         lucide.createIcons();
     }
 
-    // REGISTRO CONDUCTOR
+    // MODIFICACIÓN DEL PANEL DE CONTROL (NUEVAS OPCIONES)
+    function loadTool(tool) {
+        const host = document.getElementById('admin-host');
+        closeAllModals();
+        
+        if(tool === 'users') {
+            host.innerHTML = `
+                <div class="view-content w-full space-y-6">
+                    <header class="mb-2">
+                        <h3 class="text-2xl font-black italic uppercase tracking-tighter">Gestión de <span class="text-red-600">Usuarios</span></h3>
+                        <p class="text-[10px] font-bold text-gray-400 uppercase italic">Selecciona una categoría para administrar</p>
+                    </header>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <button onclick="viewCategory('Conductores')" class="bg-white p-6 rounded-[2rem] border shadow-sm flex flex-col items-center gap-3 active:scale-95 transition-all">
+                            <div class="w-12 h-12 bg-red-50 rounded-2xl flex items-center justify-center text-red-600"><i data-lucide="steering-wheel"></i></div>
+                            <span class="text-[10px] font-black uppercase italic">Conductores</span>
+                        </button>
+                        
+                        <button onclick="viewCategory('Pasajeros')" class="bg-white p-6 rounded-[2rem] border shadow-sm flex flex-col items-center gap-3 active:scale-95 transition-all">
+                            <div class="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600"><i data-lucide="users"></i></div>
+                            <span class="text-[10px] font-black uppercase italic">Pasajeros</span>
+                        </button>
+                        
+                        <button onclick="viewCategory('Administradores')" class="bg-white p-6 rounded-[2rem] border shadow-sm flex flex-col items-center gap-3 active:scale-95 transition-all">
+                            <div class="w-12 h-12 bg-gray-100 rounded-2xl flex items-center justify-center text-gray-800"><i data-lucide="shield-check"></i></div>
+                            <span class="text-[10px] font-black uppercase italic">Admins</span>
+                        </button>
+                        
+                        <button onclick="viewCategory('Comercios')" class="bg-white p-6 rounded-[2rem] border shadow-sm flex flex-col items-center gap-3 active:scale-95 transition-all">
+                            <div class="w-12 h-12 bg-orange-50 rounded-2xl flex items-center justify-center text-orange-600"><i data-lucide="store"></i></div>
+                            <span class="text-[10px] font-black uppercase italic">Comercios</span>
+                        </button>
+                    </div>
+                </div>`;
+        }
+        lucide.createIcons();
+    }
+
+    function viewCategory(cat) {
+        const host = document.getElementById('admin-host');
+        host.innerHTML = `
+            <div class="view-content w-full space-y-4">
+                <div class="flex items-center gap-2 mb-6">
+                    <button onclick="loadTool('users')" class="p-2 bg-gray-100 rounded-xl"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
+                    <h3 class="text-xl font-black italic uppercase tracking-tighter">${cat}</h3>
+                </div>
+                <div class="bg-white p-5 rounded-3xl border flex items-center justify-between shadow-sm">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-gray-100 rounded-full"></div>
+                        <span class="font-black text-xs uppercase italic tracking-tighter">Lista de ${cat} vacía</span>
+                    </div>
+                    <i data-lucide="info" class="text-gray-300 w-4 h-4"></i>
+                </div>
+            </div>`;
+        lucide.createIcons();
+    }
+
+    // REGISTRO CONDUCTOR Y OTROS (Sin cambios necesarios, ya funcionan)
     function openDriverRegistration() {
         closeAllModals();
         currentRegStep = 1;
@@ -241,38 +296,7 @@
     function renderRegStep() {
         const step = regSteps[currentRegStep - 1];
         const isLast = currentRegStep === regSteps.length;
-        
-        const regHTML = `
-            <div id="driver-reg-modal" class="absolute inset-0 z-[130] bg-white p-8 flex flex-col view-content">
-                <div class="flex justify-between items-center mb-8">
-                    <button onclick="this.parentElement.parentElement.remove()" class="p-2 bg-gray-100 rounded-full"><i data-lucide="x" class="w-5 h-5"></i></button>
-                    <div class="flex flex-col items-end">
-                        <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest italic">Paso ${currentRegStep} de ${regSteps.length}</span>
-                        <div class="w-24 h-1 bg-gray-100 mt-1 rounded-full overflow-hidden">
-                            <div class="bg-red-600 h-full transition-all duration-500" style="width: ${(currentRegStep/regSteps.length)*100}%"></div>
-                        </div>
-                    </div>
-                </div>
-                
-                <h2 class="text-3xl font-black italic uppercase leading-none mb-2">Registro<br><span class="text-red-600">Conductor</span></h2>
-                <p class="text-[11px] font-bold text-gray-500 uppercase mb-10 italic">Información del ${currentRegStep > 6 ? 'Vehículo' : 'Perfil'}</p>
-                
-                <div class="flex-1 flex flex-col justify-center">
-                    <div class="bg-gray-50 p-6 rounded-[2rem] border-2 border-dashed border-gray-200 text-center">
-                        <div class="w-16 h-16 bg-red-600 rounded-2xl flex items-center justify-center text-white mx-auto mb-6 shadow-lg shadow-red-200">
-                            <i data-lucide="${step.icon}" class="w-8 h-8"></i>
-                        </div>
-                        <label class="block text-[11px] font-black uppercase mb-4 italic tracking-tighter">${step.title}</label>
-                        <input type="${step.type}" id="reg-input" placeholder="${step.placeholder}" class="w-full p-4 bg-white border rounded-2xl font-bold text-sm outline-none focus:border-red-600 text-center">
-                    </div>
-                </div>
-
-                <button onclick="nextRegStep()" class="w-full bg-red-600 text-white py-5 rounded-[2rem] font-black uppercase text-xs italic shadow-xl active:scale-95 transition-all flex items-center justify-center gap-2 mt-6">
-                    ${isLast ? 'FINALIZAR' : 'AVANZAR'} <i data-lucide="chevron-right" class="w-4 h-4"></i>
-                </button>
-            </div>
-        `;
-        
+        const regHTML = `<div id="driver-reg-modal" class="absolute inset-0 z-[130] bg-white p-8 flex flex-col view-content"><div class="flex justify-between items-center mb-8"><button onclick="this.parentElement.parentElement.remove()" class="p-2 bg-gray-100 rounded-full"><i data-lucide="x" class="w-5 h-5"></i></button><div class="flex flex-col items-end"><span class="text-[10px] font-black text-gray-400 uppercase tracking-widest italic">Paso ${currentRegStep} de ${regSteps.length}</span><div class="w-24 h-1 bg-gray-100 mt-1 rounded-full overflow-hidden"><div class="bg-red-600 h-full transition-all duration-500" style="width: ${(currentRegStep/regSteps.length)*100}%"></div></div></div></div><h2 class="text-3xl font-black italic uppercase leading-none mb-2">Registro<br><span class="text-red-600">Conductor</span></h2><div class="flex-1 flex flex-col justify-center"><div class="bg-gray-50 p-6 rounded-[2rem] border-2 border-dashed border-gray-200 text-center"><div class="w-16 h-16 bg-red-600 rounded-2xl flex items-center justify-center text-white mx-auto mb-6 shadow-lg shadow-red-200"><i data-lucide="${step.icon}" class="w-8 h-8"></i></div><label class="block text-[11px] font-black uppercase mb-4 italic tracking-tighter">${step.title}</label><input type="${step.type}" id="reg-input" placeholder="${step.placeholder}" class="w-full p-4 bg-white border rounded-2xl font-bold text-sm outline-none focus:border-red-600 text-center"></div></div><button onclick="nextRegStep()" class="w-full bg-red-600 text-white py-5 rounded-[2rem] font-black uppercase text-xs italic shadow-xl active:scale-95 transition-all flex items-center justify-center gap-2 mt-6">${isLast ? 'FINALIZAR' : 'AVANZAR'} <i data-lucide="chevron-right" class="w-4 h-4"></i></button></div>`;
         const existing = document.getElementById('driver-reg-modal');
         if(existing) existing.remove();
         document.getElementById('app-container').insertAdjacentHTML('beforeend', regHTML);
@@ -282,32 +306,11 @@
     function nextRegStep() {
         const val = document.getElementById('reg-input').value;
         if(!val && regSteps[currentRegStep-1].type !== 'file') return alert("Por favor completa el campo.");
-        
-        if(currentRegStep < regSteps.length) {
-            currentRegStep++;
-            renderRegStep();
-        } else {
-            showSuccessScreen();
-        }
+        if(currentRegStep < regSteps.length) { currentRegStep++; renderRegStep(); } else { showSuccessScreen(); }
     }
 
     function showSuccessScreen() {
-        const successHTML = `
-            <div id="driver-reg-modal" class="absolute inset-0 z-[140] bg-white p-10 flex flex-col items-center justify-center text-center view-content">
-                <div class="w-24 h-24 bg-red-50 rounded-full flex items-center justify-center mb-8">
-                    <i data-lucide="hourglass" class="w-12 h-12 text-red-600 animate-bounce"></i>
-                </div>
-                <h2 class="text-3xl font-black italic uppercase leading-tight mb-4">Validando<br><span class="text-red-600">Documentos</span></h2>
-                <div class="p-6 bg-gray-50 rounded-[2.5rem] border mb-10">
-                    <p class="text-xs font-bold text-gray-600 uppercase italic tracking-tighter leading-relaxed">
-                        Tus documentos se están validando. Si todo sale bien, te activaremos en menos de <span class="text-red-600">24 hrs</span>.
-                    </p>
-                </div>
-                <button onclick="location.reload()" class="w-full bg-black text-white py-5 rounded-[2rem] font-black uppercase text-xs italic shadow-xl active:scale-95">
-                    ACEPTAR
-                </button>
-            </div>
-        `;
+        const successHTML = `<div id="driver-reg-modal" class="absolute inset-0 z-[140] bg-white p-10 flex flex-col items-center justify-center text-center view-content"><div class="w-24 h-24 bg-red-50 rounded-full flex items-center justify-center mb-8"><i data-lucide="hourglass" class="w-12 h-12 text-red-600 animate-bounce"></i></div><h2 class="text-3xl font-black italic uppercase leading-tight mb-4">Validando<br><span class="text-red-600">Documentos</span></h2><div class="p-6 bg-gray-50 rounded-[2.5rem] border mb-10"><p class="text-xs font-bold text-gray-600 uppercase italic tracking-tighter leading-relaxed">Tus documentos se están validando. Si todo sale bien, te activaremos en menos de <span class="text-red-600">24 hrs</span>.</p></div><button onclick="location.reload()" class="w-full bg-black text-white py-5 rounded-[2rem] font-black uppercase text-xs italic shadow-xl active:scale-95">ACEPTAR</button></div>`;
         const existing = document.getElementById('driver-reg-modal');
         if(existing) existing.remove();
         document.getElementById('app-container').insertAdjacentHTML('beforeend', successHTML);
@@ -326,27 +329,15 @@
         document.getElementById('passenger-ui-top').classList.add('hidden');
         document.getElementById('passenger-ui-bottom').classList.add('hidden');
         document.getElementById('searching-pin').classList.remove('hidden');
-        setTimeout(() => {
-            alert("¡Conductor asignado! Drive MX en camino.");
-            location.reload();
-        }, 6000);
+        setTimeout(() => { alert("¡Conductor asignado!"); location.reload(); }, 6000);
     }
 
     function goHome(role) {
         closeAllModals();
         if(role === "ADMINISTRADOR") {
-            document.getElementById('admin-host').innerHTML = `<div id="admin-empty-state" class="opacity-10 text-center"><i data-lucide="layout-dashboard" class="w-20 h-20 mx-auto mb-4"></i><p class="font-black uppercase italic">Sistema en Espera</p></div>`;
+            document.getElementById('admin-host').innerHTML = `<div id="admin-empty-state" class="h-full flex flex-col items-center justify-center opacity-10 text-center"><i data-lucide="layout-dashboard" class="w-20 h-20 mx-auto mb-4"></i><p class="font-black uppercase italic">Sistema en Espera</p></div>`;
             lucide.createIcons();
         }
-    }
-
-    function loadTool(tool) {
-        const host = document.getElementById('admin-host');
-        closeAllModals();
-        if(tool === 'users') {
-            host.innerHTML = `<div class="view-content w-full space-y-4"><h3 class="text-xl font-black italic uppercase tracking-tighter">Usuarios <span class="text-red-600">Activos</span></h3><div class="bg-white p-5 rounded-3xl border flex items-center justify-between shadow-sm"><span class="font-black text-xs uppercase italic">Juan Pasajero</span><button class="bg-red-600 text-white p-3 rounded-xl"><i data-lucide="edit" class="w-4 h-4"></i></button></div></div>`;
-        }
-        lucide.createIcons();
     }
 
     function selectPayment(method) {

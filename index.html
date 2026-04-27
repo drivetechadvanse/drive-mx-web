@@ -33,11 +33,11 @@
     <div id="sidebar" class="absolute inset-y-0 left-0 w-72 bg-white z-[110] shadow-2xl flex flex-col text-gray-800">
         <div class="p-6 bg-gray-900 text-white">
             <h2 class="text-lg font-black italic uppercase">DRIVE <span class="text-red-600">MX</span></h2>
-            <p id="sidebar-user-role" class="text-[8px] text-gray-500 font-bold mt-1 uppercase tracking-widest italic">Sistema Activo</p>
+            <p id="sidebar-user-role" class="text-[8px] text-gray-500 font-bold mt-1 uppercase tracking-widest italic">Sistema de Gestión</p>
         </div>
         <nav class="flex-1 p-4 space-y-1 overflow-y-auto" id="sidebar-nav"></nav>
         <div class="p-6 border-t pb-12"> 
-            <button onclick="location.reload()" class="w-full flex items-center justify-center gap-3 py-4 bg-red-50 text-red-600 rounded-2xl font-black text-[11px] uppercase italic">CERRAR SESIÓN</button>
+            <button onclick="location.reload()" class="w-full py-4 bg-red-50 text-red-600 rounded-2xl font-black text-[11px] uppercase italic">CERRAR SESIÓN</button>
         </div>
     </div>
 
@@ -45,8 +45,8 @@
         <div class="w-20 h-20 bg-red-600 rounded-[2rem] flex items-center justify-center animate-pulse"><i data-lucide="navigation" class="text-white w-10 h-10"></i></div>
     </div>
 
-    <div id="login-screen" class="hidden absolute inset-0 z-40 bg-white p-10 flex flex-col justify-center">
-        <h2 class="text-4xl font-black italic uppercase mb-10 leading-none text-center">DRIVE <span class="text-red-600">MX</span></h2>
+    <div id="login-screen" class="hidden absolute inset-0 z-40 bg-white p-10 flex flex-col justify-center text-center">
+        <h2 class="text-4xl font-black italic uppercase mb-10">DRIVE <span class="text-red-600">MX</span></h2>
         <div class="space-y-4">
             <input type="email" id="email-input" placeholder="admin@app.com o pasajero@app.com" class="w-full p-4 bg-gray-50 border rounded-2xl font-bold">
             <input type="password" id="pass-input" placeholder="123" class="w-full p-4 bg-gray-50 border rounded-2xl font-bold">
@@ -57,7 +57,7 @@
     <div id="passenger-app" class="hidden h-full flex flex-col">
         <header id="passenger-header" class="p-4 flex items-center justify-between border-b bg-white z-10">
             <button onclick="toggleMenu()" class="p-2 bg-gray-50 rounded-xl"><i data-lucide="menu"></i></button>
-            <h2 class="text-xl font-black italic uppercase flex-1 text-center italic text-red-600 tracking-tighter">DRIVE MX</h2>
+            <h2 class="text-xl font-black italic uppercase text-red-600 tracking-tighter">DRIVE MX</h2>
             <div class="w-9 h-9 rounded-full border bg-gray-100 flex items-center justify-center"><i data-lucide="user" class="w-4 h-4"></i></div>
         </header>
 
@@ -81,10 +81,10 @@
             </div>
 
             <div id="passenger-ui-bottom" class="absolute bottom-10 left-4 right-4 z-30">
-                <div class="bg-black rounded-[2.5rem] p-5 flex items-center justify-between text-white shadow-2xl border border-white/10">
+                <div class="bg-black rounded-[2.5rem] p-5 flex items-center justify-between text-white shadow-2xl">
                     <div class="flex items-center gap-4">
-                        <div class="w-10 h-10 bg-red-600/20 rounded-xl flex items-center justify-center text-red-500 border border-red-500/30"><i data-lucide="wallet" class="w-5 h-5"></i></div>
-                        <div><p class="text-[9px] text-gray-500 font-bold uppercase tracking-widest leading-none mb-1">Cartera</p><h3 class="text-lg font-black italic">$50.00</h3></div>
+                        <div class="w-10 h-10 bg-red-600/20 rounded-xl flex items-center justify-center text-red-500"><i data-lucide="wallet" class="w-5 h-5"></i></div>
+                        <div><p class="text-[9px] text-gray-500 font-bold uppercase tracking-widest mb-1 leading-none">Cartera</p><h3 class="text-lg font-black italic">$50.00</h3></div>
                     </div>
                 </div>
             </div>
@@ -92,7 +92,7 @@
 
         <div id="cost-sheet" class="absolute bottom-0 left-0 right-0 bg-white z-[120] rounded-t-[3rem] shadow-[0_-20px_60px_rgba(0,0,0,0.25)] p-8">
             <div class="w-16 h-1.5 bg-gray-200 rounded-full mx-auto mb-6"></div>
-            <h3 class="text-xl font-black italic uppercase mb-4">Drive <span class="text-red-600">Basic</span></h3>
+            <h3 class="text-xl font-black italic uppercase mb-4 text-center">Drive <span class="text-red-600">Basic</span></h3>
             <div class="p-4 rounded-3xl border-2 border-red-600 bg-red-50 flex justify-between items-center mb-6">
                 <span class="font-bold text-xs uppercase italic">Precio Fijo</span>
                 <span class="font-black text-xl italic">$45.00</span>
@@ -116,7 +116,7 @@
         <main id="admin-host" class="p-4 overflow-y-auto flex-1">
             <div class="h-full flex flex-col items-center justify-center opacity-30 text-gray-400">
                 <i data-lucide="layout-dashboard" class="w-16 h-16 mb-4"></i>
-                <p class="font-black uppercase italic text-[10px]">Selecciona una categoría en el menú</p>
+                <p class="font-black uppercase italic text-[10px]">Selecciona una categoría</p>
             </div>
         </main>
     </div>
@@ -126,25 +126,39 @@
     lucide.createIcons();
     let selectedMethod = null;
     let currentRegStep = 1;
-    let conductoresBD = [
-        { id: 1, nombre: "Fernando Garduño", tel: "5512345678", estado: "Aprobado", calif: 4.9, foto: "https://i.pravatar.cc/150?u=fer", curp: "GARC900101HDF", auto: "Jetta Rojo 2022" }
+
+    // BASE DE DATOS Y PERSISTENCIA
+    let conductoresBD = JSON.parse(localStorage.getItem('driveMX_conductores')) || [
+        { 
+            id: 1, nombre: "Fernando Garduño", tel: "5512345678", estado: "Aprobado", 
+            foto: "https://i.pravatar.cc/150?u=fer", 
+            datos: {
+                "1. Foto Perfil": "Adjunta", "2. CURP": "GARC900101HDF", "3. WhatsApp": "5512345678",
+                "4. INE Frontal": "Cargado", "5. INE Reversa": "Cargado", "6. NSS": "1234567890",
+                "7. Licencia": "Cargado", "8. Marca Auto": "Volkswagen", "9. Modelo": "Jetta 2022",
+                "10. Color": "Rojo", "11. Tarjeta Circulación": "Cargado", "12. Póliza": "Cargado",
+                "13. Placa": "MX-777", "14. Foto Matrícula": "Cargado"
+            }
+        }
     ];
 
+    function updateStorage() { localStorage.setItem('driveMX_conductores', JSON.stringify(conductoresBD)); }
+
     const regSteps = [
-        { title: "Foto de Perfil", type: "special-photo", icon: "user-circle" },
-        { title: "CURP", type: "text", placeholder: "Ingresa tu CURP", icon: "search" },
-        { title: "WhatsApp", type: "tel", placeholder: "10 dígitos", icon: "message-circle" },
-        { title: "INE Frontal", type: "file", icon: "image" },
-        { title: "INE Reversa", type: "file", icon: "image" },
-        { title: "Seguridad Social (NSS)", type: "text", icon: "shield-check" },
-        { title: "Licencia de Manejo", type: "file", icon: "file-text" },
-        { title: "Marca del Vehículo", type: "text", icon: "car" },
-        { title: "Año y Modelo", type: "text", icon: "calendar" },
-        { title: "Color del Vehículo", type: "text", icon: "palette" },
-        { title: "Tarjeta de Circulación", type: "file", icon: "file-check" },
-        { title: "Póliza de Seguro", type: "file", icon: "heart-handshake" },
-        { title: "Placa del Vehículo", type: "text", icon: "hash" },
-        { title: "Foto Frontal (Matrícula)", type: "file", icon: "camera" }
+        { title: "Foto de Perfil", type: "special-photo", icon: "user-circle", key: "1. Foto Perfil" },
+        { title: "CURP", type: "text", placeholder: "Ingresa CURP", icon: "search", key: "2. CURP" },
+        { title: "WhatsApp", type: "tel", placeholder: "10 dígitos", icon: "message-circle", key: "3. WhatsApp" },
+        { title: "INE Frontal", type: "file", icon: "image", key: "4. INE Frontal" },
+        { title: "INE Reversa", type: "file", icon: "image", key: "5. INE Reversa" },
+        { title: "Seguridad Social (NSS)", type: "text", icon: "shield-check", key: "6. NSS" },
+        { title: "Licencia de Manejo", type: "file", icon: "file-text", key: "7. Licencia" },
+        { title: "Marca del Vehículo", type: "text", icon: "car", key: "8. Marca Auto" },
+        { title: "Año y Modelo", type: "text", icon: "calendar", key: "9. Modelo" },
+        { title: "Color del Vehículo", type: "text", icon: "palette", key: "10. Color" },
+        { title: "Tarjeta de Circulación", type: "file", icon: "file-check", key: "11. Tarjeta Circulación" },
+        { title: "Póliza de Seguro", type: "file", icon: "heart-handshake", key: "12. Póliza" },
+        { title: "Placa del Vehículo", type: "text", icon: "hash", key: "13. Placa" },
+        { title: "Foto Frontal (Matrícula)", type: "file", icon: "camera", key: "14. Foto Matrícula" }
     ];
 
     function handleLogin() {
@@ -160,12 +174,11 @@
     }
 
     function setupAdminSidebar() {
-        document.getElementById('sidebar-user-role').innerText = "ADMINISTRADOR";
         const nav = document.getElementById('sidebar-nav');
         nav.innerHTML = `
             <button onclick="location.reload()" class="w-full flex items-center gap-4 p-4 text-gray-900 font-black bg-gray-50 rounded-2xl uppercase text-[10px] italic mb-4 border"><i data-lucide="home" class="text-red-600 w-4 h-4"></i> INICIO</button>
             <button onclick="toggleSubmenu()" class="w-full flex items-center justify-between p-4 text-gray-800 font-black hover:bg-gray-50 rounded-2xl uppercase text-[10px] italic">
-                <div class="flex items-center gap-4"><i data-lucide="users" class="text-red-600 w-4 h-4"></i> Usuarios</div>
+                <div class="flex items-center gap-4"><i data-lucide="users" class="text-red-600 w-4 h-4"></i> Gestión de Usuarios</div>
                 <i data-lucide="chevron-down" id="arrow-users"></i>
             </button>
             <div id="submenu-usuarios" class="pl-10 space-y-1 mt-1">
@@ -178,7 +191,6 @@
     }
 
     function setupPassengerSidebar() {
-        document.getElementById('sidebar-user-role').innerText = "PASAJERO";
         const nav = document.getElementById('sidebar-nav');
         nav.innerHTML = `
             <button onclick="location.reload()" class="w-full flex items-center gap-4 p-4 text-gray-900 font-black bg-gray-50 rounded-2xl uppercase text-[10px] italic mb-2 border"><i data-lucide="home" class="text-red-600 w-4 h-4"></i> INICIO</button>
@@ -186,28 +198,26 @@
         lucide.createIcons();
     }
 
-    // ADMIN VIEWS
+    // ADMIN: LISTADO Y DETALLE 14 REQUISITOS
     function loadListView(tipo) {
         closeAllModals();
         const host = document.getElementById('admin-host');
-        let html = `<div class="view-content"><h3 class="text-xl font-black italic uppercase mb-6 tracking-tighter italic">Lista <span class="text-red-600">${tipo}</span></h3>`;
+        let html = `<div class="view-content"><h3 class="text-xl font-black italic uppercase mb-6 italic">Lista <span class="text-red-600">${tipo}</span></h3>`;
         if(tipo === 'Conductores') {
             html += `<div class="grid gap-4">`;
             conductoresBD.forEach(c => {
-                const colorEstado = c.estado === 'Aprobado' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700';
                 html += `
                     <div onclick="verDetalleConductor(${c.id})" class="bg-white p-4 rounded-[2rem] shadow-sm border flex items-center gap-4 active:scale-95 transition-all cursor-pointer">
-                        <img src="${c.foto}" class="w-14 h-14 rounded-2xl object-cover">
+                        <img src="${c.foto}" class="w-14 h-14 rounded-2xl object-cover shadow-md">
                         <div class="flex-1">
-                            <div class="flex justify-between items-center"><h4 class="font-black text-[11px] uppercase italic">${c.nombre}</h4><span class="text-[7px] px-2 py-1 rounded-full font-black ${colorEstado}">${c.estado}</span></div>
-                            <p class="text-[9px] font-bold text-gray-400 mt-1">${c.tel}</p>
-                            <div class="flex items-center gap-1 text-orange-500 mt-1"><i data-lucide="star" class="w-3 h-3 fill-current"></i><span class="text-[9px] font-black">${c.calif}</span></div>
+                            <div class="flex justify-between items-center"><h4 class="font-black text-[11px] uppercase italic">${c.nombre || 'Nuevo'}</h4><span class="text-[7px] px-2 py-1 rounded-full font-black bg-orange-100 text-orange-700">${c.estado}</span></div>
+                            <p class="text-[9px] font-bold text-gray-400 mt-1 italic">Expediente de 14 puntos</p>
                         </div>
                     </div>`;
             });
             html += `</div>`;
         } else {
-            html += `<div class="bg-white p-10 rounded-[2.5rem] border-2 border-dashed flex flex-col items-center justify-center text-gray-300 opacity-50"><i data-lucide="folder-open" class="mb-2"></i><p class="text-[9px] font-black uppercase">Vacío</p></div>`;
+            html += `<div class="bg-white p-10 rounded-[2.5rem] border-2 border-dashed flex flex-col items-center justify-center text-gray-300"><i data-lucide="folder-open"></i><p class="text-[9px] font-black uppercase">Vacío</p></div>`;
         }
         host.innerHTML = html + `</div>`;
         lucide.createIcons();
@@ -215,82 +225,114 @@
 
     function verDetalleConductor(id) {
         const c = conductoresBD.find(x => x.id === id);
+        let docsHtml = "";
+        for(const [key, value] of Object.entries(c.datos)) {
+            const isFile = key.includes("INE") || key.includes("Licencia") || key.includes("Tarjeta") || key.includes("Póliza") || key.includes("Matrícula") || key.includes("Foto");
+            docsHtml += `
+                <div class="bg-gray-50 p-4 rounded-3xl border-l-4 border-red-600 mb-2">
+                    <p class="text-[8px] font-black text-gray-400 uppercase italic mb-1">${key}</p>
+                    ${isFile ? `
+                    <div class="flex items-center justify-between">
+                        <span class="text-[10px] font-black text-green-600 uppercase">Archivo Cargado ✓</span>
+                        <button onclick="eliminarDato(${c.id}, '${key}')" class="p-2 bg-red-100 text-red-600 rounded-lg"><i data-lucide="trash-2" class="w-3 h-3"></i></button>
+                    </div>` : `
+                    <div class="flex items-center justify-between">
+                        <p class="text-[10px] font-black text-gray-800">${value}</p>
+                        <button onclick="eliminarDato(${c.id}, '${key}')" class="p-2 bg-red-100 text-red-600 rounded-lg"><i data-lucide="trash-2" class="w-3 h-3"></i></button>
+                    </div>`}
+                </div>`;
+        }
+
         const modal = `<div id="detalle-modal" class="absolute inset-0 z-[140] bg-white overflow-y-auto p-6 view-content">
             <button onclick="this.parentElement.remove()" class="mb-6 p-2 bg-gray-100 rounded-full"><i data-lucide="arrow-left"></i></button>
-            <h2 class="text-2xl font-black italic uppercase mb-8">Detalle <span class="text-red-600">Conductor</span></h2>
-            <div class="grid grid-cols-2 gap-4 mb-8">
-                <div class="bg-gray-50 p-4 rounded-3xl"><p class="text-[8px] font-black text-gray-400 uppercase italic">CURP</p><p class="text-[10px] font-black">${c.curp}</p></div>
-                <div class="bg-gray-50 p-4 rounded-3xl"><p class="text-[8px] font-black text-gray-400 uppercase italic">Vehículo</p><p class="text-[10px] font-black">${c.auto}</p></div>
-            </div>
-            <div class="space-y-4">
-                ${['INE Frontal', 'INE Reversa', 'Licencia'].map(doc => `
-                <div class="relative rounded-[2rem] overflow-hidden border-2">
-                    <img src="https://placehold.jp/24/000000/ffffff/400x220.png?text=${doc}" class="w-full h-40 object-cover">
-                    <button onclick="eliminarFoto(${c.id}, '${doc}')" class="absolute top-3 right-3 bg-red-600 text-white p-2 rounded-xl"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-                </div>`).join('')}
-            </div>
-            <div class="mt-8 flex gap-3 pb-8">
-                <button onclick="alert('Aprobado'); this.parentElement.remove()" class="flex-1 bg-green-500 text-white py-5 rounded-[2rem] font-black text-[10px] uppercase shadow-lg">Aprobar</button>
-                <button onclick="alert('Bloqueado'); this.parentElement.remove()" class="flex-1 bg-black text-white py-5 rounded-[2rem] font-black text-[10px] uppercase">Bloquear</button>
+            <h2 class="text-2xl font-black italic uppercase mb-8">Registro <span class="text-red-600">14 Requisitos</span></h2>
+            <div class="space-y-2">${docsHtml}</div>
+            <div class="mt-10 flex gap-3 pb-12">
+                <button onclick="cambiarEstado(${c.id}, 'Aprobado')" class="flex-1 bg-green-500 text-white py-5 rounded-[2rem] font-black text-[10px] uppercase shadow-xl">Activar Ahora</button>
+                <button onclick="this.parentElement.parentElement.remove()" class="flex-1 bg-black text-white py-5 rounded-[2rem] font-black text-[10px] uppercase shadow-xl">Cerrar</button>
             </div>
         </div>`;
         document.getElementById('app-container').insertAdjacentHTML('beforeend', modal);
         lucide.createIcons();
     }
 
-    function eliminarFoto(id, doc) {
-        if(confirm(`¿Eliminar ${doc}?`)) {
-            const index = conductoresBD.findIndex(x => x.id === id);
-            conductoresBD[index].estado = "Doc. Pendiente";
-            alert("Eliminado. Se bloqueó al conductor hasta que resuba el archivo.");
+    function eliminarDato(id, key) {
+        if(confirm(`¿Deseas invalidar el requisito: ${key}?`)) {
+            const idx = conductoresBD.findIndex(x => x.id === id);
+            conductoresBD[idx].datos[key] = "Pendiente / Eliminado";
+            conductoresBD[idx].estado = "Revisión Requerida";
+            updateStorage();
             document.getElementById('detalle-modal').remove();
             loadListView('Conductores');
         }
     }
 
-    // PASAJERO FUNCTIONS
-    function openCostSheet() { document.getElementById('cost-sheet').classList.add('active'); document.getElementById('overlay').classList.add('opacity-100', 'pointer-events-auto'); }
-    function selectPayment(m) { selectedMethod = m; document.querySelectorAll('.pay-opt').forEach(o => o.classList.remove('border-red-600', 'bg-red-50', 'text-red-600')); document.getElementById(`pay-${m.toLowerCase()}`).classList.add('border-red-600', 'bg-red-50', 'text-red-600'); }
-    function processOrder() {
-        if(!selectedMethod) return alert("Selecciona pago");
-        closeAllModals();
-        document.getElementById('passenger-header').classList.add('hidden');
-        document.getElementById('passenger-ui-top').classList.add('hidden');
-        document.getElementById('passenger-ui-bottom').classList.add('hidden');
-        document.getElementById('searching-loader').classList.remove('hidden');
-        setTimeout(() => { alert("¡Conductor asignado!"); location.reload(); }, 3000);
+    function cambiarEstado(id, st) {
+        const idx = conductoresBD.findIndex(x => x.id === id);
+        conductoresBD[idx].estado = st;
+        updateStorage();
+        alert("SISTEMA: Estado actualizado con éxito.");
+        document.getElementById('detalle-modal').remove();
+        loadListView('Conductores');
     }
 
-    // REGISTRO CONDUCTOR
+    // REGISTRO PASO A PASO + RELOJ DE ARENA
     function openDriverRegistration() { closeAllModals(); currentRegStep = 1; renderRegStep(); }
     function renderRegStep() {
         const step = regSteps[currentRegStep - 1];
-        let input = step.type === "special-photo" ? 
+        let inputField = step.type === "special-photo" ? 
             `<div class="grid grid-cols-1 gap-4 w-full px-4">
-                <button onclick="nextRegStep()" class="flex items-center gap-4 p-5 bg-white border-2 rounded-3xl active:scale-95"><i data-lucide="camera" class="text-red-600"></i><span class="font-black text-xs uppercase italic">Cámara</span></button>
-                <button onclick="nextRegStep()" class="flex items-center gap-4 p-5 bg-white border-2 rounded-3xl active:scale-95"><i data-lucide="image" class="text-gray-600"></i><span class="font-black text-xs uppercase italic">Galería</span></button>
+                <button onclick="nextRegStep()" class="flex items-center gap-4 p-5 bg-white border-2 rounded-3xl"><i data-lucide="camera" class="text-red-600"></i><span class="font-black text-xs uppercase italic">Cámara</span></button>
+                <button onclick="nextRegStep()" class="flex items-center gap-4 p-5 bg-white border-2 rounded-3xl"><i data-lucide="image" class="text-gray-600"></i><span class="font-black text-xs uppercase italic">Galería</span></button>
             </div>` : 
-            `<div class="px-4 w-full"><input type="${step.type}" id="reg-input" placeholder="${step.placeholder || ''}" class="w-full p-5 bg-white border-2 rounded-[2rem] font-bold text-sm text-center outline-none focus:border-red-600"></div>`;
+            `<div class="px-4 w-full"><input type="${step.type}" placeholder="${step.placeholder || ''}" class="w-full p-5 bg-white border-2 rounded-[2rem] font-bold text-sm text-center outline-none focus:border-red-600 shadow-inner"></div>`;
 
         const html = `
             <div id="driver-reg-modal" class="absolute inset-0 z-[130] bg-white p-8 flex flex-col view-content">
-                <div class="flex justify-between items-center mb-8"><button onclick="this.parentElement.parentElement.remove()" class="p-2 bg-gray-100 rounded-full"><i data-lucide="x"></i></button><span class="text-[10px] font-black text-gray-400 uppercase italic">Paso ${currentRegStep}/${regSteps.length}</span></div>
-                <h2 class="text-3xl font-black italic uppercase mb-10">Registro <span class="text-red-600">Conductor</span></h2>
+                <div class="flex justify-between items-center mb-10"><button onclick="this.parentElement.parentElement.remove()" class="p-2 bg-gray-100 rounded-full"><i data-lucide="x"></i></button><span class="text-[10px] font-black text-gray-400 uppercase italic">Paso ${currentRegStep}/${regSteps.length}</span></div>
+                <h2 class="text-3xl font-black italic uppercase mb-10">Drive <span class="text-red-600">Conductor</span></h2>
                 <div class="flex-1 flex flex-col items-center justify-center gap-6">
-                    <div class="w-16 h-16 bg-red-600 rounded-2xl flex items-center justify-center text-white shadow-lg"><i data-lucide="${step.icon}"></i></div>
-                    <label class="font-black uppercase text-xs italic">${step.title}</label>
-                    ${input}
+                    <div class="w-20 h-20 bg-red-600 rounded-3xl flex items-center justify-center text-white shadow-xl rotate-3"><i data-lucide="${step.icon}" class="w-8 h-8"></i></div>
+                    <label class="font-black uppercase text-xs italic text-center">${step.title}</label>
+                    ${inputField}
                 </div>
-                ${step.type !== "special-photo" ? `<button onclick="nextRegStep()" class="w-full bg-red-600 text-white py-5 rounded-[2.5rem] font-black uppercase text-xs italic mt-6 shadow-xl active:scale-95 transition-all">CONTINUAR</button>` : ""}
+                ${step.type !== "special-photo" ? `<button onclick="nextRegStep()" class="w-full bg-red-600 text-white py-5 rounded-[2.5rem] font-black uppercase text-xs italic mt-6 shadow-xl active:scale-95">CONTINUAR</button>` : ""}
             </div>`;
         const ex = document.getElementById('driver-reg-modal'); if(ex) ex.remove();
         document.getElementById('app-container').insertAdjacentHTML('beforeend', html);
         lucide.createIcons();
     }
 
-    function nextRegStep() { if(currentRegStep < regSteps.length) { currentRegStep++; renderRegStep(); } else { location.reload(); } }
+    function nextRegStep() {
+        if(currentRegStep < regSteps.length) {
+            currentRegStep++;
+            renderRegStep();
+        } else {
+            showFinalWait();
+        }
+    }
 
-    // UI UTILS
+    function showFinalWait() {
+        const finalHtml = `
+            <div id="driver-reg-modal" class="absolute inset-0 z-[140] bg-white p-10 flex flex-col items-center justify-center text-center view-content">
+                <div class="w-32 h-32 bg-red-50 rounded-full flex items-center justify-center mb-8 animate-bounce">
+                    <i data-lucide="hourglass" class="w-16 h-16 text-red-600 animate-spin" style="animation-duration: 3s"></i>
+                </div>
+                <h3 class="text-2xl font-black italic uppercase mb-4 tracking-tighter">¡Registro <span class="text-red-600">Enviado!</span></h3>
+                <p class="text-xs font-bold text-gray-500 uppercase leading-relaxed italic">
+                    Te activaremos en <span class="text-red-600">menos de 24 horas</span> si todo sale bien. ¡Pronto serás parte de Drive MX!
+                </p>
+                <button onclick="location.reload()" class="mt-12 w-full bg-black text-white py-5 rounded-[2rem] font-black uppercase text-[10px] tracking-widest italic shadow-2xl">ENTENDIDO</button>
+            </div>`;
+        document.getElementById('driver-reg-modal').remove();
+        document.getElementById('app-container').insertAdjacentHTML('beforeend', finalHtml);
+        lucide.createIcons();
+    }
+
+    // UTILS PASAJERO
+    function openCostSheet() { document.getElementById('cost-sheet').classList.add('active'); document.getElementById('overlay').classList.add('opacity-100', 'pointer-events-auto'); }
+    function selectPayment(m) { selectedMethod = m; document.querySelectorAll('.pay-opt').forEach(o => o.classList.remove('border-red-600', 'bg-red-50', 'text-red-600')); document.getElementById(`pay-${m.toLowerCase()}`).classList.add('border-red-600', 'bg-red-50', 'text-red-600'); }
+    function processOrder() { if(!selectedMethod) return alert("Selecciona pago"); closeAllModals(); document.getElementById('searching-loader').classList.remove('hidden'); setTimeout(() => { alert("¡Conductor asignado!"); location.reload(); }, 3000); }
     function toggleSubmenu() { document.getElementById('submenu-usuarios').classList.toggle('active'); }
     function toggleMenu() { document.getElementById('sidebar').classList.toggle('open'); document.getElementById('overlay').classList.toggle('opacity-100', 'pointer-events-auto'); }
     function closeAllModals() { document.getElementById('sidebar').classList.remove('open'); if(document.getElementById('cost-sheet')) document.getElementById('cost-sheet').classList.remove('active'); document.getElementById('overlay').classList.remove('opacity-100', 'pointer-events-auto'); }
@@ -299,3 +341,4 @@
 </script>
 </body>
 </html>
+    

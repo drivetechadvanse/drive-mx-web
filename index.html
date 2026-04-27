@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Drive MX | Global Professional</title>
+    <title>Drive MX | Global Mobility Professional</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
@@ -11,18 +11,22 @@
         :root { --app-height: 100dvh; }
         body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; overflow: hidden; background-color: #000; height: var(--app-height); }
         
-        /* MAGIC SLIDE LOGIC */
+        /* MAGIC SLIDE LOGIC - BLOQUES OCULTOS */
         .m-block { transform: translateX(110%); opacity: 0; transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1); position: absolute; inset: 0; pointer-events: none; }
         .m-block-active { transform: translateX(0); opacity: 1; position: relative; pointer-events: auto; }
         .m-block-prev { transform: translateX(-110%); opacity: 0; position: absolute; }
 
-        /* RADAR Y UI */
+        /* RADAR DE BÚSQUEDA */
         .pulse-ring { border: 4px solid #ef4444; border-radius: 50%; height: 100px; width: 100px; position: absolute; animation: pulsate 1.8s ease-out infinite; opacity: 0; }
         @keyframes pulsate { 0% { transform: scale(0.1); opacity: 0; } 50% { opacity: 1; } 100% { transform: scale(2); opacity: 0; } }
         
         #sidebar { transition: transform 0.4s ease; transform: translateX(-100%); }
         #sidebar.open { transform: translateX(0); }
         .map-sim { background-color: #f3f4f6; background-image: radial-gradient(#d1d5db 1px, transparent 1px); background-size: 30px 30px; }
+        
+        /* HOJA DE COSTOS */
+        #cost-sheet { transition: transform 0.5s cubic-bezier(0.32, 0.72, 0, 1); transform: translateY(110%); }
+        #cost-sheet.active { transform: translateY(0); }
     </style>
 </head>
 <body>
@@ -32,12 +36,12 @@
 
     <div id="sidebar" class="absolute inset-y-0 left-0 w-72 bg-white z-[110] shadow-2xl flex flex-col">
         <div class="p-6 bg-gray-900 text-white">
-            <h2 class="text-lg font-black italic uppercase">DRIVE <span class="text-red-600">MX</span></h2>
-            <p class="text-[8px] text-gray-500 font-bold mt-1 uppercase italic tracking-widest">Global Mobility System</p>
+            <h2 class="text-lg font-black italic">DRIVE <span class="text-red-600">MX</span></h2>
+            <p class="text-[8px] text-gray-500 font-bold mt-1 uppercase italic tracking-widest">Control Panel v2.0</p>
         </div>
-        <nav class="flex-1 p-4 space-y-2">
+        <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
             <button onclick="location.reload()" class="w-full flex items-center gap-4 p-4 text-gray-900 font-black bg-gray-50 rounded-2xl uppercase text-[10px] italic border"><i data-lucide="home" class="text-red-600 w-4 h-4"></i> INICIO</button>
-            <div class="pt-4 pb-2 px-4 text-[8px] font-black text-gray-400 uppercase italic">Administración</div>
+            <div class="pt-4 pb-2 px-4 text-[8px] font-black text-gray-400 uppercase italic">Gestión de Operadores</div>
             <button onclick="loadAdminView('Conductores')" class="w-full flex items-center gap-4 p-4 text-gray-700 font-black hover:bg-gray-50 rounded-2xl uppercase text-[10px] italic"><i data-lucide="truck" class="text-red-600 w-4 h-4"></i> Conductores</button>
             <button onclick="loadAdminView('Pasajeros')" class="w-full flex items-center gap-4 p-4 text-gray-700 font-black hover:bg-gray-50 rounded-2xl uppercase text-[10px] italic"><i data-lucide="users" class="text-red-600 w-4 h-4"></i> Pasajeros</button>
             <button onclick="loadAdminView('Administradores')" class="w-full flex items-center gap-4 p-4 text-gray-700 font-black hover:bg-gray-50 rounded-2xl uppercase text-[10px] italic"><i data-lucide="shield-check" class="text-red-600 w-4 h-4"></i> Administradores</button>
@@ -57,64 +61,80 @@
             <div id="top-ui" class="absolute top-4 left-4 right-4 z-20 space-y-2">
                 <div class="bg-white p-3 rounded-2xl shadow-lg border-l-4 border-blue-500 flex items-center gap-3">
                     <i data-lucide="navigation" class="text-blue-500 w-4 h-4"></i>
-                    <span class="text-[10px] font-bold text-gray-800 uppercase italic">Ubicación: San Salvador Atenco</span>
+                    <div class="flex flex-col">
+                        <span class="text-[8px] font-black text-gray-400 uppercase italic">Tu ubicación</span>
+                        <span class="text-[10px] font-bold text-gray-800">San Salvador Atenco, México</span>
+                    </div>
                 </div>
             </div>
 
-            <div id="radar-screen" class="hidden absolute inset-0 z-40 flex flex-col items-center justify-center bg-white/40 backdrop-blur-sm">
+            <div id="radar-screen" class="hidden absolute inset-0 z-40 flex flex-col items-center justify-center bg-white/60 backdrop-blur-md">
                 <div class="pulse-ring"></div>
-                <div class="w-14 h-14 bg-red-600 rounded-full border-4 border-white shadow-2xl flex items-center justify-center z-10"><i data-lucide="map-pin" class="text-white"></i></div>
-                <div class="mt-16 bg-black text-white px-8 py-3 rounded-full font-black text-[10px] uppercase italic animate-bounce italic tracking-widest">Buscando Conductor...</div>
+                <div class="w-16 h-16 bg-red-600 rounded-full border-4 border-white shadow-2xl flex items-center justify-center z-10"><i data-lucide="navigation" class="text-white w-8 h-8"></i></div>
+                <div class="mt-20 bg-black text-white px-10 py-4 rounded-full font-black text-[10px] uppercase italic animate-bounce tracking-widest">Buscando Operador Cercano...</div>
             </div>
 
             <div id="bottom-ui" class="absolute bottom-6 left-4 right-4 z-20 space-y-4">
-                <div class="bg-black rounded-[2rem] p-5 flex items-center justify-between text-white shadow-2xl">
+                <div class="bg-black rounded-[2.5rem] p-5 flex items-center justify-between text-white shadow-2xl">
                     <div class="flex items-center gap-4">
-                        <div class="w-10 h-10 bg-red-600/20 rounded-xl flex items-center justify-center text-red-500"><i data-lucide="wallet"></i></div>
-                        <div><p class="text-[8px] text-gray-500 font-bold uppercase italic">Tu Saldo</p><h3 class="text-lg font-black italic">$50.00 MXN</h3></div>
+                        <div class="w-12 h-12 bg-red-600/20 rounded-2xl flex items-center justify-center text-red-500"><i data-lucide="wallet"></i></div>
+                        <div><p class="text-[9px] text-gray-500 font-bold uppercase italic">Saldo Disponible</p><h3 class="text-xl font-black italic">$50.00</h3></div>
                     </div>
                 </div>
-                <button onclick="showRideOptions()" class="w-full bg-red-600 text-white py-5 rounded-[2.5rem] font-black uppercase text-xs italic shadow-xl active:scale-95 italic">Pedir Viaje Ahora</button>
+                <button onclick="openCostSheet()" class="w-full bg-red-600 text-white py-6 rounded-[2.5rem] font-black uppercase text-xs italic shadow-xl active:scale-95 italic">Pedir Viaje</button>
             </div>
         </main>
+
+        <div id="cost-sheet" class="absolute bottom-0 left-0 right-0 bg-white z-[120] rounded-t-[3rem] shadow-[0_-20px_60px_rgba(0,0,0,0.3)] p-8">
+            <div class="w-16 h-1.5 bg-gray-200 rounded-full mx-auto mb-8"></div>
+            <div class="p-5 rounded-3xl border-2 border-red-600 bg-red-50 flex justify-between items-center mb-6">
+                <span class="font-black text-xs uppercase italic">Drive Basic (Jetta)</span><span class="font-black text-2xl italic text-red-600">$45.00</span>
+            </div>
+            <div class="grid grid-cols-3 gap-3 mb-8">
+                <button class="p-4 border-2 rounded-2xl flex flex-col items-center gap-2 font-black text-[9px] uppercase italic border-red-600 bg-red-50 text-red-600"><i data-lucide="banknote"></i>Efectivo</button>
+                <button class="p-4 border-2 rounded-2xl flex flex-col items-center gap-2 font-black text-[9px] uppercase italic"><i data-lucide="credit-card"></i>Tarjeta</button>
+                <button class="p-4 border-2 rounded-2xl flex flex-col items-center gap-2 font-black text-[9px] uppercase italic"><i data-lucide="wallet"></i>Cartera</button>
+            </div>
+            <button onclick="startSearch()" class="w-full bg-red-600 text-white py-5 rounded-[2.5rem] font-black uppercase text-xs italic shadow-xl">Confirmar Viaje</button>
+        </div>
     </div>
 
-    <div id="driver-magic-panel" class="hidden absolute inset-0 z-[140] bg-white flex flex-col overflow-hidden">
+    <div id="magic-panel" class="hidden absolute inset-0 z-[140] bg-white flex flex-col overflow-hidden">
         <header class="w-full bg-white border-b-4 border-red-600 p-6 flex justify-between items-center shadow-2xl z-[150]">
             <div class="flex items-center gap-3">
                 <div class="flex gap-1.5"><div class="w-3 h-3 rounded-full bg-red-500"></div><div class="w-3 h-3 rounded-full bg-yellow-500"></div><div class="w-3 h-3 rounded-full bg-green-500"></div></div>
-                <h2 class="ml-4 font-black italic uppercase text-[10px] tracking-tighter">Panel de Control: Fernando Garduño García</h2>
+                <h2 class="ml-4 font-black italic uppercase text-[10px] tracking-tighter">Expediente Maestro | Operador #001</h2>
             </div>
             <div class="flex gap-4">
-                <button id="magic-next-btn" onclick="nextMagicStep()" class="p-3 bg-red-600 text-white rounded-xl shadow-lg active:scale-90 transition-all"><i data-lucide="arrow-right-circle"></i></button>
+                <button id="magic-btn" onclick="nextMagicStep()" class="p-3 bg-red-600 text-white rounded-xl shadow-lg active:scale-90 transition-all"><i data-lucide="arrow-right-circle"></i></button>
                 <button onclick="closeMagicPanel()" class="p-3 bg-black text-white rounded-xl"><i data-lucide="x"></i></button>
             </div>
         </header>
 
         <div class="flex-1 relative bg-gray-50">
-            <div id="m-step-1" class="m-block m-block-active p-8">
-                <h3 class="text-2xl font-black italic uppercase text-red-600 mb-6 italic tracking-tighter">01. Datos del Operador</h3>
+            <div id="ms-1" class="m-block m-block-active p-8">
+                <h3 class="text-3xl font-black italic uppercase text-red-600 mb-8 italic tracking-tighter">01. Identidad</h3>
                 <div class="space-y-4">
-                    <div class="p-4 bg-white rounded-3xl border-l-8 border-red-600 shadow-sm"><p class="text-[8px] font-black text-gray-400 uppercase italic">Nombre Completo</p><p class="font-black italic text-gray-800 uppercase">Fernando Garduño García</p></div>
-                    <div class="p-4 bg-white rounded-3xl border-l-8 border-red-600 shadow-sm"><p class="text-[8px] font-black text-gray-400 uppercase italic">WhatsApp / Tel</p><p class="font-black italic text-gray-800 uppercase">+52 55 XXXX XXXX</p></div>
-                    <div class="p-4 bg-white rounded-3xl border-l-8 border-red-600 shadow-sm"><p class="text-[8px] font-black text-gray-400 uppercase italic">Identificador CURP</p><p class="font-black italic text-gray-800 uppercase italic tracking-widest">GARC900101HDF...</p></div>
+                    ${renderBox("Nombre Operador", "Fernando Garduño García")}
+                    ${renderBox("CURP / ID", "GARC900101HDF...")}
+                    ${renderBox("WhatsApp Directo", "+52 55 XXXX XXXX")}
                 </div>
             </div>
-            <div id="m-step-2" class="m-block p-8">
-                <h3 class="text-2xl font-black italic uppercase text-red-600 mb-6 italic tracking-tighter">02. Unidad Drive MX</h3>
+            <div id="ms-2" class="m-block p-8">
+                <h3 class="text-3xl font-black italic uppercase text-red-600 mb-8 italic tracking-tighter">02. Vehículo</h3>
                 <div class="space-y-4">
-                    <div class="p-4 bg-white rounded-3xl border-l-8 border-red-600 shadow-sm"><p class="text-[8px] font-black text-gray-400 uppercase italic">Vehículo Registrado</p><p class="font-black italic text-gray-800 uppercase italic">Volkswagen Jetta</p></div>
-                    <div class="p-4 bg-white rounded-3xl border-l-8 border-red-600 shadow-sm"><p class="text-[8px] font-black text-gray-400 uppercase italic">Color de Marca</p><p class="font-black italic text-red-600 uppercase italic">Rojo Brillante</p></div>
-                    <div class="p-4 bg-white rounded-3xl border-l-8 border-red-600 shadow-sm"><p class="text-[8px] font-black text-gray-400 uppercase italic">Placas de Circulación</p><p class="font-black italic text-gray-800 uppercase italic tracking-widest">MX-JET-2026</p></div>
+                    ${renderBox("Unidad Drive MX", "Volkswagen Jetta")}
+                    ${renderBox("Color Corporativo", "Rojo Brillante")}
+                    ${renderBox("Placas / Matrícula", "MX-JET-2026")}
                 </div>
             </div>
-            <div id="m-step-3" class="m-block p-8">
-                <h3 class="text-2xl font-black italic uppercase text-red-600 mb-6 italic tracking-tighter">03. Expediente Digital</h3>
+            <div id="ms-3" class="m-block p-8">
+                <h3 class="text-3xl font-black italic uppercase text-red-600 mb-8 italic tracking-tighter">03. Documentos</h3>
                 <div class="grid grid-cols-2 gap-4">
-                    <div class="h-32 bg-white rounded-3xl border-2 border-dashed border-gray-200 flex items-center justify-center font-black text-[8px] uppercase italic text-gray-400">Foto del Rostro</div>
-                    <div class="h-32 bg-white rounded-3xl border-2 border-dashed border-gray-200 flex items-center justify-center font-black text-[8px] uppercase italic text-gray-400">INE Frontal</div>
+                    <div class="h-32 bg-white rounded-3xl border-2 border-dashed border-gray-200 flex items-center justify-center font-black text-[9px] uppercase italic text-gray-300">INE Frontal</div>
+                    <div class="h-32 bg-white rounded-3xl border-2 border-dashed border-gray-200 flex items-center justify-center font-black text-[9px] uppercase italic text-gray-300">Licencia Vigente</div>
                 </div>
-                <button onclick="alert('Conductor Activado Mundialmente'); location.reload();" class="w-full mt-10 bg-green-500 text-white py-6 rounded-[2.5rem] font-black uppercase text-[10px] italic shadow-2xl italic tracking-widest">Activar Operador</button>
+                <button onclick="alert('Operador Activado en Drive MX'); location.reload();" class="w-full mt-12 bg-green-500 text-white py-6 rounded-[2.5rem] font-black uppercase text-xs italic shadow-2xl tracking-widest">Activar Ahora</button>
             </div>
         </div>
     </div>
@@ -122,100 +142,89 @@
 
 <script>
     lucide.createIcons();
-    let currentMagic = 1;
+    let currentMS = 1;
 
-    function toggleMenu() { 
-        document.getElementById('sidebar').classList.toggle('open'); 
-        document.getElementById('overlay').classList.toggle('opacity-100'); 
-        document.getElementById('overlay').classList.toggle('pointer-events-auto'); 
+    function toggleMenu() { document.getElementById('sidebar').classList.toggle('open'); document.getElementById('overlay').classList.toggle('opacity-100', 'pointer-events-auto'); }
+    function closeAll() { document.getElementById('sidebar').classList.remove('open'); document.getElementById('cost-sheet').classList.remove('active'); document.getElementById('overlay').classList.remove('opacity-100', 'pointer-events-auto'); }
+    function openCostSheet() { document.getElementById('cost-sheet').classList.add('active'); document.getElementById('overlay').classList.add('opacity-100', 'pointer-events-auto'); }
+
+    // BÚSQUEDA PROFESIONAL (PANTALLA LIMPIA)
+    function startSearch() {
+        closeAll();
+        document.getElementById('main-header').classList.add('hidden');
+        document.getElementById('top-ui').classList.add('hidden');
+        document.getElementById('bottom-ui').classList.add('hidden');
+        document.getElementById('radar-screen').classList.remove('hidden');
+        setTimeout(() => { alert("¡Operador Fernando Garduño en camino (Jetta Rojo)!"); location.reload(); }, 4000);
     }
 
-    function closeAll() { 
-        document.getElementById('sidebar').classList.remove('open'); 
-        document.getElementById('overlay').classList.remove('opacity-100', 'pointer-events-auto'); 
-    }
-
-    // CARGA DE LISTAS ADMIN
+    // CARGA DE ADMINISTRACIÓN
     function loadAdminView(tipo) {
         closeAll();
-        const mainHeader = document.getElementById('main-header');
-        const mainApp = document.querySelector('main');
-        mainHeader.innerHTML = `<button onclick="location.reload()" class="p-2 bg-gray-50 rounded-xl"><i data-lucide="arrow-left"></i></button><h2 class="text-sm font-black uppercase italic">${tipo} Registrados</h2><div class="w-9"></div>`;
+        const main = document.querySelector('main');
+        document.getElementById('main-header').innerHTML = `<button onclick="location.reload()" class="p-2 bg-gray-50 rounded-xl"><i data-lucide="arrow-left"></i></button><h2 class="text-[10px] font-black uppercase italic">${tipo} Sistema</h2><div class="w-9"></div>`;
         
-        let content = `<div class="p-4 space-y-4">`;
+        let html = `<div class="p-4 space-y-4">`;
         if(tipo === 'Conductores') {
-            content += `
-                <div onclick="openMagicPanel()" class="bg-white p-4 rounded-3xl shadow-sm border flex items-center justify-between cursor-pointer active:scale-95 transition-all italic">
+            html += `
+                <div onclick="openMagicPanel()" class="bg-white p-4 rounded-3xl shadow-sm border flex items-center justify-between cursor-pointer active:scale-95 transition-all">
                     <div class="flex items-center gap-4">
-                        <div class="w-12 h-12 bg-red-600 rounded-2xl flex items-center justify-center text-white font-black italic italic tracking-tighter">FG</div>
-                        <div><p class="font-black text-xs uppercase italic">Fernando Garduño</p><p class="text-[8px] font-bold text-red-500 uppercase italic">Pendiente de Revisión</p></div>
+                        <div class="w-12 h-12 bg-red-600 rounded-2xl flex items-center justify-center text-white font-black italic">FG</div>
+                        <div><p class="font-black text-xs uppercase italic">Fernando Garduño</p><p class="text-[8px] font-bold text-red-500 uppercase italic">Revisar Expediente</p></div>
                     </div>
                     <i data-lucide="chevron-right" class="text-gray-300"></i>
                 </div>`;
         } else {
-            content += `<div class="p-10 text-center text-gray-300 font-black uppercase text-[10px] italic">No hay registros de ${tipo} en la base de datos</div>`;
+            html += `<div class="p-20 text-center text-gray-300 font-black uppercase text-[10px] italic">Sin registros en ${tipo}</div>`;
         }
-        mainApp.innerHTML = content + `</div>`;
+        main.innerHTML = html + `</div>`;
         lucide.createIcons();
     }
 
-    // LÓGICA DEL PANEL MÁGICO
-    function openMagicPanel() {
-        document.getElementById('driver-magic-panel').classList.remove('hidden');
-        currentMagic = 1;
-    }
-    function closeMagicPanel() {
-        document.getElementById('driver-magic-panel').classList.add('hidden');
-    }
+    // MAGIC SLIDE CONTROLS
+    function openMagicPanel() { document.getElementById('magic-panel').classList.remove('hidden'); currentMS = 1; }
+    function closeMagicPanel() { document.getElementById('magic-panel').classList.add('hidden'); }
     function nextMagicStep() {
-        if(currentMagic < 3) {
-            document.getElementById(`m-step-${currentMagic}`).classList.remove('m-block-active');
-            document.getElementById(`m-step-${currentMagic}`).classList.add('m-block-prev');
-            currentMagic++;
-            document.getElementById(`m-step-${currentMagic}`).classList.add('m-block-active');
-            if(currentMagic === 3) document.getElementById('magic-next-btn').style.opacity = '0';
+        if(currentMS < 3) {
+            document.getElementById(`ms-${currentMS}`).classList.remove('m-block-active');
+            document.getElementById(`ms-${currentMS}`).classList.add('m-block-prev');
+            currentMS++;
+            document.getElementById(`ms-${currentMS}`).classList.add('m-block-active');
+            if(currentMS === 3) document.getElementById('magic-btn').style.opacity = '0';
         }
     }
 
-    // ACCIONES DE PASAJERO (EL RADAR)
-    function showRideOptions() {
-        document.getElementById('top-ui').classList.add('hidden');
-        document.getElementById('bottom-ui').classList.add('hidden');
-        document.getElementById('main-header').classList.add('hidden');
-        document.getElementById('radar-screen').classList.remove('hidden');
-        setTimeout(() => { alert("¡Conductor Jetta Rojo encontrado!"); location.reload(); }, 4000);
-    }
-
     // REGISTRO DE 14 PASOS (REINTEGRADO)
-    let stepReg = 1;
-    function startDriverReg() {
-        closeAll();
-        renderReg();
-    }
+    let regStep = 1;
+    function startDriverReg() { closeAll(); renderReg(); }
     function renderReg() {
         const main = document.querySelector('main');
-        document.getElementById('main-header').innerHTML = `<button onclick="location.reload()" class="p-2 bg-gray-50 rounded-xl"><i data-lucide="x"></i></button><h2 class="text-[10px] font-black uppercase italic">Paso ${stepReg} de 14</h2><div class="w-9"></div>`;
+        document.getElementById('main-header').innerHTML = `<button onclick="location.reload()" class="p-2 bg-gray-50 rounded-xl"><i data-lucide="x"></i></button><h2 class="text-[10px] font-black uppercase italic">Paso ${regStep} de 14</h2><div class="w-9"></div>`;
         main.innerHTML = `
             <div class="p-8 flex flex-col items-center justify-center h-full text-center">
-                <div class="w-16 h-16 bg-red-600 rounded-2xl flex items-center justify-center text-white mb-6 shadow-xl"><i data-lucide="clipboard-check"></i></div>
-                <h3 class="text-xl font-black uppercase italic italic tracking-tighter mb-4 italic tracking-tighter italic">Requisito Oficial</h3>
-                <input type="text" placeholder="Ingresa el dato solicitado..." class="w-full p-5 bg-gray-50 border-2 rounded-[2rem] font-bold text-center mb-6 outline-none focus:border-red-600 italic italic tracking-tighter">
-                <button onclick="nextReg()" class="w-full bg-red-600 text-white py-5 rounded-full font-black uppercase text-xs italic italic tracking-tighter italic shadow-xl">Siguiente</button>
+                <div class="w-16 h-16 bg-red-600 rounded-2xl flex items-center justify-center text-white mb-6 shadow-xl"><i data-lucide="clipboard-list"></i></div>
+                <h3 class="text-xl font-black uppercase italic mb-4">Requisito Operativo</h3>
+                <input type="text" placeholder="Dato solicitado..." class="w-full p-5 bg-gray-50 border-2 rounded-[2rem] font-bold text-center mb-6 outline-none focus:border-red-600 italic">
+                <button onclick="nextReg()" class="w-full bg-red-600 text-white py-5 rounded-full font-black uppercase text-xs italic shadow-xl">Siguiente</button>
             </div>`;
         lucide.createIcons();
     }
     function nextReg() {
-        if(stepReg < 14) { stepReg++; renderReg(); }
+        if(regStep < 14) { regStep++; renderReg(); }
         else {
             document.querySelector('main').innerHTML = `
                 <div class="p-8 flex flex-col items-center justify-center h-full text-center">
-                    <div class="w-24 h-24 bg-red-50 rounded-full flex items-center justify-center mb-8 animate-spin italic tracking-tighter" style="animation-duration: 4s"><i data-lucide="hourglass" class="text-red-600 w-12 h-12"></i></div>
-                    <h2 class="text-2xl font-black uppercase italic italic tracking-tighter mb-2 italic">Procesando...</h2>
+                    <div class="w-24 h-24 bg-red-50 rounded-full flex items-center justify-center mb-8 animate-spin" style="animation-duration: 4s"><i data-lucide="hourglass" class="text-red-600 w-12 h-12"></i></div>
+                    <h2 class="text-2xl font-black uppercase italic mb-2">En Revisión</h2>
                     <p class="text-[10px] font-bold text-gray-500 uppercase italic">Tu expediente se activará en menos de 24 horas.</p>
-                    <button onclick="location.reload()" class="mt-12 w-full bg-black text-white py-5 rounded-full font-black uppercase text-[10px] italic italic tracking-tighter">Finalizar</button>
+                    <button onclick="location.reload()" class="mt-12 w-full bg-black text-white py-5 rounded-full font-black uppercase text-[10px] italic">Entendido</button>
                 </div>`;
             lucide.createIcons();
         }
+    }
+
+    function renderBox(l, v) {
+        return `<div class="bg-white p-5 rounded-[2rem] border-l-8 border-red-600 shadow-sm"><p class="text-[8px] font-black text-gray-400 uppercase italic">${l}</p><p class="font-black italic text-gray-800 uppercase text-sm">${v}</p></div>`;
     }
 </script>
 </body>

@@ -10,19 +10,16 @@
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
         body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; overflow: hidden; background-color: #000; }
         
-        /* Animaciones Sidebar y Hojas */
         #sidebar { transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); transform: translateX(-100%); }
         #sidebar.open { transform: translateX(0); }
         #cost-sheet { transition: transform 0.5s cubic-bezier(0.32, 0.72, 0, 1); transform: translateY(100%); }
         #cost-sheet.active { transform: translateY(0); }
 
-        /* Acordeones */
         .accordion-content { max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; }
         .accordion-content.expanded { max-height: 250px; }
         .chevron-rotate { transition: transform 0.3s ease; }
         .chevron-rotate.active { transform: rotate(180deg); }
         
-        /* Mapa y Radar */
         .map-sim { background-color: #f3f4f6; background-image: radial-gradient(#d1d5db 1px, transparent 1px); background-size: 25px 25px; }
         .radar-pulse {
             position: absolute; width: 100px; height: 100px;
@@ -51,7 +48,7 @@
     <div id="sidebar" class="absolute inset-y-0 left-0 w-64 bg-white z-[110] shadow-2xl flex flex-col">
         <div class="p-6 bg-gray-900 text-white">
             <div class="w-10 h-10 bg-red-600 rounded-xl flex items-center justify-center mb-3"><i data-lucide="cpu" class="w-6 h-6"></i></div>
-            <h2 class="text-lg font-black italic uppercase italic">DRIVE <span class="text-red-600 text-lg">MX</span></h2>
+            <h2 class="text-lg font-black italic uppercase">DRIVE <span class="text-red-600">MX</span></h2>
             <p id="side-role" class="text-[8px] text-gray-500 font-bold uppercase italic tracking-widest">Iniciando...</p>
         </div>
         
@@ -95,13 +92,13 @@
     <div id="admin-view" class="hidden h-screen flex flex-col bg-gray-50">
         <header class="px-4 py-3 flex items-center justify-between bg-gray-900 text-white z-10">
             <button onclick="openMenu()" class="p-1.5 bg-white/10 rounded-lg"><i data-lucide="menu" class="w-5 h-5 text-red-600"></i></button>
-            <h2 class="text-base font-black italic uppercase italic">CONTROL <span class="text-red-600">CENTER</span></h2>
+            <h2 class="text-base font-black italic uppercase">CONTROL <span class="text-red-600">CENTER</span></h2>
             <div class="w-8 h-8 rounded-lg bg-red-600 flex items-center justify-center shadow-lg shadow-red-600/30"><i data-lucide="shield-check" class="w-4 h-4 text-white"></i></div>
         </header>
         <main class="flex-1 p-5 overflow-y-auto">
             <div class="grid grid-cols-2 gap-3 mb-4">
                 <div class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm"><p class="text-[7px] font-bold text-gray-400 uppercase mb-1 tracking-widest">Ingresos</p><h4 class="text-lg font-black italic">$0.00</h4></div>
-                <div class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm"><p class="text-[7px] font-bold text-gray-400 uppercase mb-1 tracking-widest">Activos</p><h4 class="text-lg font-black italic">0</h4></div>
+                <div class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm"><p class="text-[7px] font-bold text-gray-400 uppercase mb-1 tracking-widest">Activos</p><h4 id="admin-active-count" class="text-lg font-black italic">0</h4></div>
             </div>
         </main>
     </div>
@@ -109,7 +106,7 @@
     <div id="passenger-view" class="hidden h-screen flex flex-col relative">
         <header id="p-header" class="px-4 py-3 flex items-center justify-between border-b bg-white z-10 transition-all">
             <button onclick="openMenu()" class="p-1.5 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"><i data-lucide="menu" class="w-5 h-5"></i></button>
-            <h2 class="text-xl font-black italic uppercase italic">DRIVE <span class="text-red-600 text-lg">MX</span></h2>
+            <h2 class="text-xl font-black italic uppercase">DRIVE <span class="text-red-600 text-lg">MX</span></h2>
             <div class="w-8 h-8 rounded-lg bg-gray-900 flex items-center justify-center shadow-lg"><i data-lucide="user" class="text-white w-4 h-4"></i></div>
         </header>
         
@@ -144,7 +141,7 @@
         </main>
 
         <div id="cost-sheet" class="absolute bottom-0 left-0 right-0 bg-white z-[120] rounded-t-[2.5rem] shadow-2xl p-6 space-y-4">
-            <h3 class="text-lg font-black italic uppercase italic">FORMA DE <span class="text-red-600">PAGO</span></h3>
+            <h3 class="text-lg font-black italic uppercase">FORMA DE <span class="text-red-600">PAGO</span></h3>
             <div class="grid grid-cols-3 gap-2">
                 <button onclick="setPay(this)" class="payment-opt selected p-3 rounded-xl border flex flex-col items-center gap-1 transition-all"><i data-lucide="banknote" class="w-4 h-4"></i><span class="text-[8px] font-black uppercase italic">Efectivo</span></button>
                 <button onclick="setPay(this)" class="payment-opt p-3 rounded-xl border flex flex-col items-center gap-1 transition-all"><i data-lucide="send" class="w-4 h-4"></i><span class="text-[8px] font-black uppercase italic">SPEI</span></button>
@@ -153,10 +150,36 @@
             <button onclick="startRadar()" class="w-full bg-red-600 text-white py-4 rounded-2xl font-black text-[10px] uppercase italic shadow-lg shadow-red-600/20">SOLICITAR AHORA</button>
         </div>
     </div>
+
+    <div id="driver-form-view" class="hidden absolute inset-0 z-[160] bg-white flex flex-col">
+        <header class="px-4 py-4 flex items-center border-b">
+            <button onclick="closeDriverForm()" class="p-2 hover:bg-gray-100 rounded-full transition-colors">
+                <i data-lucide="arrow-left" class="w-6 h-6 text-gray-700"></i>
+            </button>
+            <h2 class="ml-3 text-lg font-black italic uppercase">Registro <span class="text-red-600">Conductor</span></h2>
+        </header>
+        <div class="flex-1 overflow-y-auto p-6 space-y-5">
+            <div class="space-y-4">
+                <div>
+                    <label class="text-[9px] font-black uppercase text-gray-400 tracking-widest">Información Personal</label>
+                    <input type="text" id="dr-name" placeholder="Nombre Completo" class="w-full mt-2 p-4 bg-gray-50 rounded-xl outline-none border-2 border-transparent focus:border-red-600 text-xs font-bold">
+                    <input type="tel" id="dr-phone" placeholder="Teléfono de Contacto" class="w-full mt-2 p-4 bg-gray-50 rounded-xl outline-none border-2 border-transparent focus:border-red-600 text-xs font-bold">
+                </div>
+                <div>
+                    <label class="text-[9px] font-black uppercase text-gray-400 tracking-widest">Datos del Vehículo</label>
+                    <input type="text" id="dr-vehicle" placeholder="Modelo (Ej: Jetta / Dominar 400)" class="w-full mt-2 p-4 bg-gray-50 rounded-xl outline-none border-2 border-transparent focus:border-red-600 text-xs font-bold">
+                    <input type="text" id="dr-plate" placeholder="Placas / Matrícula" class="w-full mt-2 p-4 bg-gray-50 rounded-xl outline-none border-2 border-transparent focus:border-red-600 text-xs font-bold">
+                </div>
+            </div>
+            <button onclick="submitDriverRegistration()" class="w-full bg-red-600 text-white py-4 rounded-xl font-black text-[10px] uppercase italic shadow-lg shadow-red-600/20 active:scale-95 transition-all">Finalizar Registro</button>
+        </div>
+    </div>
 </div>
 
 <script>
     lucide.createIcons();
+    
+    let driveMxFleet = []; // Estado Global de Conductores
 
     // 1. Splash Screen Control
     setTimeout(() => {
@@ -168,12 +191,44 @@
         }, 500);
     }, 2000);
 
-    // 2. Nueva Función Pasajero
+    // 2. Flujo Registro Conductor (NUEVO)
     function applyToBeDriver() {
-        alert("Solicitud Enviada: Iniciando proceso para convertirte en conductor de Drive MX.");
+        closeAll();
+        document.getElementById('driver-form-view').classList.remove('hidden');
     }
 
-    // 3. Autenticación Mejorada
+    function closeDriverForm() {
+        document.getElementById('driver-form-view').classList.add('hidden');
+    }
+
+    function submitDriverRegistration() {
+        const name = document.getElementById('dr-name').value;
+        const vehicle = document.getElementById('dr-vehicle').value;
+        
+        if (name && vehicle) {
+            const newDriver = {
+                id: Date.now(),
+                nombre: name,
+                telefono: document.getElementById('dr-phone').value,
+                vehiculo: vehicle,
+                placas: document.getElementById('dr-plate').value,
+                estatus: 'Pendiente'
+            };
+            driveMxFleet.push(newDriver);
+            updateAdminFleetUI();
+            alert("Solicitud Enviada: Drive MX validará tus datos pronto.");
+            closeDriverForm();
+        } else {
+            alert("Completa los campos obligatorios.");
+        }
+    }
+
+    function updateAdminFleetUI() {
+        const counter = document.getElementById('admin-active-count');
+        if (counter) counter.innerText = driveMxFleet.length;
+    }
+
+    // 3. Autenticación
     function handleAuth() {
         const email = document.getElementById('login-email').value;
         const pass = document.getElementById('login-pass').value;
@@ -182,16 +237,16 @@
             document.getElementById('login-screen').classList.add('hidden');
             document.getElementById('admin-view').classList.remove('hidden');
             document.getElementById('side-role').innerText = 'ADMINISTRADOR';
-            document.getElementById('nav-admin').classList.remove('hidden'); // Solo muestra Usuarios
+            document.getElementById('nav-admin').classList.remove('hidden');
             document.getElementById('nav-passenger').classList.add('hidden');
         } else if (email === 'user@drive.mx' && pass === '123') {
             document.getElementById('login-screen').classList.add('hidden');
             document.getElementById('passenger-view').classList.remove('hidden');
             document.getElementById('side-role').innerText = 'PASAJERO';
-            document.getElementById('nav-passenger').classList.remove('hidden'); // Solo muestra Pasajeros
+            document.getElementById('nav-passenger').classList.remove('hidden');
             document.getElementById('nav-admin').classList.add('hidden');
         } else {
-            alert("Acceso denegado. Revisa tus credenciales.");
+            alert("Acceso denegado.");
         }
     }
 
@@ -212,7 +267,7 @@
         document.getElementById(chevId).classList.toggle('active');
     }
 
-    // 5. Lógica del Pasajero (Radar, Pagos)
+    // 5. Lógica Pasajero
     function openCosts() {
         document.getElementById('cost-sheet').classList.add('active');
         document.getElementById('overlay').classList.add('opacity-100', 'pointer-events-auto');

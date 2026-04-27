@@ -16,11 +16,12 @@
         #sidebar { transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); transform: translateX(-100%); }
         #sidebar.open { transform: translateX(0); }
         
-        /* AJUSTE CRÍTICO PARA MÓVILES: Elevamos la hoja de costos sustancialmente */
+        /* HOJA DE SERVICIOS - AJUSTE DE VISIBILIDAD MÓVIL */
         #cost-sheet { 
             transition: transform 0.5s cubic-bezier(0.32, 0.72, 0, 1); 
-            transform: translateY(110%); 
-            padding-bottom: env(safe-area-inset-bottom, 50px); /* Espacio para barras de sistema */
+            transform: translateY(110%);
+            max-height: 85vh; /* Evita que crezca más que la pantalla */
+            overflow-y: auto; /* Permite scroll si el contenido es mucho */
         }
         #cost-sheet.active { transform: translateY(0); }
         
@@ -36,77 +37,83 @@
 
     <div id="sidebar" class="absolute inset-y-0 left-0 w-72 bg-white z-[110] shadow-2xl flex flex-col">
         <div class="p-6 bg-gray-900 text-white">
-            <div class="w-10 h-10 bg-red-600 rounded-xl flex items-center justify-center mb-3 shadow-lg"><i data-lucide="cpu" id="sidebar-icon" class="text-white w-5 h-5"></i></div>
+            <div class="w-10 h-10 bg-red-600 rounded-xl flex items-center justify-center mb-3 shadow-lg">
+                <i data-lucide="cpu" id="sidebar-icon" class="text-white w-5 h-5"></i>
+            </div>
             <h2 class="text-lg font-black italic tracking-tighter uppercase">DRIVE <span class="text-red-600">MX</span></h2>
             <p id="sidebar-user-role" class="text-[8px] text-gray-500 font-bold mt-1 uppercase tracking-widest italic">Sistema Activo</p>
         </div>
-        <nav class="flex-1 p-4 space-y-1" id="sidebar-nav"></nav>
-        <div class="p-4 border-t">
-            <button onclick="location.reload()" class="w-full flex items-center justify-center gap-2 py-3 bg-red-50 text-red-600 rounded-xl font-black text-[10px] uppercase italic"><i data-lucide="power" class="w-3.5 h-3.5"></i> Cerrar Sesión</button>
+        <nav class="flex-1 p-4 space-y-1 overflow-y-auto" id="sidebar-nav"></nav>
+        <div class="p-4 border-t mb-6"> 
+            <button onclick="location.reload()" class="w-full flex items-center justify-center gap-2 py-4 bg-red-50 text-red-600 rounded-xl font-black text-[10px] uppercase italic">
+                <i data-lucide="power" class="w-3.5 h-3.5"></i> Cerrar Sesión
+            </button>
         </div>
     </div>
 
     <div id="splash" class="absolute inset-0 z-[150] bg-white flex flex-col items-center justify-center">
-        <div class="w-20 h-20 bg-red-600 rounded-[2rem] flex items-center justify-center shadow-2xl animate-pulse"><i data-lucide="navigation" class="text-white w-10 h-10"></i></div>
-        <h1 class="text-3xl font-black mt-6 tracking-tighter italic uppercase">DRIVE <span class="text-red-600">MX</span></h1>
+        <div class="w-20 h-20 bg-red-600 rounded-[2rem] flex items-center justify-center animate-pulse">
+            <i data-lucide="navigation" class="text-white w-10 h-10"></i>
+        </div>
+        <h1 class="text-3xl font-black mt-6 italic uppercase">DRIVE <span class="text-red-600">MX</span></h1>
     </div>
 
     <div id="login-screen" class="hidden absolute inset-0 z-40 bg-white p-10 flex flex-col justify-center">
-        <h2 class="text-4xl font-black text-gray-900 italic uppercase mb-10 leading-none tracking-tighter">SISTEMA DE<br><span class="text-red-600">ACCESO</span></h2>
+        <h2 class="text-4xl font-black italic uppercase mb-10 leading-none">LOGIN<br><span class="text-red-600">SISTEMA</span></h2>
         <div class="space-y-3">
-            <input type="email" id="email-input" placeholder="admin@app.com" class="w-full p-4 bg-gray-50 border-b-2 border-gray-100 rounded-xl outline-none focus:border-red-600 font-bold text-sm">
-            <input type="password" id="pass-input" placeholder="123" class="w-full p-4 bg-gray-50 border-b-2 border-gray-100 rounded-xl outline-none focus:border-red-600 font-bold text-sm">
-            <button onclick="handleLogin()" class="w-full bg-red-600 text-white py-4 rounded-[2rem] font-black uppercase tracking-widest text-xs mt-4 active:scale-95 transition-all shadow-lg shadow-red-600/20">Ingresar</button>
+            <input type="email" id="email-input" placeholder="admin@app.com" class="w-full p-4 bg-gray-50 border-b-2 border-gray-100 rounded-xl outline-none font-bold text-sm">
+            <input type="password" id="pass-input" placeholder="123" class="w-full p-4 bg-gray-50 border-b-2 border-gray-100 rounded-xl outline-none font-bold text-sm">
+            <button onclick="handleLogin()" class="w-full bg-red-600 text-white py-4 rounded-[2rem] font-black uppercase text-xs mt-4 active:scale-95 shadow-lg shadow-red-600/20">Ingresar</button>
         </div>
     </div>
 
     <div id="passenger-app" class="hidden h-screen flex flex-col">
         <header class="p-3 flex items-center justify-between border-b bg-white z-10">
             <button onclick="toggleMenu()" class="p-2 bg-gray-50 rounded-lg"><i data-lucide="menu" class="w-5 h-5"></i></button>
-            <h2 class="text-xl font-black italic tracking-tighter uppercase flex-1 text-center">DRIVE <span class="text-red-600">MX</span></h2>
+            <h2 class="text-xl font-black italic uppercase flex-1 text-center">DRIVE <span class="text-red-600">MX</span></h2>
             <div class="w-8 h-8 rounded-full border bg-gray-50 overflow-hidden"><img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix"></div>
         </header>
 
         <main class="flex-1 relative map-sim">
             <div class="absolute top-4 left-4 right-4 z-20 space-y-2">
-                <div class="bg-white/90 backdrop-blur-md p-2.5 rounded-xl shadow-sm border border-black/5 flex items-center gap-2">
-                    <div class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse shadow-[0_0_5px_#22c55e]"></div>
-                    <p class="text-[9px] font-black text-gray-800 uppercase italic tracking-tighter">Ubicación Actual Detectada</p>
+                <div class="bg-white/90 backdrop-blur-md p-2.5 rounded-xl shadow-sm border flex items-center gap-2">
+                    <div class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
+                    <p class="text-[9px] font-black text-gray-800 uppercase italic">En línea</p>
                 </div>
-                <div onclick="openCostSheet()" class="bg-white p-1 rounded-xl shadow-xl flex items-center gap-3 cursor-pointer border border-black/5 active:scale-95 transition-transform">
-                    <div class="w-10 h-10 bg-red-600 rounded-lg flex items-center justify-center text-white shadow-lg"><i data-lucide="search" class="w-5 h-5"></i></div>
-                    <span class="text-xs font-black text-gray-400 italic uppercase">¿A dónde vamos hoy?</span>
+                <div onclick="openCostSheet()" class="bg-white p-1 rounded-xl shadow-xl flex items-center gap-3 border active:scale-95 transition-transform cursor-pointer">
+                    <div class="w-10 h-10 bg-red-600 rounded-lg flex items-center justify-center text-white"><i data-lucide="search" class="w-5 h-5"></i></div>
+                    <span class="text-xs font-black text-gray-400 italic uppercase italic">¿A dónde vamos hoy?</span>
                 </div>
             </div>
 
-            <div class="absolute bottom-20 left-4 right-4 z-30">
+            <div class="absolute bottom-24 left-4 right-4 z-30">
                 <div class="bg-black rounded-[2rem] p-4 flex items-center justify-between text-white shadow-2xl border border-white/10">
                     <div class="flex items-center gap-3">
-                        <div class="w-9 h-9 bg-red-600/10 rounded-xl flex items-center justify-center border border-red-600/20 text-red-600"><i data-lucide="wallet" class="w-4 h-4"></i></div>
-                        <div><p class="text-[8px] text-gray-500 font-black uppercase">Saldo Disponible</p><h3 id="p-balance" class="text-base font-black italic">$50.00</h3></div>
+                        <div class="w-9 h-9 bg-red-600/10 rounded-xl flex items-center justify-center text-red-600"><i data-lucide="wallet" class="w-4 h-4"></i></div>
+                        <div><p class="text-[8px] text-gray-500 font-black uppercase">Cartera</p><h3 id="p-balance" class="text-base font-black italic">$50.00</h3></div>
                     </div>
                 </div>
             </div>
         </main>
 
-        <div id="cost-sheet" class="absolute bottom-0 left-0 right-0 bg-white z-[120] rounded-t-[2.5rem] shadow-[0_-15px_30px_rgba(0,0,0,0.15)] p-6 space-y-4 border-t">
-            <div class="w-12 h-1.5 bg-gray-200 rounded-full mx-auto -mt-2 mb-4"></div>
-            <h3 class="text-lg font-black italic uppercase tracking-tighter">Opciones de <span class="text-red-600">Viaje</span></h3>
+        <div id="cost-sheet" class="absolute bottom-0 left-0 right-0 bg-white z-[120] rounded-t-[2.5rem] shadow-[0_-10px_40px_rgba(0,0,0,0.2)] p-6 space-y-4">
+            <div class="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-2"></div>
+            <h3 class="text-lg font-black italic uppercase">Tipo de <span class="text-red-600">Servicio</span></h3>
             
             <div class="vehicle-card selected p-3 rounded-2xl flex items-center justify-between border transition-all">
                 <div class="flex items-center gap-3"><i data-lucide="car" class="w-5 h-5 text-red-600"></i><span class="font-black italic text-xs uppercase">Drive Basic</span></div>
                 <span class="font-black italic text-base">$45.00</span>
             </div>
 
-            <p class="text-[9px] font-black text-gray-400 uppercase tracking-widest text-center mt-2">Selecciona Pago</p>
+            <p class="text-[9px] font-black text-gray-400 uppercase text-center mt-2 tracking-widest">Método de Pago</p>
             <div class="grid grid-cols-3 gap-2">
-                <button id="pay-spei" onclick="selectPayment('SPEI')" class="pay-opt p-3 border border-gray-100 rounded-xl flex flex-col items-center gap-1 active:bg-red-50 transition-all"><i data-lucide="landmark" class="w-4 h-4"></i><span class="text-[8px] font-black uppercase">SPEI</span></button>
-                <button id="pay-cartera" onclick="selectPayment('Cartera')" class="pay-opt p-3 border border-gray-100 rounded-xl flex flex-col items-center gap-1 active:bg-red-50 transition-all"><i data-lucide="wallet" class="w-4 h-4"></i><span class="text-[8px] font-black uppercase">Cartera</span></button>
-                <button id="pay-efectivo" onclick="selectPayment('Efectivo')" class="pay-opt p-3 border border-gray-100 rounded-xl flex flex-col items-center gap-1 active:bg-red-50 transition-all"><i data-lucide="banknote" class="w-4 h-4"></i><span class="text-[8px] font-black uppercase">Efectivo</span></button>
+                <button id="pay-spei" onclick="selectPayment('SPEI')" class="pay-opt p-3 border rounded-xl flex flex-col items-center gap-1 active:bg-red-50"><i data-lucide="landmark" class="w-4 h-4"></i><span class="text-[8px] font-black uppercase">SPEI</span></button>
+                <button id="pay-cartera" onclick="selectPayment('Cartera')" class="pay-opt p-3 border rounded-xl flex flex-col items-center gap-1 active:bg-red-50"><i data-lucide="wallet" class="w-4 h-4"></i><span class="text-[8px] font-black uppercase">Cartera</span></button>
+                <button id="pay-efectivo" onclick="selectPayment('Efectivo')" class="pay-opt p-3 border rounded-xl flex flex-col items-center gap-1 active:bg-red-50"><i data-lucide="banknote" class="w-4 h-4"></i><span class="text-[8px] font-black uppercase">Efectivo</span></button>
             </div>
             
-            <button onclick="processOrder()" class="w-full bg-red-600 text-white py-4 rounded-[2rem] font-black shadow-lg uppercase tracking-widest text-[10px] italic active:scale-95 transition-all mb-8">
-                Confirmar Solicitud
+            <button onclick="processOrder()" class="w-full bg-red-600 text-white py-4 rounded-[2rem] font-black uppercase text-[10px] italic active:scale-95 mb-10 shadow-lg shadow-red-600/20">
+                Confirmar Viaje
             </button>
         </div>
     </div>
@@ -115,13 +122,13 @@
         <header class="p-4 bg-gray-900 text-white flex justify-between items-center z-10">
             <div class="flex items-center gap-3">
                 <button onclick="toggleMenu()" class="p-2 bg-white/10 rounded-lg"><i data-lucide="menu" class="w-5 h-5 text-red-600"></i></button>
-                <h2 class="text-base font-black italic tracking-tighter uppercase">ADMIN <span class="text-red-600">PANEL</span></h2>
+                <h2 class="text-base font-black italic uppercase">CONTROL <span class="text-red-600">PANEL</span></h2>
             </div>
         </header>
-        <main id="admin-host" class="p-6 overflow-y-auto flex-1 flex items-center justify-center">
-            <div id="admin-empty-state" class="text-center opacity-20">
-                <i data-lucide="layout" class="w-16 h-16 mx-auto mb-4"></i>
-                <p class="text-[10px] font-black uppercase italic tracking-widest">Panel en Espera</p>
+        <main id="admin-host" class="p-6 overflow-y-auto flex-1 flex items-center justify-center text-center">
+            <div id="admin-empty-state" class="opacity-20">
+                <i data-lucide="monitor" class="w-16 h-16 mx-auto mb-4"></i>
+                <p class="text-[10px] font-black uppercase italic tracking-widest">Esperando selección...</p>
             </div>
         </main>
     </div>
@@ -159,11 +166,12 @@
         document.getElementById('sidebar-user-role').innerText = role;
         document.getElementById('sidebar-icon').setAttribute('data-lucide', icon);
         const nav = document.getElementById('sidebar-nav');
-        const homeBtn = `<button onclick="goHome('${role}')" class="w-full flex items-center gap-3 p-3 text-gray-900 font-black bg-gray-50 rounded-xl uppercase text-[10px] italic mb-4 border shadow-sm"><i data-lucide="home" class="text-red-600 w-4 h-4"></i> INICIO</button>`;
+        const homeBtn = `<button onclick="goHome('${role}')" class="w-full flex items-center gap-3 p-4 text-gray-900 font-black bg-gray-50 rounded-xl uppercase text-[10px] italic mb-4 border shadow-sm"><i data-lucide="home" class="text-red-600 w-4 h-4"></i> INICIO</button>`;
+        
         if(role === "ADMINISTRADOR") {
-            nav.innerHTML = homeBtn + `<button onclick="loadTool('users')" class="w-full flex items-center gap-3 p-3 text-gray-800 font-black hover:bg-red-50 rounded-xl uppercase text-[10px] italic"><i data-lucide="users" class="text-red-600 w-4 h-4"></i> Usuarios</button>`;
+            nav.innerHTML = homeBtn + `<button onclick="loadTool('users')" class="w-full flex items-center gap-3 p-4 text-gray-800 font-black hover:bg-red-50 rounded-xl uppercase text-[10px] italic"><i data-lucide="users" class="text-red-600 w-4 h-4"></i> Usuarios</button>`;
         } else {
-            nav.innerHTML = homeBtn + `<button onclick="loadTool('history')" class="w-full flex items-center gap-3 p-3 text-gray-800 font-black hover:bg-gray-50 rounded-xl uppercase text-[10px] italic"><i data-lucide="history" class="w-4 h-4"></i> Mis Viajes</button>`;
+            nav.innerHTML = homeBtn + `<button onclick="loadTool('history')" class="w-full flex items-center gap-3 p-4 text-gray-800 font-black hover:bg-gray-50 rounded-xl uppercase text-[10px] italic"><i data-lucide="history" class="w-4 h-4"></i> Mis Viajes</button>`;
         }
         lucide.createIcons();
     }
@@ -171,7 +179,7 @@
     function goHome(role) {
         closeAllModals();
         if(role === "ADMINISTRADOR") {
-            document.getElementById('admin-host').innerHTML = `<div id="admin-empty-state" class="text-center opacity-20"><i data-lucide="layout" class="w-16 h-16 mx-auto mb-4"></i><p class="text-[10px] font-black uppercase italic tracking-widest">Panel en Espera</p></div>`;
+            document.getElementById('admin-host').innerHTML = `<div id=\"admin-empty-state\" class=\"opacity-20\"><i data-lucide=\"monitor\" class=\"w-16 h-16 mx-auto mb-4\"></i><p class=\"text-[10px] font-black uppercase italic tracking-widest\">Esperando selección...</p></div>`;
             lucide.createIcons();
         }
     }
@@ -180,7 +188,7 @@
         const host = document.getElementById('admin-host');
         closeAllModals();
         if(tool === 'users') {
-            host.innerHTML = `<div class="view-content w-full space-y-4"><h3 class="text-lg font-black italic uppercase tracking-tighter">Gestión de <span class="text-red-600">Usuarios</span></h3><div class="bg-white p-4 rounded-2xl border flex items-center justify-between"><span class="font-black text-xs uppercase italic">Juan Pasajero</span><button class="bg-red-600 text-white p-2 rounded-lg shadow-sm"><i data-lucide="edit-3" class="w-4 h-4"></i></button></div></div>`;
+            host.innerHTML = `<div class="view-content w-full space-y-4 text-left"><h3 class="text-lg font-black italic uppercase">Gestión de <span class="text-red-600">Usuarios</span></h3><div class="bg-white p-4 rounded-2xl border flex items-center justify-between"><span class="font-black text-[10px] uppercase italic">Juan Pasajero</span><button class="bg-red-600 text-white p-2 rounded-lg"><i data-lucide="edit" class="w-4 h-4"></i></button></div></div>`;
         }
         lucide.createIcons();
     }
@@ -192,14 +200,14 @@
     }
 
     function processOrder() {
-        if(!selectedMethod) return alert("Selecciona un método de pago.");
+        if(!selectedMethod) return alert("Selecciona pago");
         if(selectedMethod === 'Cartera') {
             if(currentBalance >= tripCost) {
                 currentBalance -= tripCost;
                 document.getElementById('p-balance').innerText = `$${currentBalance.toFixed(2)}`;
-                alert(`Pago confirmado: -$${tripCost}. Buscando conductor...`);
-            } else { return alert("Saldo insuficiente en cartera."); }
-        } else { alert("Solicitud enviada. Método: " + selectedMethod); }
+                alert(`Pago exitoso (-$${tripCost}). Buscando conductor...`);
+            } else { return alert("Saldo insuficiente"); }
+        } else { alert("Solicitud enviada: Pago en " + selectedMethod); }
         closeAllModals();
     }
 

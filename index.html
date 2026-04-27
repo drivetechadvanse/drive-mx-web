@@ -24,7 +24,6 @@
         #sidebar { transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); transform: translateX(-100%); }
         #sidebar.open { transform: translateX(0); }
         
-        /* Animación para el submenú */
         #submenu-usuarios {
             max-height: 0;
             overflow: hidden;
@@ -59,9 +58,7 @@
             <h2 class="text-lg font-black italic uppercase tracking-tighter">DRIVE <span class="text-red-600">MX</span></h2>
             <p id="sidebar-user-role" class="text-[8px] text-gray-500 font-bold mt-1 uppercase tracking-widest italic">Sistema Activo</p>
         </div>
-        
         <nav class="flex-1 p-4 space-y-1 overflow-y-auto" id="sidebar-nav"></nav>
-
         <div class="p-6 border-t bg-white pb-12"> 
             <button onclick="location.reload()" class="w-full flex items-center justify-center gap-3 py-4 bg-red-50 text-red-600 rounded-2xl font-black text-[11px] uppercase italic shadow-sm border border-red-100">
                 <i data-lucide="log-out" class="w-4 h-4"></i> CERRAR SESIÓN
@@ -91,19 +88,19 @@
             <div class="w-9 h-9 rounded-full border bg-gray-100"></div>
         </header>
         <main class="flex-1 relative map-sim overflow-hidden">
-            <div id="passenger-ui-top" class="absolute top-4 left-4 right-4 z-20 space-y-2">
+            <div class="absolute top-4 left-4 right-4 z-20">
                 <div onclick="openCostSheet()" class="bg-white p-2 rounded-2xl shadow-2xl flex items-center gap-4 border-2 border-red-500/10 active:scale-95 transition-transform cursor-pointer">
                     <div class="w-12 h-12 bg-red-600 rounded-xl flex items-center justify-center text-white"><i data-lucide="search" class="w-6 h-6"></i></div>
                     <span class="text-sm font-black text-gray-400 uppercase italic tracking-tighter">¿A dónde vamos hoy?</span>
                 </div>
             </div>
-            <div id="passenger-ui-bottom" class="absolute bottom-32 left-4 right-4 z-30">
+            <div class="absolute bottom-32 left-4 right-4 z-30">
                 <div class="bg-black rounded-[2.5rem] p-5 flex items-center justify-between text-white shadow-2xl border border-white/10">
                     <div class="flex items-center gap-4">
                         <div class="w-10 h-10 bg-red-600/20 rounded-xl flex items-center justify-center text-red-500 border border-red-500/30"><i data-lucide="wallet" class="w-5 h-5"></i></div>
                         <div>
                             <p class="text-[9px] text-gray-500 font-bold uppercase tracking-widest">Saldo Cartera</p>
-                            <h3 id="p-balance" class="text-lg font-black italic">$50.00</h3>
+                            <h3 class="text-lg font-black italic">$50.00</h3>
                         </div>
                     </div>
                 </div>
@@ -119,17 +116,33 @@
             </div>
         </header>
         <main id="admin-host" class="p-6 overflow-y-auto flex-1 flex flex-col items-center justify-center">
-            <div id="admin-empty-state" class="opacity-10 text-center">
-                <i data-lucide="layout-dashboard" class="w-20 h-20 mx-auto mb-4"></i>
-                <p class="font-black uppercase italic">Sistema en Espera</p>
-            </div>
+            <div class="opacity-10 text-center"><i data-lucide="layout-dashboard" class="w-20 h-20 mx-auto mb-4"></i><p class="font-black uppercase italic">Sistema en Espera</p></div>
         </main>
     </div>
 </div>
 
 <script>
     lucide.createIcons();
-    
+    let currentRegStep = 1;
+
+    // LISTADO DE PASOS DE REGISTRO (CON FOTO DE PERFIL AL INICIO)
+    const regSteps = [
+        { title: "Foto de Perfil", type: "special-photo", icon: "user-circle" },
+        { title: "CURP", type: "text", placeholder: "Ingresa tu CURP", icon: "search" },
+        { title: "WhatsApp", type: "tel", placeholder: "Número de 10 dígitos", icon: "message-circle" },
+        { title: "INE Frontal", type: "file", placeholder: "", icon: "image" },
+        { title: "INE Reversa", type: "file", placeholder: "", icon: "image" },
+        { title: "Seguridad Social (NSS)", type: "text", placeholder: "Ingresa tu NSS", icon: "shield-check" },
+        { title: "Licencia de Manejo", type: "file", placeholder: "", icon: "file-text" },
+        { title: "Marca del Vehículo", type: "text", placeholder: "Ej. Volkswagen...", icon: "car" },
+        { title: "Año y Modelo", type: "text", placeholder: "Ej. 2022 Jetta", icon: "calendar" },
+        { title: "Color del Vehículo", type: "text", placeholder: "Ej. Rojo", icon: "palette" },
+        { title: "Tarjeta de Circulación", type: "file", placeholder: "", icon: "file-check" },
+        { title: "Póliza de Seguro", type: "file", placeholder: "", icon: "heart-handshake" },
+        { title: "Placa del Vehículo", type: "text", placeholder: "Número de placa", icon: "hash" },
+        { title: "Foto Frontal (Matrícula)", type: "file", placeholder: "", icon: "camera" }
+    ];
+
     function handleLogin() {
         const e = document.getElementById('email-input').value;
         const p = document.getElementById('pass-input').value;
@@ -148,40 +161,28 @@
         document.getElementById('sidebar-user-role').innerText = role;
         document.getElementById('sidebar-icon').setAttribute('data-lucide', icon);
         const nav = document.getElementById('sidebar-nav');
-        
         const homeBtn = `<button onclick="location.reload()" class="w-full flex items-center gap-4 p-4 text-gray-900 font-black bg-gray-50 rounded-2xl uppercase text-xs italic mb-2 border shadow-sm"><i data-lucide="home" class="text-red-600"></i> INICIO</button>`;
         
         if(role === "ADMINISTRADOR") {
             nav.innerHTML = homeBtn + `
                 <button onclick="toggleSubmenu()" class="w-full flex items-center justify-between p-4 text-gray-800 font-black hover:bg-gray-50 rounded-2xl uppercase text-xs italic">
-                    <div class="flex items-center gap-4">
-                        <i data-lucide="users" class="text-red-600"></i> Usuarios
-                    </div>
+                    <div class="flex items-center gap-4"><i data-lucide="users" class="text-red-600"></i> Usuarios</div>
                     <i data-lucide="chevron-down" id="arrow-users" class="w-4 h-4 transition-transform"></i>
                 </button>
-                
                 <div id="submenu-usuarios" class="pl-12 space-y-1">
-                    <button onclick="loadAdminView('Pasajeros')" class="w-full text-left p-3 text-[10px] font-black text-gray-500 hover:text-red-600 uppercase italic transition-colors flex items-center gap-2">
-                        <div class="w-1.5 h-1.5 bg-red-600 rounded-full"></div> Pasajeros
-                    </button>
-                    <button onclick="loadAdminView('Conductores')" class="w-full text-left p-3 text-[10px] font-black text-gray-500 hover:text-red-600 uppercase italic transition-colors flex items-center gap-2">
-                        <div class="w-1.5 h-1.5 bg-red-600 rounded-full"></div> Conductores
-                    </button>
-                    <button onclick="loadAdminView('Administradores')" class="w-full text-left p-3 text-[10px] font-black text-gray-500 hover:text-red-600 uppercase italic transition-colors flex items-center gap-2">
-                        <div class="w-1.5 h-1.5 bg-red-600 rounded-full"></div> Administradores
-                    </button>
-                    <button onclick="loadAdminView('Comercios')" class="w-full text-left p-3 text-[10px] font-black text-gray-500 hover:text-red-600 uppercase italic transition-colors flex items-center gap-2">
-                        <div class="w-1.5 h-1.5 bg-red-600 rounded-full"></div> Comercios
-                    </button>
-                </div>
-            `;
+                    <button onclick="loadAdminView('Pasajeros')" class="w-full text-left p-3 text-[10px] font-black text-gray-500 hover:text-red-600 uppercase italic">Pasajeros</button>
+                    <button onclick="loadAdminView('Conductores')" class="w-full text-left p-3 text-[10px] font-black text-gray-500 hover:text-red-600 uppercase italic">Conductores</button>
+                    <button onclick="loadAdminView('Administradores')" class="w-full text-left p-3 text-[10px] font-black text-gray-500 hover:text-red-600 uppercase italic">Administradores</button>
+                    <button onclick="loadAdminView('Comercios')" class="w-full text-left p-3 text-[10px] font-black text-gray-500 hover:text-red-600 uppercase italic">Comercios</button>
+                </div>`;
         } else {
-            nav.innerHTML = homeBtn + `<button onclick="alert('Mis Viajes')" class="w-full flex items-center gap-4 p-4 text-gray-800 font-black hover:bg-gray-50 rounded-2xl uppercase text-xs italic"><i data-lucide="history"></i> Mis Viajes</button>`;
+            nav.innerHTML = homeBtn + 
+                `<button onclick="alert('Historial')" class="w-full flex items-center gap-4 p-4 text-gray-800 font-black hover:bg-gray-50 rounded-2xl uppercase text-xs italic"><i data-lucide="history"></i> Mis Viajes</button>` +
+                `<button onclick="openDriverRegistration()" class="w-full flex items-center gap-4 p-4 text-red-600 font-black bg-red-50 rounded-2xl uppercase text-[10px] italic mt-4 border border-red-100 shadow-sm"><i data-lucide="car"></i> Quiero ser Conductor</button>`;
         }
         lucide.createIcons();
     }
 
-    // Lógica para abrir/cerrar el submenú en el sidebar
     function toggleSubmenu() {
         const submenu = document.getElementById('submenu-usuarios');
         const arrow = document.getElementById('arrow-users');
@@ -189,21 +190,97 @@
         arrow.style.transform = submenu.classList.contains('active') ? 'rotate(180deg)' : 'rotate(0deg)';
     }
 
-    // Función para cargar la vista en el panel central al elegir una opción
     function loadAdminView(tipo) {
         closeAllModals();
         const host = document.getElementById('admin-host');
-        host.innerHTML = `
-            <div class="view-content w-full">
-                <h3 class="text-2xl font-black italic uppercase tracking-tighter mb-6">Lista de <span class="text-red-600">${tipo}</span></h3>
-                <div class="bg-white p-6 rounded-[2.5rem] border-2 border-dashed border-gray-200 text-center opacity-50">
-                    <p class="text-[10px] font-black uppercase italic text-gray-400 tracking-widest">Sin registros activos de ${tipo}</p>
-                </div>
-            </div>`;
+        host.innerHTML = `<div class="view-content w-full"><h3 class="text-2xl font-black italic uppercase mb-6 tracking-tighter">Lista de <span class="text-red-600">${tipo}</span></h3><div class="bg-white p-6 rounded-[2.5rem] border-2 border-dashed border-gray-200 text-center opacity-50"><p class="text-[10px] font-black uppercase italic text-gray-400 tracking-widest">Sin registros activos</p></div></div>`;
         lucide.createIcons();
     }
 
-    // Utilerías de UI
+    // REGISTRO CONDUCTOR
+    function openDriverRegistration() {
+        closeAllModals();
+        currentRegStep = 1;
+        renderRegStep();
+    }
+
+    function renderRegStep() {
+        const step = regSteps[currentRegStep - 1];
+        const isLast = currentRegStep === regSteps.length;
+        
+        let contentInput = "";
+        
+        // LÓGICA PARA EL FILTRO ESPECIAL DE FOTO DE PERFIL
+        if (step.type === "special-photo") {
+            contentInput = `
+                <div class="grid grid-cols-1 gap-4 w-full px-4">
+                    <button onclick="document.getElementById('cam-trigger').click()" class="flex items-center gap-4 p-5 bg-white border-2 rounded-3xl active:scale-95 transition-all shadow-sm">
+                        <div class="w-12 h-12 bg-red-50 rounded-2xl flex items-center justify-center text-red-600"><i data-lucide="camera"></i></div>
+                        <span class="font-black text-xs uppercase italic">Desde Cámara</span>
+                    </button>
+                    <button onclick="document.getElementById('gal-trigger').click()" class="flex items-center gap-4 p-5 bg-white border-2 rounded-3xl active:scale-95 transition-all shadow-sm">
+                        <div class="w-12 h-12 bg-gray-50 rounded-2xl flex items-center justify-center text-gray-600"><i data-lucide="image"></i></div>
+                        <span class="font-black text-xs uppercase italic">Desde Galería</span>
+                    </button>
+                    <input type="file" accept="image/*" capture="user" id="cam-trigger" class="hidden" onchange="nextRegStep()">
+                    <input type="file" accept="image/*" id="gal-trigger" class="hidden" onchange="nextRegStep()">
+                </div>`;
+        } else {
+            contentInput = `
+                <div class="px-4 w-full">
+                    <input type="${step.type}" id="reg-input" placeholder="${step.placeholder}" class="w-full p-5 bg-white border-2 rounded-[2rem] font-bold text-sm outline-none focus:border-red-600 text-center shadow-inner">
+                </div>`;
+        }
+
+        const regHTML = `
+            <div id="driver-reg-modal" class="absolute inset-0 z-[130] bg-white p-8 flex flex-col view-content">
+                <div class="flex justify-between items-center mb-8">
+                    <button onclick="this.parentElement.parentElement.remove()" class="p-2 bg-gray-100 rounded-full"><i data-lucide="x" class="w-5 h-5"></i></button>
+                    <div class="flex flex-col items-end">
+                        <span class="text-[10px] font-black text-gray-400 uppercase italic">Paso ${currentRegStep} de ${regSteps.length}</span>
+                        <div class="w-24 h-1 bg-gray-100 mt-1 rounded-full"><div class="bg-red-600 h-full transition-all" style="width:${(currentRegStep/regSteps.length)*100}%"></div></div>
+                    </div>
+                </div>
+                
+                <h2 class="text-3xl font-black italic uppercase leading-none mb-10">Registro<br><span class="text-red-600">Conductor</span></h2>
+                
+                <div class="flex-1 flex flex-col items-center justify-center gap-8">
+                    <div class="w-20 h-20 bg-red-600 rounded-3xl flex items-center justify-center text-white shadow-xl shadow-red-100">
+                        <i data-lucide="${step.icon}" class="w-10 h-10"></i>
+                    </div>
+                    <label class="font-black uppercase text-xs italic tracking-tighter">${step.title}</label>
+                    ${contentInput}
+                </div>
+
+                ${step.type !== "special-photo" ? `
+                    <button onclick="nextRegStep()" class="w-full bg-red-600 text-white py-5 rounded-[2.5rem] font-black uppercase text-xs italic shadow-xl active:scale-95 transition-all mt-6">
+                        CONTINUAR <i data-lucide="chevron-right" class="inline w-4 h-4 ml-1"></i>
+                    </button>
+                ` : `<p class="text-center text-[10px] font-bold text-gray-300 uppercase italic">Selecciona una opción para continuar</p>`}
+            </div>`;
+        
+        const existing = document.getElementById('driver-reg-modal');
+        if(existing) existing.remove();
+        document.getElementById('app-container').insertAdjacentHTML('beforeend', regHTML);
+        lucide.createIcons();
+    }
+
+    function nextRegStep() {
+        if(currentRegStep < regSteps.length) {
+            currentRegStep++;
+            renderRegStep();
+        } else {
+            showSuccessScreen();
+        }
+    }
+
+    function showSuccessScreen() {
+        const successHTML = `<div id="driver-reg-modal" class="absolute inset-0 z-[140] bg-white p-10 flex flex-col items-center justify-center text-center view-content"><div class="w-24 h-24 bg-red-50 rounded-full flex items-center justify-center mb-8"><i data-lucide="hourglass" class="w-12 h-12 text-red-600 animate-bounce"></i></div><h2 class="text-3xl font-black italic uppercase leading-tight mb-4">Validando<br><span class="text-red-600">Documentos</span></h2><div class="p-6 bg-gray-50 rounded-[2.5rem] border mb-10"><p class="text-xs font-bold text-gray-600 uppercase italic tracking-tighter leading-relaxed">Tus documentos se están validando. Si todo sale bien, te activaremos en menos de <span class="text-red-600">24 hrs</span>.</p></div><button onclick="location.reload()" class="w-full bg-black text-white py-5 rounded-[2rem] font-black uppercase text-xs italic shadow-xl active:scale-95">ACEPTAR</button></div>`;
+        document.getElementById('driver-reg-modal').remove();
+        document.getElementById('app-container').insertAdjacentHTML('beforeend', successHTML);
+        lucide.createIcons();
+    }
+
     function toggleMenu() {
         document.getElementById('sidebar').classList.toggle('open');
         document.getElementById('overlay').classList.toggle('opacity-100');
@@ -215,7 +292,6 @@
         document.getElementById('overlay').classList.remove('opacity-100', 'pointer-events-auto');
     }
 
-    // Simulación de Splash
     setTimeout(() => {
         document.getElementById('splash').style.opacity = '0';
         setTimeout(() => {

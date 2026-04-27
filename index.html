@@ -9,7 +9,6 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
         
-        /* Ajuste de altura para evitar recortes en móviles */
         :root { --app-height: 100dvh; }
         body { 
             font-family: 'Inter', sans-serif; 
@@ -26,15 +25,32 @@
         #sidebar { transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); transform: translateX(-100%); }
         #sidebar.open { transform: translateX(0); }
         
-        /* HOJA DE SERVICIOS - ELEVACIÓN TOTAL */
         #cost-sheet { 
             transition: transform 0.5s cubic-bezier(0.32, 0.72, 0, 1); 
             transform: translateY(110%);
-            padding-bottom: env(safe-area-inset-bottom, 60px); /* Margen para barras de navegación del cel */
+            padding-bottom: env(safe-area-inset-bottom, 60px);
             max-height: 80vh;
         }
         #cost-sheet.active { transform: translateY(0); }
-        
+
+        /* ANIMACIÓN DE ONDAS EXPANSIVAS */
+        .pulse-ring {
+            border: 3px solid #ef4444;
+            border-radius: 50%;
+            height: 60px;
+            width: 60px;
+            position: absolute;
+            left: -18px;
+            top: -18px;
+            animation: pulsate 1.5s ease-out infinite;
+            opacity: 0;
+        }
+        @keyframes pulsate {
+            0% { transform: scale(0.1, 0.1); opacity: 0; }
+            50% { opacity: 1; }
+            100% { transform: scale(1.2, 1.2); opacity: 0; }
+        }
+
         .view-content { animation: fadeInUp 0.4s ease-out; }
         @keyframes fadeInUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
@@ -53,10 +69,9 @@
             <p id="sidebar-user-role" class="text-[8px] text-gray-500 font-bold mt-1 uppercase tracking-widest italic">Sistema Activo</p>
         </div>
         <nav class="flex-1 p-4 space-y-1 overflow-y-auto" id="sidebar-nav"></nav>
-        
         <div class="p-6 border-t bg-white pb-12"> 
             <button onclick="location.reload()" class="w-full flex items-center justify-center gap-3 py-4 bg-red-50 text-red-600 rounded-2xl font-black text-[11px] uppercase italic shadow-sm border border-red-100">
-                <i data-lucide="log-out" class="w-4 h-4 text-red-600"></i> CERRAR SESIÓN
+                <i data-lucide="log-out" class="w-4 h-4"></i> CERRAR SESIÓN
             </button>
         </div>
     </div>
@@ -77,26 +92,37 @@
     </div>
 
     <div id="passenger-app" class="hidden h-full flex flex-col">
-        <header class="p-4 flex items-center justify-between border-b bg-white z-10">
+        <header id="passenger-header" class="p-4 flex items-center justify-between border-b bg-white z-10">
             <button onclick="toggleMenu()" class="p-2 bg-gray-50 rounded-xl"><i data-lucide="menu" class="w-6 h-6"></i></button>
             <h2 class="text-xl font-black italic uppercase flex-1 text-center">DRIVE <span class="text-red-600">MX</span></h2>
             <div class="w-9 h-9 rounded-full border bg-gray-100"></div>
         </header>
 
-        <main class="flex-1 relative map-sim">
-            <div class="absolute top-4 left-4 right-4 z-20 space-y-2">
+        <main class="flex-1 relative map-sim overflow-hidden">
+            <div id="passenger-ui-top" class="absolute top-4 left-4 right-4 z-20 space-y-2">
                 <div class="bg-white/90 backdrop-blur-md p-3 rounded-2xl shadow-sm border flex items-center gap-2">
                     <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
                     <span class="text-[10px] font-black uppercase italic">GPS Activo</span>
                 </div>
                 <div onclick="openCostSheet()" class="bg-white p-2 rounded-2xl shadow-2xl flex items-center gap-4 border-2 border-red-500/10 active:scale-95 transition-transform cursor-pointer">
-                    <div class="w-12 h-12 bg-red-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-red-600/30"><i data-lucide="search" class="w-6 h-6"></i></div>
-                    <span class="text-sm font-black text-gray-400 uppercase italic">¿A dónde vamos hoy?</span>
+                    <div class="w-12 h-12 bg-red-600 rounded-xl flex items-center justify-center text-white"><i data-lucide="search" class="w-6 h-6"></i></div>
+                    <span class="text-sm font-black text-gray-400 uppercase italic tracking-tighter">¿A dónde vamos hoy?</span>
                 </div>
             </div>
 
-            <div class="absolute bottom-32 left-4 right-4 z-30">
-                <div class="bg-black rounded-[2.5rem] p-5 flex items-center justify-between text-white shadow-[0_20px_50px_rgba(0,0,0,0.3)]">
+            <div id="searching-pin" class="hidden absolute inset-0 flex items-center justify-center z-40 pointer-events-none">
+                <div class="relative">
+                    <div class="pulse-ring"></div>
+                    <div class="w-6 h-6 bg-red-600 rounded-full border-4 border-white shadow-xl relative z-10"></div>
+                    <div class="w-1 h-8 bg-red-600 mx-auto -mt-1 rounded-full shadow-lg"></div>
+                </div>
+                <div class="absolute top-1/2 left-1/2 -translate-x-1/2 mt-12 bg-black text-white px-6 py-2 rounded-full shadow-2xl animate-bounce">
+                    <span class="text-[10px] font-black uppercase italic tracking-[0.2em]">Buscando Conductor...</span>
+                </div>
+            </div>
+
+            <div id="passenger-ui-bottom" class="absolute bottom-32 left-4 right-4 z-30">
+                <div class="bg-black rounded-[2.5rem] p-5 flex items-center justify-between text-white shadow-2xl border border-white/10">
                     <div class="flex items-center gap-4">
                         <div class="w-10 h-10 bg-red-600/20 rounded-xl flex items-center justify-center text-red-500 border border-red-500/30"><i data-lucide="wallet" class="w-5 h-5"></i></div>
                         <div>
@@ -110,21 +136,18 @@
 
         <div id="cost-sheet" class="absolute bottom-0 left-0 right-0 bg-white z-[120] rounded-t-[3rem] shadow-[0_-20px_60px_rgba(0,0,0,0.25)] p-8">
             <div class="w-16 h-1.5 bg-gray-200 rounded-full mx-auto mb-6"></div>
-            
             <div class="view-content">
                 <h3 class="text-xl font-black italic uppercase mb-4">Drive <span class="text-red-600">Basic</span></h3>
                 <div class="p-4 rounded-3xl border-2 border-red-600 bg-red-50 flex justify-between items-center mb-6">
                     <div class="flex items-center gap-3"><i data-lucide="car" class="text-red-600"></i><span class="font-bold text-xs uppercase">Precio Fijo</span></div>
                     <span class="font-black text-xl italic">$45.00</span>
                 </div>
-
                 <div class="grid grid-cols-3 gap-3 mb-8">
                     <button id="pay-spei" onclick="selectPayment('SPEI')" class="pay-opt p-4 border-2 rounded-2xl flex flex-col items-center gap-2 transition-all"><i data-lucide="landmark"></i><span class="text-[9px] font-black uppercase">SPEI</span></button>
                     <button id="pay-cartera" onclick="selectPayment('Cartera')" class="pay-opt p-4 border-2 rounded-2xl flex flex-col items-center gap-2 transition-all"><i data-lucide="wallet"></i><span class="text-[9px] font-black uppercase">Cartera</span></button>
                     <button id="pay-efectivo" onclick="selectPayment('Efectivo')" class="pay-opt p-4 border-2 rounded-2xl flex flex-col items-center gap-2 transition-all"><i data-lucide="banknote"></i><span class="text-[9px] font-black uppercase">Cash</span></button>
                 </div>
-                
-                <button onclick="processOrder()" class="w-full bg-red-600 text-white py-5 rounded-[2.5rem] font-black uppercase text-xs italic shadow-xl shadow-red-600/20 active:scale-95 mb-4">
+                <button onclick="processOrder()" class="w-full bg-red-600 text-white py-5 rounded-[2.5rem] font-black uppercase text-xs italic shadow-xl active:scale-95 mb-4">
                     PEDIR CONDUCTOR AHORA
                 </button>
             </div>
@@ -153,7 +176,6 @@
     let selectedMethod = null;
     const tripCost = 45.00;
 
-    // Fix para altura en móviles
     const setHeight = () => document.documentElement.style.setProperty('--app-height', `${window.innerHeight}px`);
     window.addEventListener('resize', setHeight);
     setHeight();
@@ -177,7 +199,7 @@
             document.getElementById('login-screen').classList.add('hidden');
             document.getElementById('passenger-app').classList.remove('hidden');
             setupUI("JUAN PASAJERO", "user");
-        } else { alert("Error de acceso"); }
+        } else { alert("Acceso Incorrecto"); }
     }
 
     function setupUI(role, icon) {
@@ -185,19 +207,42 @@
         document.getElementById('sidebar-icon').setAttribute('data-lucide', icon);
         const nav = document.getElementById('sidebar-nav');
         const homeBtn = `<button onclick="goHome('${role}')" class="w-full flex items-center gap-4 p-4 text-gray-900 font-black bg-gray-50 rounded-2xl uppercase text-xs italic mb-4 border shadow-sm"><i data-lucide="home" class="text-red-600"></i> INICIO</button>`;
-        
         if(role === "ADMINISTRADOR") {
-            nav.innerHTML = homeBtn + `<button onclick="loadTool('users')" class="w-full flex items-center gap-4 p-4 text-gray-800 font-black hover:bg-red-50 rounded-2xl uppercase text-xs italic"><i data-lucide="users" class="text-red-600"></i> Usuarios</button>`;
+            nav.innerHTML = homeBtn + `<button onclick=\"loadTool('users')\" class=\"w-full flex items-center gap-4 p-4 text-gray-800 font-black hover:bg-red-50 rounded-2xl uppercase text-xs italic\"><i data-lucide=\"users\" class=\"text-red-600\"></i> Usuarios</button>`;
         } else {
-            nav.innerHTML = homeBtn + `<button onclick="loadTool('history')" class="w-full flex items-center gap-4 p-4 text-gray-800 font-black hover:bg-gray-50 rounded-2xl uppercase text-xs italic"><i data-lucide="history"></i> Mis Viajes</button>`;
+            nav.innerHTML = homeBtn + `<button onclick=\"loadTool('history')\" class=\"w-full flex items-center gap-4 p-4 text-gray-800 font-black hover:bg-gray-50 rounded-2xl uppercase text-xs italic\"><i data-lucide=\"history\"></i> Mis Viajes</button>`;
         }
         lucide.createIcons();
+    }
+
+    function processOrder() {
+        if(!selectedMethod) return alert("Selecciona un método de pago.");
+        
+        if(selectedMethod === 'Cartera') {
+            if(currentBalance < tripCost) return alert("Saldo insuficiente.");
+            currentBalance -= tripCost;
+            document.getElementById('p-balance').innerText = `$${currentBalance.toFixed(2)}`;
+        }
+
+        closeAllModals();
+        
+        // MODO BÚSQUEDA ACTIVADO
+        document.getElementById('passenger-header').classList.add('hidden');
+        document.getElementById('passenger-ui-top').classList.add('hidden');
+        document.getElementById('passenger-ui-bottom').classList.add('hidden');
+        document.getElementById('searching-pin').classList.remove('hidden');
+
+        // Simulamos que encuentra conductor en 5 segundos (esto es escalable a tiempo real después)
+        setTimeout(() => {
+            alert("¡Conductor asignado! Drive MX en camino.");
+            location.reload(); // Reiniciamos para ejemplo
+        }, 6000);
     }
 
     function goHome(role) {
         closeAllModals();
         if(role === "ADMINISTRADOR") {
-            document.getElementById('admin-host').innerHTML = `<div id="admin-empty-state" class="opacity-10 text-center"><i data-lucide="layout-dashboard" class="w-20 h-20 mx-auto mb-4"></i><p class="font-black uppercase italic">Sistema en Espera</p></div>`;
+            document.getElementById('admin-host').innerHTML = `<div id=\"admin-empty-state\" class=\"opacity-10 text-center\"><i data-lucide=\"layout-dashboard\" class=\"w-20 h-20 mx-auto mb-4\"></i><p class=\"font-black uppercase italic\">Sistema en Espera</p></div>`;
             lucide.createIcons();
         }
     }
@@ -206,7 +251,7 @@
         const host = document.getElementById('admin-host');
         closeAllModals();
         if(tool === 'users') {
-            host.innerHTML = `<div class="view-content w-full space-y-4"><h3 class="text-xl font-black italic uppercase">Usuarios <span class="text-red-600">Activos</span></h3><div class="bg-white p-5 rounded-3xl border flex items-center justify-between shadow-sm"><span class="font-black text-xs uppercase italic">Juan Pasajero</span><button class="bg-red-600 text-white p-3 rounded-xl shadow-lg"><i data-lucide="edit" class="w-4 h-4"></i></button></div></div>`;
+            host.innerHTML = `<div class=\"view-content w-full space-y-4\"><h3 class=\"text-xl font-black italic uppercase tracking-tighter\">Usuarios <span class=\"text-red-600\">Activos</span></h3><div class=\"bg-white p-5 rounded-3xl border flex items-center justify-between shadow-sm\"><span class=\"font-black text-xs uppercase italic\">Juan Pasajero</span><button class=\"bg-red-600 text-white p-3 rounded-xl\"><i data-lucide=\"edit\" class=\"w-4 h-4\"></i></button></div></div>`;
         }
         lucide.createIcons();
     }
@@ -215,18 +260,6 @@
         selectedMethod = method;
         document.querySelectorAll('.pay-opt').forEach(o => o.classList.remove('border-red-600', 'bg-red-50', 'text-red-600'));
         document.getElementById(`pay-${method.toLowerCase()}`).classList.add('border-red-600', 'bg-red-50', 'text-red-600');
-    }
-
-    function processOrder() {
-        if(!selectedMethod) return alert("Selecciona un método de pago.");
-        if(selectedMethod === 'Cartera') {
-            if(currentBalance >= tripCost) {
-                currentBalance -= tripCost;
-                document.getElementById('p-balance').innerText = `$${currentBalance.toFixed(2)}`;
-                alert(`Pago exitoso. Saldo actual: $${currentBalance.toFixed(2)}`);
-            } else { return alert("Saldo insuficiente."); }
-        } else { alert("Solicitud enviada. Buscando conductor..."); }
-        closeAllModals();
     }
 
     function toggleMenu() {

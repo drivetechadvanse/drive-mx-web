@@ -126,8 +126,10 @@
     lucide.createIcons();
     let selectedMethod = null;
     let currentRegStep = 1;
+    
+    // Base de datos simulada con nuevos campos para NSS, Color y Placa 
     let conductoresBD = [
-        { id: 1, nombre: "Fernando Garduño", tel: "5512345678", estado: "Aprobado", calif: 4.9, foto: "https://i.pravatar.cc/150?u=fer", curp: "GARC900101HDF", auto: "Jetta Rojo 2022" }
+        { id: 1, nombre: "Fernando Garduño", tel: "5512345678", estado: "Aprobado", calif: 4.9, foto: "https://i.pravatar.cc/150?u=fer", curp: "GARC900101HDF", auto: "Jetta 2022", color: "Rojo", nss: "12345678901", placa: "MX-9988" }
     ];
 
     const regSteps = [
@@ -186,7 +188,7 @@
         lucide.createIcons();
     }
 
-    // ADMIN VIEWS
+    // LIST VIEW
     function loadListView(tipo) {
         closeAllModals();
         const host = document.getElementById('admin-host');
@@ -213,36 +215,82 @@
         lucide.createIcons();
     }
 
+    // NUEVA FUNCIÓN: DETALLE DEL CONDUCTOR CON BANNERS INTERACTIVOS
     function verDetalleConductor(id) {
         const c = conductoresBD.find(x => x.id === id);
-        const modal = `<div id="detalle-modal" class="absolute inset-0 z-[140] bg-white overflow-y-auto p-6 view-content">
-            <button onclick="this.parentElement.remove()" class="mb-6 p-2 bg-gray-100 rounded-full"><i data-lucide="arrow-left"></i></button>
-            <h2 class="text-2xl font-black italic uppercase mb-8">Detalle <span class="text-red-600">Conductor</span></h2>
-            <div class="grid grid-cols-2 gap-4 mb-8">
-                <div class="bg-gray-50 p-4 rounded-3xl"><p class="text-[8px] font-black text-gray-400 uppercase italic">CURP</p><p class="text-[10px] font-black">${c.curp}</p></div>
-                <div class="bg-gray-50 p-4 rounded-3xl"><p class="text-[8px] font-black text-gray-400 uppercase italic">Vehículo</p><p class="text-[10px] font-black">${c.auto}</p></div>
-            </div>
-            <div class="space-y-4">
-                ${['INE Frontal', 'INE Reversa', 'Licencia'].map(doc => `
-                <div class="relative rounded-[2rem] overflow-hidden border-2">
-                    <img src="https://placehold.jp/24/000000/ffffff/400x220.png?text=${doc}" class="w-full h-40 object-cover">
-                    <button onclick="eliminarFoto(${c.id}, '${doc}')" class="absolute top-3 right-3 bg-red-600 text-white p-2 rounded-xl"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-                </div>`).join('')}
-            </div>
-            <div class="mt-8 flex gap-3 pb-8">
-                <button onclick="alert('Aprobado'); this.parentElement.remove()" class="flex-1 bg-green-500 text-white py-5 rounded-[2rem] font-black text-[10px] uppercase shadow-lg">Aprobar</button>
-                <button onclick="alert('Bloqueado'); this.parentElement.remove()" class="flex-1 bg-black text-white py-5 rounded-[2rem] font-black text-[10px] uppercase">Bloquear</button>
+        const modal = `
+        <div id="detalle-modal" class="absolute inset-0 z-[140] bg-white overflow-y-auto p-6 view-content">
+            <header class="flex items-center gap-4 mb-8">
+                <button onclick="this.parentElement.parentElement.remove()" class="p-2 bg-gray-100 rounded-full"><i data-lucide="arrow-left"></i></button>
+                <h2 class="text-xl font-black italic uppercase">Perfil <span class="text-red-600">Conductor</span></h2>
+            </header>
+
+            <div class="space-y-4 pb-10">
+                <div onclick="toggleSeccionDocs('docs-personales')" class="bg-gray-50 p-5 rounded-[2rem] border border-gray-100 active:scale-95 transition-all cursor-pointer">
+                    <h3 class="text-[10px] font-black text-red-600 uppercase italic mb-3 tracking-widest">DATOS DE CONDUCTOR</h3>
+                    <div class="grid grid-cols-1 gap-2">
+                        <p class="text-[11px] font-bold"><span class="text-gray-400 uppercase italic mr-2 text-[8px]">CURP:</span> ${c.curp}</p>
+                        <p class="text-[11px] font-bold"><span class="text-gray-400 uppercase italic mr-2 text-[8px]">WhatsApp:</span> ${c.tel}</p>
+                        <p class="text-[11px] font-bold"><span class="text-gray-400 uppercase italic mr-2 text-[8px]">NSS:</span> ${c.nss}</p>
+                    </div>
+                </div>
+                <div id="docs-personales" class="hidden space-y-3 px-2">
+                    ${renderDocCard(c.id, 'INE Frontal')}
+                    ${renderDocCard(c.id, 'INE Reversa')}
+                </div>
+
+                <div onclick="toggleSeccionDocs('docs-vehiculo')" class="bg-gray-50 p-5 rounded-[2rem] border border-gray-100 active:scale-95 transition-all cursor-pointer">
+                    <h3 class="text-[10px] font-black text-red-600 uppercase italic mb-3 tracking-widest">DATOS DEL VEHÍCULO</h3>
+                    <div class="grid grid-cols-1 gap-2">
+                        <p class="text-[11px] font-bold"><span class="text-gray-400 uppercase italic mr-2 text-[8px]">Modelo/Año:</span> ${c.auto}</p>
+                        <p class="text-[11px] font-bold"><span class="text-gray-400 uppercase italic mr-2 text-[8px]">Color:</span> ${c.color}</p>
+                    </div>
+                </div>
+                <div id="docs-vehiculo" class="hidden space-y-3 px-2">
+                    ${renderDocCard(c.id, 'Licencia de Manejo')}
+                    ${renderDocCard(c.id, 'Tarjeta de Circulación')}
+                </div>
+
+                <div onclick="toggleSeccionDocs('docs-matricula')" class="bg-gray-50 p-5 rounded-[2rem] border border-gray-100 active:scale-95 transition-all cursor-pointer">
+                    <h3 class="text-[10px] font-black text-red-600 uppercase italic mb-3 tracking-widest">MATRÍCULA</h3>
+                    <div class="grid grid-cols-1 gap-2">
+                        <p class="text-[11px] font-bold"><span class="text-gray-400 uppercase italic mr-2 text-[8px]">Placa:</span> ${c.placa}</p>
+                    </div>
+                </div>
+                <div id="docs-matricula" class="hidden space-y-3 px-2">
+                    ${renderDocCard(c.id, 'Foto Matrícula')}
+                    ${renderDocCard(c.id, 'Póliza de Seguro')}
+                </div>
+
+                <div class="mt-8 flex gap-3">
+                    <button onclick="alert('Aprobado'); this.parentElement.parentElement.remove()" class="flex-1 bg-green-500 text-white py-5 rounded-[2rem] font-black text-[10px] uppercase shadow-lg">Aprobar</button>
+                    <button onclick="alert('Bloqueado'); this.parentElement.parentElement.remove()" class="flex-1 bg-black text-white py-5 rounded-[2rem] font-black text-[10px] uppercase">Bloquear</button>
+                </div>
             </div>
         </div>`;
         document.getElementById('app-container').insertAdjacentHTML('beforeend', modal);
         lucide.createIcons();
     }
 
+    function renderDocCard(id, docName) {
+        return `
+        <div class="relative rounded-3xl overflow-hidden border-2 border-gray-100 bg-white">
+            <p class="absolute top-2 left-4 text-[7px] font-black uppercase text-white bg-black/50 px-2 py-1 rounded-full z-10">${docName}</p>
+            <img src="https://placehold.jp/24/666666/ffffff/400x200.png?text=${docName}" class="w-full h-32 object-cover">
+            <button onclick="eliminarFoto(${id}, '${docName}')" class="absolute bottom-2 right-2 bg-red-600 text-white p-2 rounded-xl shadow-lg active:scale-90 transition-all"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+        </div>`;
+    }
+
+    function toggleSeccionDocs(id) {
+        const seccion = document.getElementById(id);
+        const estaOculto = seccion.classList.contains('hidden');
+        ['docs-personales', 'docs-vehiculo', 'docs-matricula'].forEach(s => document.getElementById(s).classList.add('hidden'));
+        if(estaOculto) seccion.classList.remove('hidden');
+    }
+
     function eliminarFoto(id, doc) {
         if(confirm(`¿Eliminar ${doc}?`)) {
-            const index = conductoresBD.findIndex(x => x.id === id);
-            conductoresBD[index].estado = "Doc. Pendiente";
-            alert("Eliminado. Se bloqueó al conductor hasta que resuba el archivo.");
+            alert(`SISTEMA: El documento "${doc}" ha sido eliminado. Se ha notificado al conductor para que vuelva a subirlo.`);
             document.getElementById('detalle-modal').remove();
             loadListView('Conductores');
         }
@@ -271,7 +319,6 @@
                 <button onclick="nextRegStep()" class="flex items-center gap-4 p-5 bg-white border-2 rounded-3xl active:scale-95"><i data-lucide="image" class="text-gray-600"></i><span class="font-black text-xs uppercase italic">Galería</span></button>
             </div>` : 
             `<div class="px-4 w-full"><input type="${step.type}" id="reg-input" placeholder="${step.placeholder || ''}" class="w-full p-5 bg-white border-2 rounded-[2rem] font-bold text-sm text-center outline-none focus:border-red-600"></div>`;
-
         const html = `
             <div id="driver-reg-modal" class="absolute inset-0 z-[130] bg-white p-8 flex flex-col view-content">
                 <div class="flex justify-between items-center mb-8"><button onclick="this.parentElement.parentElement.remove()" class="p-2 bg-gray-100 rounded-full"><i data-lucide="x"></i></button><span class="text-[10px] font-black text-gray-400 uppercase italic">Paso ${currentRegStep}/${regSteps.length}</span></div>

@@ -36,15 +36,15 @@
         <div class="w-20 h-20 bg-red-600 rounded-[2rem] flex items-center justify-center shadow-2xl animate-bounce">
             <i data-lucide="navigation" class="text-white w-10 h-10"></i>
         </div>
-        <h1 class="text-3xl font-black mt-8 italic uppercase">Drive <span class="text-red-600">MX</span></h1>
+        <h1 class="text-3xl font-black mt-8 italic uppercase">drive <span class="text-red-600">mx</span></h1>
     </div>
 
     <div id="login-screen" class="hidden absolute inset-0 z-[150] bg-white p-10 flex flex-col justify-center">
-        <h2 class="text-3xl font-black italic uppercase mb-8 leading-none">Bienvenido a<br><span class="text-red-600">Drive MX</span></h2>
+        <h2 class="text-3xl font-black italic uppercase mb-8 leading-none">bienvenido a<br><span class="text-red-600">drive mx</span></h2>
         <div class="space-y-4">
             <input type="email" id="login-email" placeholder="usuario" class="w-full p-4 bg-gray-50 border-b-2 border-gray-100 rounded-2xl outline-none focus:border-red-600 text-xs font-bold transition-all">
             <input type="password" id="login-pass" placeholder="contraseña" class="w-full p-4 bg-gray-50 border-b-2 border-gray-100 rounded-2xl outline-none focus:border-red-600 text-xs font-bold transition-all">
-            <button onclick="handleAuth()" class="w-full bg-red-600 text-white py-5 rounded-[1.5rem] font-black text-[11px] uppercase italic shadow-xl shadow-red-200 mt-4">Ingresar</button>
+            <button onclick="handleAuth()" class="w-full bg-red-600 text-white py-5 rounded-[1.5rem] font-black text-[11px] uppercase italic shadow-xl shadow-red-200 mt-4">ingresar</button>
         </div>
     </div>
 
@@ -52,29 +52,29 @@
 
     <div id="sidebar" class="absolute inset-y-0 left-0 w-64 bg-white z-[110] shadow-2xl flex flex-col">
         <div class="p-8 bg-gray-900 text-white">
-            <div class="w-12 h-12 bg-red-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-red-600/20"><i data-lucide="cpu" class="w-6 h-6"></i></div>
-            <h2 class="text-xl font-black italic uppercase">Drive <span class="text-red-600">MX</span></h2>
-            <p id="side-role" class="text-[8px] text-gray-500 font-bold uppercase tracking-widest mt-1">sistema</p>
+            <div class="w-12 h-12 bg-red-600 rounded-2xl flex items-center justify-center mb-4"><i data-lucide="cpu" class="w-6 h-6"></i></div>
+            <h2 class="text-xl font-black italic uppercase">drive <span class="text-red-600">mx</span></h2>
+            <p id="side-role" class="text-[8px] text-gray-500 font-bold uppercase tracking-widest mt-1 italic">sistema</p>
         </div>
         <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
             <div id="nav-admin" class="hidden">
                 <button onclick="toggleAccordion('admin-acc', 'admin-chev')" class="w-full flex items-center justify-between p-3 text-gray-700 font-black hover:bg-gray-50 rounded-xl uppercase text-[10px] italic">
-                    <div class="flex items-center gap-3"><i data-lucide="users" class="text-red-600 w-4 h-4"></i><span>Usuarios</span></div>
+                    <div class="flex items-center gap-3"><i data-lucide="users" class="text-red-600 w-4 h-4"></i><span>usuarios</span></div>
                     <i data-lucide="chevron-down" id="admin-chev" class="w-3 h-3 chevron-rotate"></i>
                 </button>
                 <div id="admin-acc" class="accordion-content bg-gray-50/50 rounded-xl ml-2">
-                    <button class="w-full text-left p-3 pl-9 text-[9px] font-bold text-gray-400 uppercase italic hover:text-red-600">Pasajeros</button>
-                    <button class="w-full text-left p-3 pl-9 text-[9px] font-bold text-gray-400 uppercase italic hover:text-red-600">Conductores</button>
-                    <button class="w-full text-left p-3 pl-9 text-[9px] font-bold text-gray-400 uppercase italic hover:text-red-600">Administradores</button>
+                    <button class="w-full text-left p-3 pl-9 text-[9px] font-bold text-gray-400 uppercase italic hover:text-red-600">pasajeros</button>
+                    <button class="w-full text-left p-3 pl-9 text-[9px] font-bold text-gray-400 uppercase italic hover:text-red-600">conductores</button>
+                    <button class="w-full text-left p-3 pl-9 text-[9px] font-bold text-gray-400 uppercase italic hover:text-red-600">administradores</button>
                 </div>
             </div>
             <div id="nav-passenger" class="hidden">
                 <button onclick="toggleAccordion('pass-acc', 'pass-chev')" class="w-full flex items-center justify-between p-3 text-gray-700 font-black hover:bg-gray-50 rounded-xl uppercase text-[10px] italic">
-                    <div class="flex items-center gap-3"><i data-lucide="user" class="text-red-600 w-4 h-4"></i><span>Pasajeros</span></div>
+                    <div class="flex items-center gap-3"><i data-lucide="user" class="text-red-600 w-4 h-4"></i><span>pasajeros</span></div>
                     <i data-lucide="chevron-down" id="pass-chev" class="w-3 h-3 chevron-rotate"></i>
                 </button>
                 <div id="pass-acc" class="accordion-content bg-gray-50/50 rounded-xl ml-2">
-                    <button onclick="openDriverRegistration()" class="w-full text-left p-3 pl-9 text-[9px] font-black text-red-600 uppercase italic">Quiero ser conductor</button>
+                    <button onclick="openDriverRegistration()" class="w-full text-left p-3 pl-9 text-[9px] font-black text-red-600 uppercase italic">quiero ser conductor</button>
                 </div>
             </div>
         </nav>
@@ -83,7 +83,7 @@
 
     <div id="driver-registration-modal" class="absolute inset-0 z-[180] bg-white p-8 flex flex-col overflow-y-auto">
         <header class="flex items-center justify-between mb-10">
-            <h2 class="text-2xl font-black italic uppercase leading-none">Registro<br><span class="text-red-600">Conductor</span></h2>
+            <h2 class="text-2xl font-black italic uppercase leading-none">registro<br><span class="text-red-600">conductor</span></h2>
             <button onclick="closeDriverRegistration()" class="p-3 bg-gray-100 rounded-2xl"><i data-lucide="x" class="w-5 h-5"></i></button>
         </header>
         <form id="driverForm" onsubmit="saveDriver(event)" class="space-y-5">
@@ -100,16 +100,16 @@
     <div id="admin-view" class="hidden h-screen flex flex-col bg-gray-50">
         <header class="px-5 py-4 bg-gray-900 text-white flex justify-between items-center z-10 shadow-lg">
             <button onclick="openMenu()"><i data-lucide="menu" class="text-red-600 w-6 h-6"></i></button>
-            <h2 class="font-black italic uppercase text-base">Control <span class="text-red-600">Center</span></h2>
+            <h2 class="font-black italic uppercase text-base">control <span class="text-red-600">center</span></h2>
             <div class="w-5 h-5"></div>
         </header>
         <main class="flex-1 p-6 overflow-y-auto space-y-6">
             <div class="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm flex items-center justify-between">
-                <div><p class="text-[8px] font-black text-gray-400 uppercase italic">Solicitudes</p><h4 id="pending-count" class="text-3xl font-black italic">0</h4></div>
+                <div><p class="text-[8px] font-black text-gray-400 uppercase italic">solicitudes recibidas</p><h4 id="pending-count" class="text-3xl font-black italic">0</h4></div>
                 <div class="w-14 h-14 bg-red-50 rounded-2xl flex items-center justify-center text-red-600"><i data-lucide="file-text" class="w-7 h-7"></i></div>
             </div>
             <div id="drivers-list" class="space-y-3">
-                <div class="bg-white p-6 rounded-[2rem] border border-gray-100 text-[10px] text-gray-400 font-bold italic text-center uppercase">Sin solicitudes pendientes</div>
+                <div class="bg-white p-6 rounded-[2rem] border border-gray-100 text-[10px] text-gray-400 font-bold italic text-center uppercase">sin solicitudes pendientes</div>
             </div>
         </main>
     </div>
@@ -117,14 +117,14 @@
     <div id="passenger-view" class="hidden h-screen flex flex-col relative">
         <header class="px-5 py-4 bg-white border-b flex justify-between items-center z-10">
             <button onclick="openMenu()"><i data-lucide="menu" class="w-6 h-6"></i></button>
-            <h2 class="font-black italic uppercase text-xl">Drive <span class="text-red-600">MX</span></h2>
+            <h2 class="font-black italic uppercase text-xl">drive <span class="text-red-600">mx</span></h2>
             <div class="w-10 h-10 rounded-xl bg-gray-900 flex items-center justify-center shadow-lg"><i data-lucide="user" class="w-5 h-5 text-white"></i></div>
         </header>
         <main class="flex-1 map-sim relative overflow-hidden">
-            <div id="p-banners" class="absolute top-5 left-5 right-5 z-20 space-y-3">
+            <div id="p-banners" class="absolute top-5 left-5 right-5 z-20">
                 <div onclick="openCosts()" class="bg-white p-1 rounded-2xl shadow-2xl flex items-center gap-3 border border-black/5 cursor-pointer">
                     <div class="w-12 h-12 bg-red-600 rounded-xl flex items-center justify-center text-white"><i data-lucide="map-pin" class="w-6 h-6"></i></div>
-                    <span class="text-[12px] font-black text-gray-400 italic uppercase">¿A dónde vamos?</span>
+                    <span class="text-[12px] font-black text-gray-400 italic uppercase">¿a dónde vamos?</span>
                 </div>
             </div>
             <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
@@ -133,7 +133,7 @@
             </div>
         </main>
         <div id="cost-sheet" class="absolute bottom-0 left-0 right-0 bg-white z-[120] rounded-t-[3rem] shadow-2xl p-10">
-            <button onclick="startRadar()" class="w-full bg-red-600 text-white py-5 rounded-[2rem] font-black text-[12px] uppercase italic">solicitar ahora</button>
+            <button onclick="startRadar()" class="w-full bg-red-600 text-white py-5 rounded-[2rem] font-black text-[12px] uppercase italic">solicitar viaje</button>
         </div>
     </div>
 </div>
@@ -142,7 +142,7 @@
     lucide.createIcons();
     let driversDB = [];
 
-    // Carga inicial
+    // carga splash inicial
     window.onload = () => {
         setTimeout(() => {
             document.getElementById('splash').style.opacity = '0';
@@ -153,19 +153,20 @@
         }, 2000);
     };
 
-    // Lógica de Registro
+    // lógica de registro conductor
     function openDriverRegistration() { closeAll(); document.getElementById('driver-registration-modal').classList.add('active'); }
     function closeDriverRegistration() { document.getElementById('driver-registration-modal').classList.remove('active'); }
 
     function saveDriver(e) {
         e.preventDefault();
-        driversDB.push({
+        const nuevoDriver = {
             id: Date.now(),
             nombre: document.getElementById('d-name').value,
             telefono: document.getElementById('d-phone').value,
             vehiculo: document.getElementById('d-car').value,
             placas: document.getElementById('d-plate').value
-        });
+        };
+        driversDB.push(nuevoDriver);
         updateAdminView();
         alert("solicitud enviada");
         document.getElementById('driverForm').reset();
@@ -182,14 +183,14 @@
                 <h5 class="text-[12px] font-black italic uppercase">${d.nombre}</h5>
                 <p class="text-[9px] text-gray-400 font-bold italic uppercase">${d.vehiculo} - ${d.placas}</p>
                 <div class="flex gap-2">
-                    <button class="flex-1 py-3 bg-gray-900 text-white text-[9px] font-black rounded-xl">aprobar</button>
-                    <button class="flex-1 py-3 bg-red-50 text-red-600 text-[9px] font-black rounded-xl uppercase">rechazar</button>
+                    <button class="flex-1 py-3 bg-gray-900 text-white text-[9px] font-black rounded-xl italic">aprobar</button>
+                    <button class="flex-1 py-3 bg-red-50 text-red-600 text-[9px] font-black rounded-xl italic">rechazar</button>
                 </div>
             </div>
         `).join('');
     }
 
-    // Navegación y Auth
+    // autenticación básica
     function handleAuth() {
         const email = document.getElementById('login-email').value;
         const login = document.getElementById('login-screen');
@@ -207,6 +208,7 @@
         }
     }
 
+    // funciones generales de ui
     function openMenu() { document.getElementById('sidebar').classList.add('open'); document.getElementById('overlay').classList.add('opacity-100', 'pointer-events-auto'); }
     function closeAll() { document.getElementById('sidebar').classList.remove('open'); document.getElementById('cost-sheet').classList.remove('active'); document.getElementById('overlay').classList.remove('opacity-100', 'pointer-events-auto'); }
     function openCosts() { document.getElementById('cost-sheet').classList.add('active'); document.getElementById('overlay').classList.add('opacity-100', 'pointer-events-auto'); }

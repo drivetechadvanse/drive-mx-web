@@ -24,6 +24,16 @@
         #sidebar { transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); transform: translateX(-100%); }
         #sidebar.open { transform: translateX(0); }
         
+        /* Animación para el submenú */
+        #submenu-usuarios {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+        #submenu-usuarios.active {
+            max-height: 300px;
+        }
+
         #cost-sheet { 
             transition: transform 0.5s cubic-bezier(0.32, 0.72, 0, 1);
             transform: translateY(110%);
@@ -31,20 +41,6 @@
             max-height: 80vh;
         }
         #cost-sheet.active { transform: translateY(0); }
-
-        .pulse-ring {
-            border: 3px solid #ef4444;
-            border-radius: 50%;
-            height: 60px; width: 60px;
-            position: absolute; left: -18px; top: -18px;
-            animation: pulsate 1.5s ease-out infinite;
-            opacity: 0;
-        }
-        @keyframes pulsate {
-            0% { transform: scale(0.1, 0.1); opacity: 0; }
-            50% { opacity: 1; }
-            100% { transform: scale(1.2, 1.2); opacity: 0; }
-        }
 
         .view-content { animation: fadeInUp 0.4s ease-out; }
         @keyframes fadeInUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -63,7 +59,9 @@
             <h2 class="text-lg font-black italic uppercase tracking-tighter">DRIVE <span class="text-red-600">MX</span></h2>
             <p id="sidebar-user-role" class="text-[8px] text-gray-500 font-bold mt-1 uppercase tracking-widest italic">Sistema Activo</p>
         </div>
+        
         <nav class="flex-1 p-4 space-y-1 overflow-y-auto" id="sidebar-nav"></nav>
+
         <div class="p-6 border-t bg-white pb-12"> 
             <button onclick="location.reload()" class="w-full flex items-center justify-center gap-3 py-4 bg-red-50 text-red-600 rounded-2xl font-black text-[11px] uppercase italic shadow-sm border border-red-100">
                 <i data-lucide="log-out" class="w-4 h-4"></i> CERRAR SESIÓN
@@ -92,30 +90,13 @@
             <h2 class="text-xl font-black italic uppercase flex-1 text-center">DRIVE <span class="text-red-600">MX</span></h2>
             <div class="w-9 h-9 rounded-full border bg-gray-100"></div>
         </header>
-
         <main class="flex-1 relative map-sim overflow-hidden">
             <div id="passenger-ui-top" class="absolute top-4 left-4 right-4 z-20 space-y-2">
-                <div class="bg-white/90 backdrop-blur-md p-3 rounded-2xl shadow-sm border flex items-center gap-2">
-                    <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                    <span class="text-[10px] font-black uppercase italic">GPS Activo</span>
-                </div>
                 <div onclick="openCostSheet()" class="bg-white p-2 rounded-2xl shadow-2xl flex items-center gap-4 border-2 border-red-500/10 active:scale-95 transition-transform cursor-pointer">
                     <div class="w-12 h-12 bg-red-600 rounded-xl flex items-center justify-center text-white"><i data-lucide="search" class="w-6 h-6"></i></div>
                     <span class="text-sm font-black text-gray-400 uppercase italic tracking-tighter">¿A dónde vamos hoy?</span>
                 </div>
             </div>
-
-            <div id="searching-pin" class="hidden absolute inset-0 flex items-center justify-center z-40 pointer-events-none">
-                <div class="relative">
-                    <div class="pulse-ring"></div>
-                    <div class="w-6 h-6 bg-red-600 rounded-full border-4 border-white shadow-xl relative z-10"></div>
-                    <div class="w-1 h-8 bg-red-600 mx-auto -mt-1 rounded-full shadow-lg"></div>
-                </div>
-                <div class="absolute top-1/2 left-1/2 -translate-x-1/2 mt-12 bg-black text-white px-6 py-2 rounded-full shadow-2xl animate-bounce">
-                    <span class="text-[10px] font-black uppercase italic tracking-[0.2em]">Buscando Conductor...</span>
-                </div>
-            </div>
-
             <div id="passenger-ui-bottom" class="absolute bottom-32 left-4 right-4 z-30">
                 <div class="bg-black rounded-[2.5rem] p-5 flex items-center justify-between text-white shadow-2xl border border-white/10">
                     <div class="flex items-center gap-4">
@@ -128,23 +109,6 @@
                 </div>
             </div>
         </main>
-
-        <div id="cost-sheet" class="absolute bottom-0 left-0 right-0 bg-white z-[120] rounded-t-[3rem] shadow-[0_-20px_60px_rgba(0,0,0,0.25)] p-8">
-            <div class="w-16 h-1.5 bg-gray-200 rounded-full mx-auto mb-6"></div>
-            <div class="view-content">
-                <h3 class="text-xl font-black italic uppercase mb-4">Drive <span class="text-red-600">Basic</span></h3>
-                <div class="p-4 rounded-3xl border-2 border-red-600 bg-red-50 flex justify-between items-center mb-6">
-                    <div class="flex items-center gap-3"><i data-lucide="car" class="text-red-600"></i><span class="font-bold text-xs uppercase">Precio Fijo</span></div>
-                    <span class="font-black text-xl italic">$45.00</span>
-                </div>
-                <div class="grid grid-cols-3 gap-3 mb-8">
-                    <button id="pay-spei" onclick="selectPayment('SPEI')" class="pay-opt p-4 border-2 rounded-2xl flex flex-col items-center gap-2 transition-all"><i data-lucide="landmark"></i><span class="text-[9px] font-black uppercase">SPEI</span></button>
-                    <button id="pay-cartera" onclick="selectPayment('Cartera')" class="pay-opt p-4 border-2 rounded-2xl flex flex-col items-center gap-2 transition-all"><i data-lucide="wallet"></i><span class="text-[9px] font-black uppercase">Cartera</span></button>
-                    <button id="pay-efectivo" onclick="selectPayment('Efectivo')" class="pay-opt p-4 border-2 rounded-2xl flex flex-col items-center gap-2 transition-all"><i data-lucide="banknote"></i><span class="text-[9px] font-black uppercase">Cash</span></button>
-                </div>
-                <button onclick="processOrder()" class="w-full bg-red-600 text-white py-5 rounded-[2.5rem] font-black uppercase text-xs italic shadow-xl active:scale-95 mb-4">PEDIR CONDUCTOR AHORA</button>
-            </div>
-        </div>
     </div>
 
     <div id="admin-app" class="hidden h-full flex flex-col bg-gray-50">
@@ -154,8 +118,8 @@
                 <h2 class="text-base font-black italic uppercase tracking-widest">CONTROL <span class="text-red-600">PANEL</span></h2>
             </div>
         </header>
-        <main id="admin-host" class="p-6 overflow-y-auto flex-1 bg-gray-50">
-            <div id="admin-empty-state" class="h-full flex flex-col items-center justify-center opacity-10 text-center">
+        <main id="admin-host" class="p-6 overflow-y-auto flex-1 flex flex-col items-center justify-center">
+            <div id="admin-empty-state" class="opacity-10 text-center">
                 <i data-lucide="layout-dashboard" class="w-20 h-20 mx-auto mb-4"></i>
                 <p class="font-black uppercase italic">Sistema en Espera</p>
             </div>
@@ -165,39 +129,7 @@
 
 <script>
     lucide.createIcons();
-    let currentBalance = 50.00;
-    let selectedMethod = null;
-    const tripCost = 45.00;
-
-    let currentRegStep = 1;
-    const regSteps = [
-        { title: "CURP", type: "text", placeholder: "Ingresa tu CURP", icon: "search" },
-        { title: "WhatsApp", type: "tel", placeholder: "Número de 10 dígitos", icon: "message-circle" },
-        { title: "INE Frontal", type: "file", placeholder: "", icon: "image" },
-        { title: "INE Reversa", type: "file", placeholder: "", icon: "image" },
-        { title: "Seguridad Social (NSS)", type: "text", placeholder: "Ingresa tu NSS", icon: "shield-check" },
-        { title: "Licencia de Manejo", type: "file", placeholder: "", icon: "file-text" },
-        { title: "Marca del Vehículo", type: "text", placeholder: "Ej. Volkswagen, Nissan...", icon: "car" },
-        { title: "Año y Modelo", type: "text", placeholder: "Ej. 2022 Jetta", icon: "calendar" },
-        { title: "Color del Vehículo", type: "text", placeholder: "Ej. Rojo, Blanco...", icon: "palette" },
-        { title: "Tarjeta de Circulación", type: "file", placeholder: "", icon: "file-check" },
-        { title: "Póliza de Seguro", type: "file", placeholder: "", icon: "heart-handshake" },
-        { title: "Placa del Vehículo", type: "text", placeholder: "Número de placa", icon: "hash" },
-        { title: "Foto Frontal (con Matrícula)", type: "file", placeholder: "", icon: "camera" }
-    ];
-
-    const setHeight = () => document.documentElement.style.setProperty('--app-height', `${window.innerHeight}px`);
-    window.addEventListener('resize', setHeight);
-    setHeight();
-
-    setTimeout(() => {
-        document.getElementById('splash').style.opacity = '0';
-        setTimeout(() => {
-            document.getElementById('splash').style.display = 'none';
-            document.getElementById('login-screen').classList.remove('hidden');
-        }, 500);
-    }, 2000);
-
+    
     function handleLogin() {
         const e = document.getElementById('email-input').value;
         const p = document.getElementById('pass-input').value;
@@ -209,143 +141,69 @@
             document.getElementById('login-screen').classList.add('hidden');
             document.getElementById('passenger-app').classList.remove('hidden');
             setupUI("JUAN PASAJERO", "user");
-        } else { alert("Acceso Incorrecto"); }
+        }
     }
 
     function setupUI(role, icon) {
         document.getElementById('sidebar-user-role').innerText = role;
         document.getElementById('sidebar-icon').setAttribute('data-lucide', icon);
         const nav = document.getElementById('sidebar-nav');
-        const homeBtn = `<button onclick="goHome('${role}')" class="w-full flex items-center gap-4 p-4 text-gray-900 font-black bg-gray-50 rounded-2xl uppercase text-xs italic mb-4 border shadow-sm"><i data-lucide="home" class="text-red-600"></i> INICIO</button>`;
+        
+        const homeBtn = `<button onclick="location.reload()" class="w-full flex items-center gap-4 p-4 text-gray-900 font-black bg-gray-50 rounded-2xl uppercase text-xs italic mb-2 border shadow-sm"><i data-lucide="home" class="text-red-600"></i> INICIO</button>`;
         
         if(role === "ADMINISTRADOR") {
-            nav.innerHTML = homeBtn + `<button onclick="loadTool('users')" class="w-full flex items-center gap-4 p-4 text-gray-800 font-black hover:bg-red-50 rounded-2xl uppercase text-xs italic"><i data-lucide="users" class="text-red-600"></i> Usuarios</button>`;
-        } else {
-            nav.innerHTML = homeBtn + 
-                `<button onclick="loadTool('history')" class="w-full flex items-center gap-4 p-4 text-gray-800 font-black hover:bg-gray-50 rounded-2xl uppercase text-xs italic"><i data-lucide="history"></i> Mis Viajes</button>` +
-                `<button onclick="openDriverRegistration()" class="w-full flex items-center gap-4 p-4 text-red-600 font-black hover:bg-red-50 rounded-2xl uppercase text-[10px] italic mt-2 border border-dashed border-red-200"><i data-lucide="car"></i> Quiero ser Conductor</button>`;
-        }
-        lucide.createIcons();
-    }
-
-    // MODIFICACIÓN DEL PANEL DE CONTROL (NUEVAS OPCIONES)
-    function loadTool(tool) {
-        const host = document.getElementById('admin-host');
-        closeAllModals();
-        
-        if(tool === 'users') {
-            host.innerHTML = `
-                <div class="view-content w-full space-y-6">
-                    <header class="mb-2">
-                        <h3 class="text-2xl font-black italic uppercase tracking-tighter">Gestión de <span class="text-red-600">Usuarios</span></h3>
-                        <p class="text-[10px] font-bold text-gray-400 uppercase italic">Selecciona una categoría para administrar</p>
-                    </header>
-                    
-                    <div class="grid grid-cols-2 gap-4">
-                        <button onclick="viewCategory('Conductores')" class="bg-white p-6 rounded-[2rem] border shadow-sm flex flex-col items-center gap-3 active:scale-95 transition-all">
-                            <div class="w-12 h-12 bg-red-50 rounded-2xl flex items-center justify-center text-red-600"><i data-lucide="steering-wheel"></i></div>
-                            <span class="text-[10px] font-black uppercase italic">Conductores</span>
-                        </button>
-                        
-                        <button onclick="viewCategory('Pasajeros')" class="bg-white p-6 rounded-[2rem] border shadow-sm flex flex-col items-center gap-3 active:scale-95 transition-all">
-                            <div class="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600"><i data-lucide="users"></i></div>
-                            <span class="text-[10px] font-black uppercase italic">Pasajeros</span>
-                        </button>
-                        
-                        <button onclick="viewCategory('Administradores')" class="bg-white p-6 rounded-[2rem] border shadow-sm flex flex-col items-center gap-3 active:scale-95 transition-all">
-                            <div class="w-12 h-12 bg-gray-100 rounded-2xl flex items-center justify-center text-gray-800"><i data-lucide="shield-check"></i></div>
-                            <span class="text-[10px] font-black uppercase italic">Admins</span>
-                        </button>
-                        
-                        <button onclick="viewCategory('Comercios')" class="bg-white p-6 rounded-[2rem] border shadow-sm flex flex-col items-center gap-3 active:scale-95 transition-all">
-                            <div class="w-12 h-12 bg-orange-50 rounded-2xl flex items-center justify-center text-orange-600"><i data-lucide="store"></i></div>
-                            <span class="text-[10px] font-black uppercase italic">Comercios</span>
-                        </button>
+            nav.innerHTML = homeBtn + `
+                <button onclick="toggleSubmenu()" class="w-full flex items-center justify-between p-4 text-gray-800 font-black hover:bg-gray-50 rounded-2xl uppercase text-xs italic">
+                    <div class="flex items-center gap-4">
+                        <i data-lucide="users" class="text-red-600"></i> Usuarios
                     </div>
-                </div>`;
+                    <i data-lucide="chevron-down" id="arrow-users" class="w-4 h-4 transition-transform"></i>
+                </button>
+                
+                <div id="submenu-usuarios" class="pl-12 space-y-1">
+                    <button onclick="loadAdminView('Pasajeros')" class="w-full text-left p-3 text-[10px] font-black text-gray-500 hover:text-red-600 uppercase italic transition-colors flex items-center gap-2">
+                        <div class="w-1.5 h-1.5 bg-red-600 rounded-full"></div> Pasajeros
+                    </button>
+                    <button onclick="loadAdminView('Conductores')" class="w-full text-left p-3 text-[10px] font-black text-gray-500 hover:text-red-600 uppercase italic transition-colors flex items-center gap-2">
+                        <div class="w-1.5 h-1.5 bg-red-600 rounded-full"></div> Conductores
+                    </button>
+                    <button onclick="loadAdminView('Administradores')" class="w-full text-left p-3 text-[10px] font-black text-gray-500 hover:text-red-600 uppercase italic transition-colors flex items-center gap-2">
+                        <div class="w-1.5 h-1.5 bg-red-600 rounded-full"></div> Administradores
+                    </button>
+                    <button onclick="loadAdminView('Comercios')" class="w-full text-left p-3 text-[10px] font-black text-gray-500 hover:text-red-600 uppercase italic transition-colors flex items-center gap-2">
+                        <div class="w-1.5 h-1.5 bg-red-600 rounded-full"></div> Comercios
+                    </button>
+                </div>
+            `;
+        } else {
+            nav.innerHTML = homeBtn + `<button onclick="alert('Mis Viajes')" class="w-full flex items-center gap-4 p-4 text-gray-800 font-black hover:bg-gray-50 rounded-2xl uppercase text-xs italic"><i data-lucide="history"></i> Mis Viajes</button>`;
         }
         lucide.createIcons();
     }
 
-    function viewCategory(cat) {
+    // Lógica para abrir/cerrar el submenú en el sidebar
+    function toggleSubmenu() {
+        const submenu = document.getElementById('submenu-usuarios');
+        const arrow = document.getElementById('arrow-users');
+        submenu.classList.toggle('active');
+        arrow.style.transform = submenu.classList.contains('active') ? 'rotate(180deg)' : 'rotate(0deg)';
+    }
+
+    // Función para cargar la vista en el panel central al elegir una opción
+    function loadAdminView(tipo) {
+        closeAllModals();
         const host = document.getElementById('admin-host');
         host.innerHTML = `
-            <div class="view-content w-full space-y-4">
-                <div class="flex items-center gap-2 mb-6">
-                    <button onclick="loadTool('users')" class="p-2 bg-gray-100 rounded-xl"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
-                    <h3 class="text-xl font-black italic uppercase tracking-tighter">${cat}</h3>
-                </div>
-                <div class="bg-white p-5 rounded-3xl border flex items-center justify-between shadow-sm">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 bg-gray-100 rounded-full"></div>
-                        <span class="font-black text-xs uppercase italic tracking-tighter">Lista de ${cat} vacía</span>
-                    </div>
-                    <i data-lucide="info" class="text-gray-300 w-4 h-4"></i>
+            <div class="view-content w-full">
+                <h3 class="text-2xl font-black italic uppercase tracking-tighter mb-6">Lista de <span class="text-red-600">${tipo}</span></h3>
+                <div class="bg-white p-6 rounded-[2.5rem] border-2 border-dashed border-gray-200 text-center opacity-50">
+                    <p class="text-[10px] font-black uppercase italic text-gray-400 tracking-widest">Sin registros activos de ${tipo}</p>
                 </div>
             </div>`;
         lucide.createIcons();
     }
 
-    // REGISTRO CONDUCTOR Y OTROS (Sin cambios necesarios, ya funcionan)
-    function openDriverRegistration() {
-        closeAllModals();
-        currentRegStep = 1;
-        renderRegStep();
-    }
-
-    function renderRegStep() {
-        const step = regSteps[currentRegStep - 1];
-        const isLast = currentRegStep === regSteps.length;
-        const regHTML = `<div id="driver-reg-modal" class="absolute inset-0 z-[130] bg-white p-8 flex flex-col view-content"><div class="flex justify-between items-center mb-8"><button onclick="this.parentElement.parentElement.remove()" class="p-2 bg-gray-100 rounded-full"><i data-lucide="x" class="w-5 h-5"></i></button><div class="flex flex-col items-end"><span class="text-[10px] font-black text-gray-400 uppercase tracking-widest italic">Paso ${currentRegStep} de ${regSteps.length}</span><div class="w-24 h-1 bg-gray-100 mt-1 rounded-full overflow-hidden"><div class="bg-red-600 h-full transition-all duration-500" style="width: ${(currentRegStep/regSteps.length)*100}%"></div></div></div></div><h2 class="text-3xl font-black italic uppercase leading-none mb-2">Registro<br><span class="text-red-600">Conductor</span></h2><div class="flex-1 flex flex-col justify-center"><div class="bg-gray-50 p-6 rounded-[2rem] border-2 border-dashed border-gray-200 text-center"><div class="w-16 h-16 bg-red-600 rounded-2xl flex items-center justify-center text-white mx-auto mb-6 shadow-lg shadow-red-200"><i data-lucide="${step.icon}" class="w-8 h-8"></i></div><label class="block text-[11px] font-black uppercase mb-4 italic tracking-tighter">${step.title}</label><input type="${step.type}" id="reg-input" placeholder="${step.placeholder}" class="w-full p-4 bg-white border rounded-2xl font-bold text-sm outline-none focus:border-red-600 text-center"></div></div><button onclick="nextRegStep()" class="w-full bg-red-600 text-white py-5 rounded-[2rem] font-black uppercase text-xs italic shadow-xl active:scale-95 transition-all flex items-center justify-center gap-2 mt-6">${isLast ? 'FINALIZAR' : 'AVANZAR'} <i data-lucide="chevron-right" class="w-4 h-4"></i></button></div>`;
-        const existing = document.getElementById('driver-reg-modal');
-        if(existing) existing.remove();
-        document.getElementById('app-container').insertAdjacentHTML('beforeend', regHTML);
-        lucide.createIcons();
-    }
-
-    function nextRegStep() {
-        const val = document.getElementById('reg-input').value;
-        if(!val && regSteps[currentRegStep-1].type !== 'file') return alert("Por favor completa el campo.");
-        if(currentRegStep < regSteps.length) { currentRegStep++; renderRegStep(); } else { showSuccessScreen(); }
-    }
-
-    function showSuccessScreen() {
-        const successHTML = `<div id="driver-reg-modal" class="absolute inset-0 z-[140] bg-white p-10 flex flex-col items-center justify-center text-center view-content"><div class="w-24 h-24 bg-red-50 rounded-full flex items-center justify-center mb-8"><i data-lucide="hourglass" class="w-12 h-12 text-red-600 animate-bounce"></i></div><h2 class="text-3xl font-black italic uppercase leading-tight mb-4">Validando<br><span class="text-red-600">Documentos</span></h2><div class="p-6 bg-gray-50 rounded-[2.5rem] border mb-10"><p class="text-xs font-bold text-gray-600 uppercase italic tracking-tighter leading-relaxed">Tus documentos se están validando. Si todo sale bien, te activaremos en menos de <span class="text-red-600">24 hrs</span>.</p></div><button onclick="location.reload()" class="w-full bg-black text-white py-5 rounded-[2rem] font-black uppercase text-xs italic shadow-xl active:scale-95">ACEPTAR</button></div>`;
-        const existing = document.getElementById('driver-reg-modal');
-        if(existing) existing.remove();
-        document.getElementById('app-container').insertAdjacentHTML('beforeend', successHTML);
-        lucide.createIcons();
-    }
-
-    function processOrder() {
-        if(!selectedMethod) return alert("Selecciona un método de pago.");
-        if(selectedMethod === 'Cartera') {
-            if(currentBalance < tripCost) return alert("Saldo insuficiente.");
-            currentBalance -= tripCost;
-            document.getElementById('p-balance').innerText = `$${currentBalance.toFixed(2)}`;
-        }
-        closeAllModals();
-        document.getElementById('passenger-header').classList.add('hidden');
-        document.getElementById('passenger-ui-top').classList.add('hidden');
-        document.getElementById('passenger-ui-bottom').classList.add('hidden');
-        document.getElementById('searching-pin').classList.remove('hidden');
-        setTimeout(() => { alert("¡Conductor asignado!"); location.reload(); }, 6000);
-    }
-
-    function goHome(role) {
-        closeAllModals();
-        if(role === "ADMINISTRADOR") {
-            document.getElementById('admin-host').innerHTML = `<div id="admin-empty-state" class="h-full flex flex-col items-center justify-center opacity-10 text-center"><i data-lucide="layout-dashboard" class="w-20 h-20 mx-auto mb-4"></i><p class="font-black uppercase italic">Sistema en Espera</p></div>`;
-            lucide.createIcons();
-        }
-    }
-
-    function selectPayment(method) {
-        selectedMethod = method;
-        document.querySelectorAll('.pay-opt').forEach(o => o.classList.remove('border-red-600', 'bg-red-50', 'text-red-600'));
-        document.getElementById(`pay-${method.toLowerCase()}`).classList.add('border-red-600', 'bg-red-50', 'text-red-600');
-    }
-
+    // Utilerías de UI
     function toggleMenu() {
         document.getElementById('sidebar').classList.toggle('open');
         document.getElementById('overlay').classList.toggle('opacity-100');
@@ -354,14 +212,17 @@
 
     function closeAllModals() {
         document.getElementById('sidebar').classList.remove('open');
-        document.getElementById('cost-sheet').classList.remove('active');
         document.getElementById('overlay').classList.remove('opacity-100', 'pointer-events-auto');
     }
 
-    function openCostSheet() {
-        document.getElementById('cost-sheet').classList.add('active');
-        document.getElementById('overlay').classList.add('opacity-100', 'pointer-events-auto');
-    }
+    // Simulación de Splash
+    setTimeout(() => {
+        document.getElementById('splash').style.opacity = '0';
+        setTimeout(() => {
+            document.getElementById('splash').style.display = 'none';
+            document.getElementById('login-screen').classList.remove('hidden');
+        }, 500);
+    }, 1500);
 </script>
 </body>
 </html>

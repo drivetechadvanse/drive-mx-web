@@ -98,18 +98,18 @@
     </div>
 
     <div id="admin-view" class="hidden h-screen flex flex-col bg-gray-50">
-        <header class="px-5 py-4 bg-gray-900 text-white flex justify-between items-center z-10 shadow-lg">
+        <header class="px-5 py-4 bg-gray-900 text-white flex justify-between items-center z-10">
             <button onclick="openMenu()"><i data-lucide="menu" class="text-red-600 w-6 h-6"></i></button>
-            <h2 class="font-black italic uppercase text-base">control <span class="text-red-600">center</span></h2>
+            <h2 class="font-black italic uppercase text-base italic">control <span class="text-red-600">center</span></h2>
             <div class="w-5 h-5"></div>
         </header>
         <main class="flex-1 p-6 overflow-y-auto space-y-6">
             <div class="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm flex items-center justify-between">
-                <div><p class="text-[8px] font-black text-gray-400 uppercase italic">solicitudes recibidas</p><h4 id="pending-count" class="text-3xl font-black italic">0</h4></div>
+                <div><p class="text-[8px] font-black text-gray-400 uppercase italic">solicitudes pendientes</p><h4 id="pending-count" class="text-3xl font-black italic">0</h4></div>
                 <div class="w-14 h-14 bg-red-50 rounded-2xl flex items-center justify-center text-red-600"><i data-lucide="file-text" class="w-7 h-7"></i></div>
             </div>
             <div id="drivers-list" class="space-y-3">
-                <div class="bg-white p-6 rounded-[2rem] border border-gray-100 text-[10px] text-gray-400 font-bold italic text-center uppercase">sin solicitudes pendientes</div>
+                <div class="bg-white p-6 rounded-[2rem] border border-gray-100 text-[10px] text-gray-400 font-bold italic text-center uppercase">sin solicitudes</div>
             </div>
         </main>
     </div>
@@ -117,23 +117,42 @@
     <div id="passenger-view" class="hidden h-screen flex flex-col relative">
         <header class="px-5 py-4 bg-white border-b flex justify-between items-center z-10">
             <button onclick="openMenu()"><i data-lucide="menu" class="w-6 h-6"></i></button>
-            <h2 class="font-black italic uppercase text-xl">drive <span class="text-red-600">mx</span></h2>
+            <h2 class="font-black italic uppercase text-xl italic">drive <span class="text-red-600">mx</span></h2>
             <div class="w-10 h-10 rounded-xl bg-gray-900 flex items-center justify-center shadow-lg"><i data-lucide="user" class="w-5 h-5 text-white"></i></div>
         </header>
+
         <main class="flex-1 map-sim relative overflow-hidden">
-            <div id="p-banners" class="absolute top-5 left-5 right-5 z-20">
+            <div class="absolute top-5 left-5 right-5 z-20">
                 <div onclick="openCosts()" class="bg-white p-1 rounded-2xl shadow-2xl flex items-center gap-3 border border-black/5 cursor-pointer">
                     <div class="w-12 h-12 bg-red-600 rounded-xl flex items-center justify-center text-white"><i data-lucide="map-pin" class="w-6 h-6"></i></div>
                     <span class="text-[12px] font-black text-gray-400 italic uppercase">¿a dónde vamos?</span>
                 </div>
             </div>
+
             <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
                 <div id="radar" class="hidden"><div class="radar-pulse"></div></div>
                 <div class="bg-red-600 p-5 rounded-[2rem] border-4 border-white shadow-2xl relative z-10"><i data-lucide="navigation" class="text-white w-8 h-8"></i></div>
             </div>
+
+            <div class="absolute bottom-6 left-6 right-6">
+                <div class="bg-gray-900 rounded-[2rem] p-4 text-white flex justify-between items-center shadow-2xl">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center text-red-600"><i data-lucide="wallet" class="w-5 h-5"></i></div>
+                        <div><p class="text-[7px] text-gray-400 font-bold uppercase italic leading-none">tu saldo</p><p class="text-xs font-black italic text-white">$0.00 mxn</p></div>
+                    </div>
+                </div>
+            </div>
         </main>
-        <div id="cost-sheet" class="absolute bottom-0 left-0 right-0 bg-white z-[120] rounded-t-[3rem] shadow-2xl p-10">
-            <button onclick="startRadar()" class="w-full bg-red-600 text-white py-5 rounded-[2rem] font-black text-[12px] uppercase italic">solicitar viaje</button>
+
+        <div id="cost-sheet" class="absolute bottom-0 left-0 right-0 bg-white z-[120] rounded-t-[3rem] shadow-2xl p-10 space-y-6">
+            <div class="w-12 h-1.5 bg-gray-100 rounded-full mx-auto"></div>
+            
+            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-2xl">
+                <div class="flex items-center gap-3 text-gray-800"><i data-lucide="banknote" class="w-5 h-5"></i><span class="text-[10px] font-black uppercase italic">efectivo</span></div>
+                <i data-lucide="chevron-right" class="w-4 h-4 text-gray-300"></i>
+            </div>
+
+            <button onclick="startRadar()" class="w-full bg-red-600 text-white py-5 rounded-[2rem] font-black text-[12px] uppercase italic shadow-xl shadow-red-200">solicitar ahora</button>
         </div>
     </div>
 </div>
@@ -142,7 +161,6 @@
     lucide.createIcons();
     let driversDB = [];
 
-    // carga splash inicial
     window.onload = () => {
         setTimeout(() => {
             document.getElementById('splash').style.opacity = '0';
@@ -153,20 +171,18 @@
         }, 2000);
     };
 
-    // lógica de registro conductor
     function openDriverRegistration() { closeAll(); document.getElementById('driver-registration-modal').classList.add('active'); }
     function closeDriverRegistration() { document.getElementById('driver-registration-modal').classList.remove('active'); }
 
     function saveDriver(e) {
         e.preventDefault();
-        const nuevoDriver = {
+        driversDB.push({
             id: Date.now(),
             nombre: document.getElementById('d-name').value,
             telefono: document.getElementById('d-phone').value,
             vehiculo: document.getElementById('d-car').value,
             placas: document.getElementById('d-plate').value
-        };
-        driversDB.push(nuevoDriver);
+        });
         updateAdminView();
         alert("solicitud enviada");
         document.getElementById('driverForm').reset();
@@ -190,7 +206,6 @@
         `).join('');
     }
 
-    // autenticación básica
     function handleAuth() {
         const email = document.getElementById('login-email').value;
         const login = document.getElementById('login-screen');
@@ -208,7 +223,6 @@
         }
     }
 
-    // funciones generales de ui
     function openMenu() { document.getElementById('sidebar').classList.add('open'); document.getElementById('overlay').classList.add('opacity-100', 'pointer-events-auto'); }
     function closeAll() { document.getElementById('sidebar').classList.remove('open'); document.getElementById('cost-sheet').classList.remove('active'); document.getElementById('overlay').classList.remove('opacity-100', 'pointer-events-auto'); }
     function openCosts() { document.getElementById('cost-sheet').classList.add('active'); document.getElementById('overlay').classList.add('opacity-100', 'pointer-events-auto'); }

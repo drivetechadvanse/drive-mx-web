@@ -211,7 +211,18 @@
                     <img id="circ-preview" class="hidden w-full h-full object-cover">
                     <i data-lucide="file-text" class="text-gray-300 w-10 h-10"></i>
                 </div>
-                <input type="file" id="circ-input" accept="image/*" class="hidden" onchange="processFile(this, 'circ-preview', 'btn-final')">
+                <input type="file" id="circ-input" accept="image/*" class="hidden" onchange="processFile(this, 'circ-preview', 'btn-circ-next')">
+                <button id="btn-circ-next" disabled onclick="goToStep(7)" class="w-full bg-gray-300 text-white py-4 rounded-xl font-black text-[10px] uppercase italic transition-all">Siguiente</button>
+            </div>
+
+            <div id="step-v-photo" class="hidden w-full flex flex-col">
+                <h3 class="text-center font-black text-[10px] text-gray-400 uppercase mb-4 italic">Foto del Vehículo</h3>
+                <p class="text-[8px] text-center text-gray-400 uppercase font-bold mb-4">Asegúrate de que la matrícula sea visible</p>
+                <div class="w-full aspect-video bg-gray-50 rounded-2xl border-4 border-dashed border-gray-200 flex items-center justify-center mb-6 overflow-hidden" onclick="document.getElementById('v-photo-input').click()">
+                    <img id="v-photo-preview" class="hidden w-full h-full object-cover">
+                    <i data-lucide="car" class="text-gray-300 w-12 h-12"></i>
+                </div>
+                <input type="file" id="v-photo-input" accept="image/*" class="hidden" onchange="processFile(this, 'v-photo-preview', 'btn-final')">
                 <button id="btn-final" disabled onclick="alert('Registro enviado con éxito')" class="w-full bg-gray-300 text-white py-4 rounded-xl font-black text-[10px] uppercase italic transition-all">Finalizar Registro</button>
             </div>
         </div>
@@ -222,7 +233,6 @@
     lucide.createIcons();
     let currentStep = 1;
 
-    // Splash y Login
     setTimeout(() => {
         document.getElementById('splash').style.opacity = '0';
         setTimeout(() => { document.getElementById('splash').style.display = 'none'; document.getElementById('login-screen').classList.remove('hidden'); }, 500);
@@ -243,7 +253,6 @@
         lucide.createIcons();
     }
 
-    // Funciones de UI Global
     function openMenu() { document.getElementById('sidebar').classList.add('open'); document.getElementById('overlay').classList.add('opacity-100', 'pointer-events-auto'); }
     function closeAll() { 
         document.getElementById('sidebar').classList.remove('open'); 
@@ -252,7 +261,6 @@
     }
     function toggleAccordion(id) { document.getElementById(id).classList.toggle('expanded'); }
 
-    // Pasajero
     function openCosts() { document.getElementById('cost-sheet').classList.add('active'); document.getElementById('overlay').classList.add('opacity-100', 'pointer-events-auto'); }
     function setPay(btn) { document.querySelectorAll('.payment-opt').forEach(b => b.classList.remove('selected')); btn.classList.add('selected'); }
     function startRadar() {
@@ -264,10 +272,9 @@
         document.getElementById('p-header').classList.add('hidden-view');
     }
 
-    // Registro
     function applyToBeDriver() { closeAll(); document.getElementById('driver-registration-view').classList.remove('hidden'); }
     function goToStep(n) {
-        const steps = ['step-photo', 'step-name', 'step-ine-front', 'step-ine-back', 'step-vehicle', 'step-circ'];
+        const steps = ['step-photo', 'step-name', 'step-ine-front', 'step-ine-back', 'step-vehicle', 'step-circ', 'step-v-photo'];
         document.getElementById(steps[currentStep-1]).classList.add('hidden');
         document.getElementById(steps[n-1]).classList.remove('hidden');
         currentStep = n;
@@ -278,7 +285,6 @@
         else document.getElementById('driver-registration-view').classList.add('hidden');
     }
 
-    // Procesadores de Archivos
     function processImage(input) {
         if (input.files[0]) {
             document.getElementById('driver-photo-preview').src = URL.createObjectURL(input.files[0]);

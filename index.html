@@ -151,32 +151,51 @@
         </div>
     </div>
 
-    <div id="driver-form-view" class="hidden absolute inset-0 z-[160] bg-white flex flex-col">
+    <div id="driver-registration-view" class="hidden absolute inset-0 z-[160] bg-white flex flex-col">
         <header class="px-4 py-4 flex items-center border-b bg-white sticky top-0 z-10">
-            <button onclick="closeDriverForm()" class="p-2 hover:bg-gray-100 rounded-full transition-colors">
+            <button onclick="handleDriverBack()" class="p-2 hover:bg-gray-100 rounded-full transition-colors">
                 <i data-lucide="arrow-left" class="w-6 h-6 text-gray-700"></i>
             </button>
             <h2 class="ml-3 text-lg font-black italic uppercase">Registro <span class="text-red-600">Conductor</span></h2>
         </header>
         
-        <div class="flex-1 overflow-y-auto p-6 flex flex-col items-center justify-center">
-            <div class="relative mb-8">
-                <div id="photo-preview-container" class="w-48 h-48 rounded-full border-4 border-gray-100 bg-gray-50 flex items-center justify-center overflow-hidden shadow-inner">
-                    <i id="placeholder-icon" data-lucide="user" class="w-16 h-16 text-gray-300"></i>
-                    <img id="driver-photo-preview" class="hidden w-full h-full object-cover" src="">
+        <div class="flex-1 overflow-y-auto p-6 flex flex-col items-center">
+            
+            <div id="step-photo" class="w-full flex flex-col items-center justify-center">
+                <div class="relative mb-8">
+                    <div id="photo-preview-container" class="w-48 h-48 rounded-full border-4 border-gray-100 bg-gray-50 flex items-center justify-center overflow-hidden shadow-inner">
+                        <i id="placeholder-icon" data-lucide="user" class="w-16 h-16 text-gray-300"></i>
+                        <img id="driver-photo-preview" class="hidden w-full h-full object-cover" src="">
+                    </div>
+                    <button onclick="document.getElementById('photo-input').click()" class="absolute bottom-2 right-2 bg-red-600 p-4 rounded-full text-white shadow-xl border-4 border-white active:scale-90 transition-transform">
+                        <i data-lucide="camera" class="w-6 h-6"></i>
+                    </button>
+                    <input type="file" id="photo-input" accept="image/*" class="hidden" onchange="processImage(this)">
                 </div>
-                <button onclick="document.getElementById('photo-input').click()" class="absolute bottom-2 right-2 bg-red-600 p-4 rounded-full text-white shadow-xl border-4 border-white active:scale-90 transition-transform">
-                    <i data-lucide="camera" class="w-6 h-6"></i>
-                </button>
-                <input type="file" id="photo-input" accept="image/*" class="hidden" onchange="processImage(this)">
+                <h3 class="text-[11px] font-black text-gray-400 uppercase tracking-widest mb-2 italic">Foto de Perfil Obligatoria</h3>
+                <p class="text-[9px] text-gray-400 text-center px-8 uppercase font-bold mb-6">Tu rostro debe ser visible para la seguridad de la comunidad.</p>
+                <div id="photo-error" class="hidden text-[10px] font-bold text-red-600 uppercase mb-4 animate-pulse italic">Carga una imagen para continuar</div>
+                <button id="btn-photo-next" disabled onclick="goToStepName()" class="w-full bg-gray-300 text-white py-4 rounded-xl font-black text-[10px] uppercase italic transition-all cursor-not-allowed">Seguir</button>
             </div>
 
-            <h3 class="text-[11px] font-black text-gray-400 uppercase tracking-widest mb-2 italic">Foto de Perfil Obligatoria</h3>
-            <p class="text-[9px] text-gray-400 text-center px-8 uppercase font-bold mb-10">Tu rostro debe ser claramente visible para la seguridad de la comunidad.</p>
+            <div id="step-name" class="hidden w-full flex flex-col">
+                <div class="mb-10 text-center">
+                    <h3 class="text-[11px] font-black text-gray-400 uppercase tracking-widest mb-2 italic">Identificación</h3>
+                    <p class="text-[9px] text-gray-400 uppercase font-bold px-4">Ingresa tu nombre tal como aparece en tu identificación oficial.</p>
+                </div>
+                
+                <div class="w-full">
+                    <label class="text-[9px] font-black uppercase text-gray-400 tracking-widest ml-2">Nombre Completo</label>
+                    <input type="text" id="dr-full-name" placeholder="Ej: Juan Pérez López" 
+                        class="w-full mt-2 p-4 bg-gray-50 rounded-xl outline-none border-2 border-transparent focus:border-red-600 text-xs font-bold transition-all"
+                        oninput="validateNameInput(this)">
+                </div>
 
-            <div id="photo-error" class="hidden text-[10px] font-bold text-red-600 uppercase mb-4 animate-pulse italic">Carga una imagen para continuar</div>
-            
-            <button id="btn-submit-driver" disabled onclick="submitDriverRegistration()" class="w-full bg-gray-300 text-white py-4 rounded-xl font-black text-[10px] uppercase italic transition-all cursor-not-allowed">Seguir</button>
+                <div id="name-error" class="hidden text-[9px] font-bold text-red-600 uppercase mt-2 ml-2 italic animate-pulse">Este campo es obligatorio</div>
+
+                <button id="btn-name-next" disabled onclick="submitNameStep()" class="w-full mt-10 bg-gray-300 text-white py-4 rounded-xl font-black text-[10px] uppercase italic transition-all cursor-not-allowed">Seguir</button>
+            </div>
+
         </div>
     </div>
 </div>
@@ -185,7 +204,8 @@
     lucide.createIcons();
     
     let driveMxFleet = []; 
-    let tempDriverData = { photo: null };
+    let tempDriverData = { photo: null, name: null };
+    let currentRegStep = 1; // 1: Photo, 2: Name
 
     // 1. Splash Screen
     setTimeout(() => {
@@ -200,19 +220,50 @@
     // 2. Registro de Conductor Logic
     function applyToBeDriver() {
         closeAll();
-        document.getElementById('driver-form-view').classList.remove('hidden');
+        document.getElementById('driver-registration-view').classList.remove('hidden');
+        currentRegStep = 1;
     }
 
     function closeDriverForm() {
-        document.getElementById('driver-form-view').classList.add('hidden');
+        document.getElementById('driver-registration-view').classList.add('hidden');
+        resetAllSteps();
     }
 
+    function handleDriverBack() {
+        if (currentRegStep === 1) {
+            closeDriverForm();
+        } else if (currentRegStep === 2) {
+            document.getElementById('step-name').classList.add('hidden');
+            document.getElementById('step-photo').classList.remove('hidden');
+            currentRegStep = 1;
+        }
+    }
+
+    function resetAllSteps() {
+        // Reset Photo
+        tempDriverData.photo = null;
+        document.getElementById('driver-photo-preview').classList.add('hidden');
+        document.getElementById('placeholder-icon').classList.remove('hidden');
+        document.getElementById('btn-photo-next').disabled = true;
+        document.getElementById('btn-photo-next').classList.add('bg-gray-300');
+        
+        // Reset Name
+        tempDriverData.name = null;
+        document.getElementById('dr-full-name').value = '';
+        document.getElementById('btn-name-next').disabled = true;
+        document.getElementById('btn-name-next').classList.add('bg-gray-300');
+        
+        // Reset Views
+        document.getElementById('step-photo').classList.remove('hidden');
+        document.getElementById('step-name').classList.add('hidden');
+    }
+
+    // Lógica Filtro 1: Foto
     function processImage(input) {
         const file = input.files[0];
-        const errorMsg = document.getElementById('photo-error');
         const preview = document.getElementById('driver-photo-preview');
         const placeholder = document.getElementById('placeholder-icon');
-        const submitBtn = document.getElementById('btn-submit-driver');
+        const nextBtn = document.getElementById('btn-photo-next');
 
         if (file) {
             const reader = new FileReader();
@@ -221,29 +272,41 @@
                 preview.src = e.target.result;
                 preview.classList.remove('hidden');
                 placeholder.classList.add('hidden');
-                errorMsg.classList.add('hidden');
-                submitBtn.disabled = false;
-                submitBtn.classList.remove('bg-gray-300', 'cursor-not-allowed');
-                submitBtn.classList.add('bg-red-600', 'shadow-lg', 'shadow-red-600/20');
+                nextBtn.disabled = false;
+                nextBtn.classList.remove('bg-gray-300', 'cursor-not-allowed');
+                nextBtn.classList.add('bg-red-600', 'shadow-lg', 'shadow-red-600/20');
             };
             reader.readAsDataURL(file);
         }
     }
 
-    function submitDriverRegistration() {
-        if (!tempDriverData.photo) {
-            document.getElementById('photo-error').classList.remove('hidden');
-            return;
-        }
-        
-        // Simulación de paso al siguiente módulo
-        alert("Fotografía validada. Procediendo al siguiente paso...");
-        // Aquí se conectaría con la siguiente vista de registro
+    function goToStepName() {
+        document.getElementById('step-photo').classList.add('hidden');
+        document.getElementById('step-name').classList.remove('hidden');
+        currentRegStep = 2;
     }
 
-    function updateAdminFleetUI() {
-        const counter = document.getElementById('admin-active-count');
-        if (counter) counter.innerText = driveMxFleet.length;
+    // Lógica Filtro 2: Nombre
+    function validateNameInput(input) {
+        const nextBtn = document.getElementById('btn-name-next');
+        const error = document.getElementById('name-error');
+        
+        if (input.value.trim().length >= 3) {
+            nextBtn.disabled = false;
+            nextBtn.classList.remove('bg-gray-300', 'cursor-not-allowed');
+            nextBtn.classList.add('bg-red-600', 'shadow-lg', 'shadow-red-600/20');
+            error.classList.add('hidden');
+        } else {
+            nextBtn.disabled = true;
+            nextBtn.classList.add('bg-gray-300', 'cursor-not-allowed');
+            nextBtn.classList.remove('bg-red-600');
+        }
+    }
+
+    function submitNameStep() {
+        tempDriverData.name = document.getElementById('dr-full-name').value.trim();
+        alert("Nombre registrado: " + tempDriverData.name + ". Procediendo al siguiente paso...");
+        // Aquí se activará el filtro 3 en el futuro
     }
 
     // 3. Autenticación
@@ -268,7 +331,7 @@
         }
     }
 
-    // 4. Navegación & UI
+    // 4. Navegación & UI Sidebar
     function openMenu() {
         document.getElementById('sidebar').classList.add('open');
         document.getElementById('overlay').classList.add('opacity-100', 'pointer-events-auto');

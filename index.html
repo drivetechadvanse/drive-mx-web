@@ -71,11 +71,11 @@
         <div class="p-4 border-t"><button onclick="location.reload()" class="w-full py-3 bg-red-50 text-red-600 rounded-xl font-black text-[9px] uppercase italic">Cerrar Sesión</button></div>
     </div>
 
-    <div id="login-screen" class="hidden absolute inset-0 z-[150] bg-white p-8 flex flex-col justify-center">
-        <h2 class="text-2xl font-black italic uppercase mb-8 leading-none tracking-tighter">ACCESO<br><span class="text-red-600">DRIVE MX</span></h2>
+    <div id="login-screen" class="hidden absolute inset-0 z-[150] bg-white p-8 flex flex-col justify-center text-center">
+        <h2 class="text-3xl font-black italic uppercase mb-12 leading-none tracking-tighter">BIENVENIDO</h2>
         <div class="space-y-4">
-            <input type="email" id="login-email" placeholder="Usuario (admin para panel)" class="reg-input">
-            <input type="password" id="login-pass" placeholder="Contraseña" class="reg-input">
+            <input type="email" id="login-email" placeholder="Usuario (admin para panel)" class="reg-input text-left">
+            <input type="password" id="login-pass" placeholder="Contraseña" class="reg-input text-left">
             <button onclick="handleAuth()" class="w-full bg-red-600 text-white py-4 rounded-xl font-black text-[11px] uppercase italic shadow-lg active:scale-95 transition-all">Ingresar</button>
         </div>
     </div>
@@ -251,7 +251,6 @@
     lucide.createIcons();
     let currentStep = 1;
 
-    // --- LÓGICA API / PERSISTENCIA ---
     function saveDriverRequest() {
         const newRequest = {
             id: Date.now(),
@@ -262,11 +261,9 @@
             status: 'pendiente',
             date: new Date().toLocaleDateString()
         };
-
         let requests = JSON.parse(localStorage.getItem('driver_requests') || '[]');
         requests.push(newRequest);
         localStorage.setItem('driver_requests', JSON.stringify(requests));
-        
         alert('Registro completado y enviado a revisión.');
         location.reload();
     }
@@ -274,9 +271,7 @@
     function renderAdminRequests() {
         const container = document.getElementById('admin-requests-container');
         const requests = JSON.parse(localStorage.getItem('driver_requests') || '[]');
-        
         if(requests.length === 0) return;
-
         container.innerHTML = '';
         requests.forEach(req => {
             container.innerHTML += `
@@ -294,12 +289,10 @@
                         <span class="text-[7px] font-black px-2 py-1 bg-yellow-100 text-yellow-600 rounded-full uppercase">Pendiente</span>
                         <p class="text-[7px] font-bold text-gray-400">${req.phone}</p>
                     </div>
-                </div>
-            `;
+                </div>`;
         });
     }
 
-    // --- LÓGICA EXISTENTE ---
     setTimeout(() => {
         document.getElementById('splash').style.opacity = '0';
         setTimeout(() => { document.getElementById('splash').style.display = 'none'; document.getElementById('login-screen').classList.remove('hidden'); }, 500);
@@ -312,7 +305,7 @@
             document.getElementById('admin-view').classList.remove('hidden');
             document.getElementById('nav-admin').classList.remove('hidden');
             document.getElementById('side-role').innerText = 'ADMINISTRADOR';
-            renderAdminRequests(); // Cargar solicitudes al entrar como admin
+            renderAdminRequests();
         } else {
             document.getElementById('passenger-view').classList.remove('hidden');
             document.getElementById('nav-passenger').classList.remove('hidden');
@@ -330,7 +323,6 @@
     function toggleAccordion(id) { document.getElementById(id).classList.toggle('expanded'); }
     function openCosts() { document.getElementById('cost-sheet').classList.add('active'); document.getElementById('overlay').classList.add('opacity-100', 'pointer-events-auto'); }
     function setPay(btn) { document.querySelectorAll('.payment-opt').forEach(b => b.classList.remove('selected')); btn.classList.add('selected'); }
-    
     function startRadar() {
         closeAll();
         document.getElementById('radar').classList.remove('hidden');
@@ -339,9 +331,7 @@
         document.getElementById('p-wallet').classList.add('hidden-view');
         document.getElementById('p-header').classList.add('hidden-view');
     }
-
     function applyToBeDriver() { closeAll(); document.getElementById('driver-registration-view').classList.remove('hidden'); }
-    
     function goToStep(n) {
         const steps = ['step-photo', 'step-name', 'step-ine-front', 'step-ine-back', 'step-vehicle', 'step-circ', 'step-v-photo', 'step-phone', 'step-finish'];
         document.getElementById(steps[currentStep-1]).classList.add('hidden');
@@ -349,12 +339,10 @@
         currentStep = n;
         lucide.createIcons();
     }
-    
     function handleDriverBack() {
         if(currentStep > 1) goToStep(currentStep-1);
         else document.getElementById('driver-registration-view').classList.add('hidden');
     }
-
     function processImage(input) {
         if (input.files[0]) {
             document.getElementById('driver-photo-preview').src = URL.createObjectURL(input.files[0]);
@@ -388,11 +376,9 @@
     function checkPhone(input) {
         const btn = document.getElementById('btn-phone-next');
         if(input.value.length >= 10) { 
-            btn.disabled = false; 
-            btn.classList.replace('bg-gray-300', 'bg-red-600'); 
+            btn.disabled = false; btn.classList.replace('bg-gray-300', 'bg-red-600'); 
         } else {
-            btn.disabled = true;
-            btn.classList.replace('bg-red-600', 'bg-gray-300');
+            btn.disabled = true; btn.classList.replace('bg-red-600', 'bg-gray-300');
         }
     }
 </script>

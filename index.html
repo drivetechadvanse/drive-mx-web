@@ -54,6 +54,7 @@
         .reg-input:focus { border-color: #ef4444; background-color: #fff; }
         .reg-label { font-size: 9px; font-weight: 900; color: #9ca3af; text-transform: uppercase; margin-bottom: 0.4rem; display: block; margin-left: 0.5rem; }
         
+        /* Estilo para selección visual de pago */
         .payment-opt.selected {
             border-color: #ef4444;
             background-color: #fef2f2;
@@ -191,15 +192,109 @@
                     <span class="text-[9px] font-black uppercase italic">Cartera</span>
                 </button>
             </div>
-            <div class="text-center py-2">
-                <p class="text-[10px] font-black text-gray-400 uppercase italic">Costo estimado: <span class="text-gray-900">$120.00 MXN</span></p>
+            <div class="text-center py-1">
+                <p class="text-[9px] font-black text-gray-400 uppercase italic tracking-widest">Costo Estimado: <span class="text-gray-900">$120.00 MXN</span></p>
             </div>
             <button onclick="handleRequest()" class="w-full bg-red-600 text-white py-4 rounded-2xl font-black text-[12px] uppercase italic shadow-xl shadow-red-600/30 active:scale-95 transition-all mb-4">CONFIRMAR SOLICITUD</button>
         </div>
     </div>
 
     <div id="driver-registration-view" class="hidden absolute inset-0 z-[200] bg-white flex flex-col">
+        <header class="px-4 py-4 flex items-center border-b bg-white sticky top-0 z-10 shrink-0">
+            <button onclick="handleDriverBack()" class="p-2 hover:bg-gray-100 rounded-full transition-all"><i data-lucide="arrow-left" class="w-6 h-6 text-gray-700"></i></button>
+            <h2 class="ml-3 text-lg font-black italic uppercase tracking-tighter">REGISTRO <span class="text-red-600 uppercase">DRIVER</span></h2>
+        </header>
+        
+        <div class="flex-1 overflow-y-auto p-6 pb-12">
+            <div id="step-photo" class="w-full flex flex-col items-center">
+                <div class="relative mb-8 mt-6">
+                    <div id="photo-preview-container" class="w-40 h-40 rounded-full border-4 border-gray-100 bg-gray-50 flex items-center justify-center overflow-hidden">
+                        <i id="placeholder-icon" data-lucide="user" class="w-12 h-12 text-gray-300"></i>
+                        <img id="driver-photo-preview" class="hidden w-full h-full object-cover">
+                    </div>
+                    <button onclick="document.getElementById('photo-input').click()" class="absolute bottom-1 right-1 bg-red-600 p-3 rounded-full text-white border-4 border-white shadow-lg"><i data-lucide="camera" class="w-5 h-5"></i></button>
+                    <input type="file" id="photo-input" accept="image/*" class="hidden" onchange="processImage(this)">
+                </div>
+                <button id="btn-photo-next" disabled onclick="goToStep(2)" class="w-full bg-gray-300 text-white py-4 rounded-xl font-black text-[10px] uppercase italic transition-all">Siguiente</button>
+            </div>
+
+            <div id="step-name" class="hidden w-full flex flex-col">
+                <label class="reg-label">Nombre Completo</label>
+                <input type="text" id="dr-name" class="reg-input mb-8" placeholder="Ej: Juan Pérez" oninput="checkName(this)">
+                <button id="btn-name-next" disabled onclick="goToStep(3)" class="w-full bg-gray-300 text-white py-4 rounded-xl font-black text-[10px] uppercase italic transition-all">Siguiente</button>
+            </div>
+
+            <div id="step-ine-front" class="hidden w-full flex flex-col">
+                <h3 class="text-center font-black text-[10px] text-gray-400 uppercase mb-4 italic">INE Frontal</h3>
+                <div class="w-full aspect-video bg-gray-50 rounded-2xl border-4 border-dashed border-gray-200 flex items-center justify-center mb-6 overflow-hidden" onclick="document.getElementById('ine-f-input').click()">
+                    <img id="ine-f-preview" class="hidden w-full h-full object-cover">
+                    <i data-lucide="image" class="text-gray-300 w-10 h-10"></i>
+                </div>
+                <input type="file" id="ine-f-input" accept="image/*" class="hidden" onchange="processFile(this, 'ine-f-preview', 'btn-ine-f-next')">
+                <button id="btn-ine-f-next" disabled onclick="goToStep(4)" class="w-full bg-gray-300 text-white py-4 rounded-xl font-black text-[10px] uppercase italic transition-all">Siguiente</button>
+            </div>
+
+            <div id="step-ine-back" class="hidden w-full flex flex-col">
+                <h3 class="text-center font-black text-[10px] text-gray-400 uppercase mb-4 italic">INE Trasera</h3>
+                <div class="w-full aspect-video bg-gray-50 rounded-2xl border-4 border-dashed border-gray-200 flex items-center justify-center mb-6 overflow-hidden" onclick="document.getElementById('ine-b-input').click()">
+                    <img id="ine-b-preview" class="hidden w-full h-full object-cover">
+                    <i data-lucide="image" class="text-gray-300 w-10 h-10"></i>
+                </div>
+                <input type="file" id="ine-b-input" accept="image/*" class="hidden" onchange="processFile(this, 'ine-b-preview', 'btn-ine-b-next')">
+                <button id="btn-ine-b-next" disabled onclick="goToStep(5)" class="w-full bg-gray-300 text-white py-4 rounded-xl font-black text-[10px] uppercase italic transition-all">Siguiente</button>
+            </div>
+
+            <div id="step-vehicle" class="hidden w-full flex flex-col space-y-3">
+                <h3 class="text-center font-black text-[10px] text-gray-400 uppercase mb-4 italic">Datos del Vehículo</h3>
+                <input type="number" id="v-year" placeholder="Año" class="reg-input v-in">
+                <input type="text" id="v-color" placeholder="Color" class="reg-input v-in">
+                <input type="text" id="v-model" placeholder="Modelo" class="reg-input v-in">
+                <input type="text" id="v-brand" placeholder="Marca" class="reg-input v-in">
+                <input type="text" id="v-plate" placeholder="Placa" class="reg-input v-in uppercase" oninput="checkVehicle()">
+                <button id="btn-v-next" disabled onclick="goToStep(6)" class="w-full mt-4 bg-gray-300 text-white py-4 rounded-xl font-black text-[10px] uppercase italic">Siguiente</button>
+            </div>
+
+            <div id="step-circ" class="hidden w-full flex flex-col">
+                <h3 class="text-center font-black text-[10px] text-gray-400 uppercase mb-4 italic">Tarjeta de Circulación</h3>
+                <div class="w-full aspect-video bg-gray-50 rounded-2xl border-4 border-dashed border-gray-200 flex items-center justify-center mb-6 overflow-hidden" onclick="document.getElementById('circ-input').click()">
+                    <img id="circ-preview" class="hidden w-full h-full object-cover">
+                    <i data-lucide="file-text" class="text-gray-300 w-10 h-10"></i>
+                </div>
+                <input type="file" id="circ-input" accept="image/*" class="hidden" onchange="processFile(this, 'circ-preview', 'btn-circ-next')">
+                <button id="btn-circ-next" disabled onclick="goToStep(7)" class="w-full bg-gray-300 text-white py-4 rounded-xl font-black text-[10px] uppercase italic transition-all">Siguiente</button>
+            </div>
+
+            <div id="step-v-photo" class="hidden w-full flex flex-col">
+                <h3 class="text-center font-black text-[10px] text-gray-400 uppercase mb-4 italic">Foto del Vehículo</h3>
+                <div class="w-full aspect-video bg-gray-50 rounded-2xl border-4 border-dashed border-gray-200 flex items-center justify-center mb-6 overflow-hidden" onclick="document.getElementById('v-photo-input').click()">
+                    <img id="v-photo-preview" class="hidden w-full h-full object-cover">
+                    <i data-lucide="car" class="text-gray-300 w-12 h-12"></i>
+                </div>
+                <input type="file" id="v-photo-input" accept="image/*" class="hidden" onchange="processFile(this, 'v-photo-preview', 'btn-v-photo-next')">
+                <button id="btn-v-photo-next" disabled onclick="goToStep(8)" class="w-full bg-gray-300 text-white py-4 rounded-xl font-black text-[10px] uppercase italic transition-all">Siguiente</button>
+            </div>
+
+            <div id="step-phone" class="hidden w-full flex flex-col">
+                <h3 class="text-center font-black text-[10px] text-gray-400 uppercase mb-4 italic">Número Telefónico</h3>
+                <div class="relative mb-8 mt-4">
+                    <div class="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-2 border-r pr-3 border-gray-200">
+                        <span class="text-[10px] font-black text-gray-400">+52</span>
+                    </div>
+                    <input type="tel" id="dr-phone" class="reg-input pl-20" placeholder="55 0000 0000" oninput="checkPhone(this)">
+                </div>
+                <button id="btn-phone-next" disabled onclick="goToStep(9)" class="w-full bg-gray-300 text-white py-4 rounded-xl font-black text-[11px] uppercase italic transition-all shadow-xl shadow-red-600/30">Siguiente</button>
+            </div>
+
+            <div id="step-finish" class="hidden w-full flex flex-col items-center justify-center text-center py-10">
+                <div class="w-24 h-24 bg-gray-900 rounded-3xl flex items-center justify-center mb-8 shadow-2xl shadow-gray-200">
+                    <i data-lucide="hourglass" class="w-12 h-12 text-red-600 animate-[spin_3s_linear_infinite]"></i>
+                </div>
+                <h2 class="text-xl font-black italic uppercase leading-none mb-4">REVISIÓN EN<br><span class="text-red-600">PROGRESO</span></h2>
+                <p class="text-[11px] font-bold text-gray-500 uppercase tracking-tight italic mb-10 px-4">Si todo sale bien, te activaremos en<br><span class="text-gray-900">menos de 24 hrs.</span></p>
+                <button onclick="saveDriverRequest()" class="w-full bg-red-600 text-white py-4 rounded-xl font-black text-[12px] uppercase italic transition-all shadow-xl shadow-red-600/30 active:scale-95">CONFIRMAR</button>
+            </div>
         </div>
+    </div>
 </div>
 
 <script>
@@ -210,7 +305,7 @@
     let appState = {
         selectedPayment: 'efectivo',
         saldoUsuario: 350.00,
-        precioViaje: 120.00 // Precio para la lógica de pago
+        precioViaje: 120.00
     };
 
     function updateWalletDisplay() {
@@ -223,10 +318,9 @@
         saldoElement.innerText = `$${appState.saldoUsuario.toFixed(2)} MXN`;
     }
 
-    // Inicializar visualización del saldo
+    // Inicialización del saldo al cargar
     updateWalletDisplay();
 
-    // NUEVA FUNCIÓN: Lógica de confirmación y pago
     function handleRequest() {
         if (appState.selectedPayment === 'cartera') {
             if (appState.saldoUsuario >= appState.precioViaje) {
@@ -238,7 +332,7 @@
                 alert('Saldo insuficiente en tu Cartera');
             }
         } else {
-            // Para Efectivo o SPEI, solo inicia la búsqueda
+            // Para Efectivo o SPEI
             startRadar();
         }
     }
@@ -287,7 +381,10 @@
 
     setTimeout(() => {
         document.getElementById('splash').style.opacity = '0';
-        setTimeout(() => { document.getElementById('splash').style.display = 'none'; document.getElementById('login-screen').classList.remove('hidden'); }, 500);
+        setTimeout(() => { 
+            document.getElementById('splash').style.display = 'none'; 
+            document.getElementById('login-screen').classList.remove('hidden'); 
+        }, 500);
     }, 1500);
 
     function handleAuth() {
@@ -306,12 +403,17 @@
         lucide.createIcons();
     }
 
-    function openMenu() { document.getElementById('sidebar').classList.add('open'); document.getElementById('overlay').classList.add('opacity-100', 'pointer-events-auto'); }
+    function openMenu() { 
+        document.getElementById('sidebar').classList.add('open'); 
+        document.getElementById('overlay').classList.add('opacity-100', 'pointer-events-auto'); 
+    }
+
     function closeAll() { 
         document.getElementById('sidebar').classList.remove('open'); 
         document.getElementById('cost-sheet').classList.remove('active'); 
         document.getElementById('overlay').classList.remove('opacity-100', 'pointer-events-auto');
     }
+
     function toggleAccordion(id) { document.getElementById(id).classList.toggle('expanded'); }
     function openCosts() { document.getElementById('cost-sheet').classList.add('active'); document.getElementById('overlay').classList.add('opacity-100', 'pointer-events-auto'); }
     
@@ -329,8 +431,79 @@
         document.getElementById('p-wallet').classList.add('hidden-view');
         document.getElementById('p-header').classList.add('hidden-view');
     }
-
-    // Funciones de registro omitidas para brevedad pero operativas en el flujo
+    
+    function applyToBeDriver() { 
+        closeAll(); 
+        document.getElementById('passenger-view').classList.add('hidden');
+        document.getElementById('driver-registration-view').classList.remove('hidden');
+        currentStep = 1;
+        goToStep(1);
+        lucide.createIcons();
+    }
+    
+    function goToStep(n) {
+        const steps = ['step-photo', 'step-name', 'step-ine-front', 'step-ine-back', 'step-vehicle', 'step-circ', 'step-v-photo', 'step-phone', 'step-finish'];
+        steps.forEach(s => document.getElementById(s).classList.add('hidden'));
+        document.getElementById(steps[n-1]).classList.remove('hidden');
+        currentStep = n;
+        lucide.createIcons();
+    }
+    
+    function handleDriverBack() {
+        if(currentStep > 1) {
+            goToStep(currentStep - 1);
+        } else {
+            document.getElementById('driver-registration-view').classList.add('hidden');
+            document.getElementById('passenger-view').classList.remove('hidden');
+            lucide.createIcons();
+        }
+    }
+    
+    function processImage(input) {
+        if (input.files[0]) {
+            document.getElementById('driver-photo-preview').src = URL.createObjectURL(input.files[0]);
+            document.getElementById('driver-photo-preview').classList.remove('hidden');
+            document.getElementById('placeholder-icon').classList.add('hidden');
+            const btn = document.getElementById('btn-photo-next');
+            btn.disabled = false; btn.classList.replace('bg-gray-300', 'bg-red-600');
+        }
+    }
+    
+    function processFile(input, previewId, btnId) {
+        if (input.files[0]) {
+            document.getElementById(previewId).src = URL.createObjectURL(input.files[0]);
+            document.getElementById(previewId).classList.remove('hidden');
+            const btn = document.getElementById(btnId);
+            btn.disabled = false; btn.classList.replace('bg-gray-300', 'bg-red-600');
+        }
+    }
+    
+    function checkName(input) {
+        const btn = document.getElementById('btn-name-next');
+        if(input.value.length > 3) { btn.disabled = false; btn.classList.replace('bg-gray-300', 'bg-red-600'); }
+    }
+    
+    function checkVehicle() {
+        const ins = document.querySelectorAll('.v-in');
+        let ok = true;
+        ins.forEach(i => { if(!i.value) ok = false; });
+        if(ok) {
+            const btn = document.getElementById('btn-v-next');
+            btn.disabled = false;
+            btn.classList.replace('bg-gray-300', 'bg-red-600');
+        }
+    }
+    
+    function checkPhone(input) {
+        const btn = document.getElementById('btn-phone-next');
+        if(input.value.length >= 10) { 
+            btn.disabled = false;
+            btn.classList.replace('bg-gray-300', 'bg-red-600'); 
+        } else {
+            btn.disabled = true;
+            btn.classList.replace('bg-red-600', 'bg-gray-300');
+        }
+    }
 </script>
 </body>
 </html>

@@ -54,7 +54,6 @@
         .reg-input:focus { border-color: #ef4444; background-color: #fff; }
         .reg-label { font-size: 9px; font-weight: 900; color: #9ca3af; text-transform: uppercase; margin-bottom: 0.4rem; display: block; margin-left: 0.5rem; }
         
-        /* Estilos para la selección de pago */
         .payment-opt.selected {
             border-color: #ef4444;
             background-color: #fef2f2;
@@ -164,8 +163,11 @@
             <div id="p-wallet" class="absolute bottom-6 left-4 right-4 z-30">
                 <div class="bg-gray-900 rounded-2xl p-4 flex items-center justify-between text-white shadow-2xl">
                     <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 bg-red-600/20 rounded-xl flex items-center justify-center text-red-600 border border-red-600/30"><i data-lucide="wallet" class="w-5 h-5"></i></div>
-                        <div><p class="text-[8px] text-gray-500 font-black uppercase italic">Tu Saldo</p><h3 class="text-sm font-black italic">$350.00 MXN</h3></div>
+                        <div id="wallet-icon-bg" class="w-10 h-10 bg-red-600/20 rounded-xl flex items-center justify-center text-red-600 border border-red-600/30"><i data-lucide="wallet" class="w-5 h-5"></i></div>
+                        <div>
+                            <p class="text-[8px] text-gray-500 font-black uppercase italic">Tu Cartera</p>
+                            <h3 id="display-saldo" class="text-sm font-black italic">$0.00 MXN</h3>
+                        </div>
                     </div>
                     <button class="bg-white/10 p-2 rounded-lg active:bg-white/20"><i data-lucide="plus" class="w-4 h-4 text-white"></i></button>
                 </div>
@@ -213,7 +215,7 @@
             </div>
 
             <div id="step-name" class="hidden w-full flex flex-col">
-                <label class="reg-label">Nombre Completo [cite: 49]</label>
+                <label class="reg-label">Nombre Completo</label>
                 <input type="text" id="dr-name" class="reg-input mb-8" placeholder="Ej: Juan Pérez" oninput="checkName(this)">
                 <button id="btn-name-next" disabled onclick="goToStep(3)" class="w-full bg-gray-300 text-white py-4 rounded-xl font-black text-[10px] uppercase italic transition-all">Siguiente</button>
             </div>
@@ -297,8 +299,22 @@
 
     // ESTADO GLOBAL
     let appState = {
-        selectedPayment: 'efectivo' // Valor por defecto
+        selectedPayment: 'efectivo',
+        saldoUsuario: 350.00 // Puedes cambiar este valor para probar (ej. -50.00)
     };
+
+    function updateWalletDisplay() {
+        const saldoElement = document.getElementById('display-saldo');
+        if (appState.saldoUsuario < 0) {
+            saldoElement.classList.add('text-red-600');
+        } else {
+            saldoElement.classList.remove('text-red-600');
+        }
+        saldoElement.innerText = `$${appState.saldoUsuario.toFixed(2)} MXN`;
+    }
+
+    // Inicializar visualización del saldo
+    updateWalletDisplay();
 
     function saveDriverRequest() {
         const newRequest = {
@@ -372,19 +388,10 @@
     function toggleAccordion(id) { document.getElementById(id).classList.toggle('expanded'); }
     function openCosts() { document.getElementById('cost-sheet').classList.add('active'); document.getElementById('overlay').classList.add('opacity-100', 'pointer-events-auto'); }
     
-    // Función de selección actualizada
     function setPay(btn, method) { 
-        // 1. Quitar selección visual de todos
         document.querySelectorAll('.payment-opt').forEach(b => b.classList.remove('selected')); 
-        
-        // 2. Aplicar selección al actual
         btn.classList.add('selected'); 
-        
-        // 3. Guardar en el estado
         appState.selectedPayment = method;
-        
-        // Log para verificar (opcional)
-        console.log("Método seleccionado:", appState.selectedPayment);
     }
     
     function startRadar() {

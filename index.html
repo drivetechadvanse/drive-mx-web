@@ -8,10 +8,9 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
-        
         body { 
             font-family: 'Inter', sans-serif; 
-            -webkit-tap-highlight-color: transparent; 
+            -webkit-tap-highlight-color: transparent;
             overflow: hidden; 
             background-color: #000; 
             height: 100dvh;
@@ -23,7 +22,7 @@
         #sidebar.open { transform: translateX(0); }
         
         #cost-sheet { 
-            transition: transform 0.5s cubic-bezier(0.32, 0.72, 0, 1); 
+            transition: transform 0.5s cubic-bezier(0.32, 0.72, 0, 1);
             transform: translateY(100%); 
             padding-bottom: env(safe-area-inset-bottom, 2rem);
         }
@@ -35,7 +34,8 @@
         .map-sim { background-color: #f3f4f6; background-image: radial-gradient(#d1d5db 1px, transparent 1px); background-size: 25px 25px; flex-grow: 1; }
         
         .radar-pulse {
-            position: absolute; width: 100px; height: 100px;
+            position: absolute;
+            width: 100px; height: 100px;
             background: rgba(239, 68, 68, 0.15); border-radius: 100%;
             animation: radar 2s infinite;
         }
@@ -53,6 +53,13 @@
         .reg-input { width: 100%; padding: 1rem; background-color: #f9fafb; border-radius: 0.75rem; border: 2px solid transparent; outline: none; font-size: 0.75rem; font-weight: 700; }
         .reg-input:focus { border-color: #ef4444; background-color: #fff; }
         .reg-label { font-size: 9px; font-weight: 900; color: #9ca3af; text-transform: uppercase; margin-bottom: 0.4rem; display: block; margin-left: 0.5rem; }
+        
+        /* Estilos para la selección de pago */
+        .payment-opt.selected {
+            border-color: #ef4444;
+            background-color: #fef2f2;
+            color: #ef4444;
+        }
     </style>
 </head>
 <body>
@@ -169,9 +176,18 @@
             <div class="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-2"></div>
             <h3 class="text-lg font-black italic uppercase text-center tracking-tighter">FORMA DE <span class="text-red-600">PAGO</span></h3>
             <div class="grid grid-cols-3 gap-3">
-                <button onclick="setPay(this)" class="payment-opt selected p-4 rounded-2xl border flex flex-col items-center gap-2 transition-all"><i data-lucide="banknote" class="w-5 h-5"></i><span class="text-[9px] font-black uppercase italic">Efectivo</span></button>
-                <button onclick="setPay(this)" class="payment-opt p-4 rounded-2xl border flex flex-col items-center gap-2 transition-all"><i data-lucide="send" class="w-5 h-5"></i><span class="text-[9px] font-black uppercase italic">SPEI</span></button>
-                <button onclick="setPay(this)" class="payment-opt p-4 rounded-2xl border flex flex-col items-center gap-2 transition-all"><i data-lucide="wallet" class="w-5 h-5"></i><span class="text-[9px] font-black uppercase italic">Cartera</span></button>
+                <button onclick="setPay(this, 'efectivo')" class="payment-opt selected p-4 rounded-2xl border flex flex-col items-center gap-2 transition-all">
+                    <i data-lucide="banknote" class="w-5 h-5"></i>
+                    <span class="text-[9px] font-black uppercase italic">Efectivo</span>
+                </button>
+                <button onclick="setPay(this, 'spei')" class="payment-opt p-4 rounded-2xl border flex flex-col items-center gap-2 transition-all">
+                    <i data-lucide="send" class="w-5 h-5"></i>
+                    <span class="text-[9px] font-black uppercase italic">SPEI</span>
+                </button>
+                <button onclick="setPay(this, 'cartera')" class="payment-opt p-4 rounded-2xl border flex flex-col items-center gap-2 transition-all">
+                    <i data-lucide="wallet" class="w-5 h-5"></i>
+                    <span class="text-[9px] font-black uppercase italic">Cartera</span>
+                </button>
             </div>
             <button onclick="startRadar()" class="w-full bg-red-600 text-white py-4 rounded-2xl font-black text-[12px] uppercase italic shadow-xl shadow-red-600/30 active:scale-95 transition-all mb-4">CONFIRMAR SOLICITUD</button>
         </div>
@@ -197,7 +213,7 @@
             </div>
 
             <div id="step-name" class="hidden w-full flex flex-col">
-                <label class="reg-label">Nombre Completo</label>
+                <label class="reg-label">Nombre Completo [cite: 49]</label>
                 <input type="text" id="dr-name" class="reg-input mb-8" placeholder="Ej: Juan Pérez" oninput="checkName(this)">
                 <button id="btn-name-next" disabled onclick="goToStep(3)" class="w-full bg-gray-300 text-white py-4 rounded-xl font-black text-[10px] uppercase italic transition-all">Siguiente</button>
             </div>
@@ -279,6 +295,11 @@
     lucide.createIcons();
     let currentStep = 1;
 
+    // ESTADO GLOBAL
+    let appState = {
+        selectedPayment: 'efectivo' // Valor por defecto
+    };
+
     function saveDriverRequest() {
         const newRequest = {
             id: Date.now(),
@@ -346,11 +367,25 @@
     function closeAll() { 
         document.getElementById('sidebar').classList.remove('open'); 
         document.getElementById('cost-sheet').classList.remove('active'); 
-        document.getElementById('overlay').classList.remove('opacity-100', 'pointer-events-auto'); 
+        document.getElementById('overlay').classList.remove('opacity-100', 'pointer-events-auto');
     }
     function toggleAccordion(id) { document.getElementById(id).classList.toggle('expanded'); }
     function openCosts() { document.getElementById('cost-sheet').classList.add('active'); document.getElementById('overlay').classList.add('opacity-100', 'pointer-events-auto'); }
-    function setPay(btn) { document.querySelectorAll('.payment-opt').forEach(b => b.classList.remove('selected')); btn.classList.add('selected'); }
+    
+    // Función de selección actualizada
+    function setPay(btn, method) { 
+        // 1. Quitar selección visual de todos
+        document.querySelectorAll('.payment-opt').forEach(b => b.classList.remove('selected')); 
+        
+        // 2. Aplicar selección al actual
+        btn.classList.add('selected'); 
+        
+        // 3. Guardar en el estado
+        appState.selectedPayment = method;
+        
+        // Log para verificar (opcional)
+        console.log("Método seleccionado:", appState.selectedPayment);
+    }
     
     function startRadar() {
         closeAll();
@@ -406,16 +441,19 @@
         ins.forEach(i => { if(!i.value) ok = false; });
         if(ok) {
             const btn = document.getElementById('btn-v-next');
-            btn.disabled = false; btn.classList.replace('bg-gray-300', 'bg-red-600');
+            btn.disabled = false;
+            btn.classList.replace('bg-gray-300', 'bg-red-600');
         }
     }
     
     function checkPhone(input) {
         const btn = document.getElementById('btn-phone-next');
         if(input.value.length >= 10) { 
-            btn.disabled = false; btn.classList.replace('bg-gray-300', 'bg-red-600'); 
+            btn.disabled = false;
+            btn.classList.replace('bg-gray-300', 'bg-red-600'); 
         } else {
-            btn.disabled = true; btn.classList.replace('bg-red-600', 'bg-gray-300');
+            btn.disabled = true;
+            btn.classList.replace('bg-red-600', 'bg-gray-300');
         }
     }
 </script>

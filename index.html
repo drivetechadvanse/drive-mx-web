@@ -148,13 +148,11 @@
                         <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"></i>
                     </div>
                 </div>
-
                 <div class="bg-white p-5 rounded-2xl border border-gray-200 space-y-4 shadow-sm">
                     <div class="flex flex-col items-center justify-center py-2 border-b border-gray-100 mb-2">
                         <p class="text-[9px] font-black text-gray-400 uppercase italic">Saldo Actual del Usuario</p>
                         <h2 id="admin-view-saldo" class="text-2xl font-black italic text-gray-900 tracking-tighter">$0.00 MXN</h2>
                     </div>
-                    
                     <div class="space-y-3">
                         <div>
                             <label class="reg-label">Monto de Operación</label>
@@ -335,7 +333,7 @@
         precioViaje: 120.00
     };
 
-    // --- FUNCIONES CARTERA ADMIN ---
+    // --- CARTERA ADMIN ---
     function openAdminWallet() {
         closeAll();
         document.getElementById('admin-dashboard').classList.add('hidden');
@@ -359,36 +357,22 @@
     function updateAdminWalletUI() {
         const saldoVista = document.getElementById('admin-view-saldo');
         saldoVista.innerText = `$${appState.saldoUsuario.toFixed(2)} MXN`;
-        // Colores para saldos negativos/positivos
-        if(appState.saldoUsuario < 0) {
-            saldoVista.classList.add('text-red-600');
-        } else {
-            saldoVista.classList.remove('text-red-600');
-        }
-        // Sincronizar con la vista del pasajero automáticamente
+        if(appState.saldoUsuario < 0) saldoVista.classList.add('text-red-600');
+        else saldoVista.classList.remove('text-red-600');
         updateWalletDisplay();
     }
 
     function adminModificarSaldo(tipo) {
         const montoInput = document.getElementById('admin-monto-input');
         const monto = parseFloat(montoInput.value);
-        
-        if (isNaN(monto) || monto <= 0) {
-            alert("Por favor, ingresa un monto válido.");
-            return;
-        }
-
-        if (tipo === 'sumar') {
-            appState.saldoUsuario += monto;
-        } else {
-            appState.saldoUsuario -= monto;
-        }
-
-        montoInput.value = ''; // Limpiar input
+        if (isNaN(monto) || monto <= 0) return alert("Monto no válido");
+        if (tipo === 'sumar') appState.saldoUsuario += monto;
+        else appState.saldoUsuario -= monto;
+        montoInput.value = '';
         updateAdminWalletUI();
     }
 
-    // --- LÓGICA PASAJERO Y GENERAL ---
+    // --- LÓGICA PASAJERO ---
     function updateWalletDisplay() {
         const saldoElement = document.getElementById('display-saldo');
         const btnConfirmar = document.getElementById('btn-confirmar');
@@ -411,15 +395,21 @@
 
     updateWalletDisplay();
 
+    // CORRECCIÓN: Ahora handleRequest aplica el descuento ANTES de iniciar el radar
     function handleRequest() {
         if (appState.saldoUsuario < 0) {
             alert("Debes pagar tu deuda para continuar");
             return;
         }
+
         if (appState.selectedPayment === 'cartera') {
             if (appState.saldoUsuario >= appState.precioViaje) {
+                // Realizar el descuento real
                 appState.saldoUsuario -= appState.precioViaje;
+                // Actualizar las pantallas (admin y pasajero)
                 updateWalletDisplay();
+                updateAdminWalletUI();
+                // Iniciar animación de búsqueda
                 startRadar();
             } else {
                 alert('Saldo insuficiente en tu Cartera');
@@ -429,56 +419,7 @@
         }
     }
 
-    function saveDriverRequest() {
-        const newRequest = {
-            id: Date.now(),
-            name: document.getElementById('dr-name').value,
-            vehicle: `${document.getElementById('v-brand').value} ${document.getElementById('v-model').value}`,
-            plate: document.getElementById('v-plate').value,
-            phone: document.getElementById('dr-phone').value,
-            status: 'pendiente',
-            date: new Date().toLocaleDateString()
-        };
-        let requests = JSON.parse(localStorage.getItem('driver_requests') || '[]');
-        requests.push(newRequest);
-        localStorage.setItem('driver_requests', JSON.stringify(requests));
-        alert('Registro completado y enviado a revisión.');
-        location.reload();
-    }
-
-    function renderAdminRequests() {
-        const container = document.getElementById('admin-requests-container');
-        const requests = JSON.parse(localStorage.getItem('driver_requests') || '[]');
-        if(requests.length === 0) return;
-        container.innerHTML = '';
-        requests.forEach(req => {
-            container.innerHTML += `
-                <div class="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm flex items-center justify-between">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 bg-red-50 rounded-xl flex items-center justify-center text-red-600 font-black italic text-xs uppercase">
-                            ${req.name.charAt(0)}
-                        </div>
-                        <div>
-                            <h4 class="text-[11px] font-black uppercase italic">${req.name}</h4>
-                            <p class="text-[8px] font-bold text-gray-400 uppercase tracking-tighter">${req.vehicle} • ${req.plate}</p>
-                        </div>
-                    </div>
-                    <div class="flex flex-col items-end gap-1">
-                        <span class="text-[7px] font-black px-2 py-1 bg-yellow-100 text-yellow-600 rounded-full uppercase">Pendiente</span>
-                        <p class="text-[7px] font-bold text-gray-400">${req.phone}</p>
-                    </div>
-                </div>`;
-        });
-    }
-
-    setTimeout(() => {
-        document.getElementById('splash').style.opacity = '0';
-        setTimeout(() => { 
-            document.getElementById('splash').style.display = 'none'; 
-            document.getElementById('login-screen').classList.remove('hidden'); 
-        }, 500);
-    }, 1500);
-
+    // Funciones Generales
     function handleAuth() {
         const mail = document.getElementById('login-email').value.toLowerCase();
         document.getElementById('login-screen').classList.add('hidden');
@@ -495,25 +436,11 @@
         lucide.createIcons();
     }
 
-    function openMenu() { 
-        document.getElementById('sidebar').classList.add('open'); 
-        document.getElementById('overlay').classList.add('opacity-100', 'pointer-events-auto'); 
-    }
-
-    function closeAll() { 
-        document.getElementById('sidebar').classList.remove('open'); 
-        document.getElementById('cost-sheet').classList.remove('active'); 
-        document.getElementById('overlay').classList.remove('opacity-100', 'pointer-events-auto');
-    }
-
+    function openMenu() { document.getElementById('sidebar').classList.add('open'); document.getElementById('overlay').classList.add('opacity-100', 'pointer-events-auto'); }
+    function closeAll() { document.getElementById('sidebar').classList.remove('open'); document.getElementById('cost-sheet').classList.remove('active'); document.getElementById('overlay').classList.remove('opacity-100', 'pointer-events-auto'); }
     function toggleAccordion(id) { document.getElementById(id).classList.toggle('expanded'); }
     function openCosts() { document.getElementById('cost-sheet').classList.add('active'); document.getElementById('overlay').classList.add('opacity-100', 'pointer-events-auto'); }
-    
-    function setPay(btn, method) { 
-        document.querySelectorAll('.payment-opt').forEach(b => b.classList.remove('selected')); 
-        btn.classList.add('selected'); 
-        appState.selectedPayment = method;
-    }
+    function setPay(btn, method) { document.querySelectorAll('.payment-opt').forEach(b => b.classList.remove('selected')); btn.classList.add('selected'); appState.selectedPayment = method; }
     
     function startRadar() {
         closeAll();
@@ -523,78 +450,52 @@
         document.getElementById('p-wallet').classList.add('hidden-view');
         document.getElementById('p-header').classList.add('hidden-view');
     }
-    
-    function applyToBeDriver() { 
-        closeAll(); 
-        document.getElementById('passenger-view').classList.add('hidden');
-        document.getElementById('driver-registration-view').classList.remove('hidden');
-        currentStep = 1;
-        goToStep(1);
-        lucide.createIcons();
+
+    function saveDriverRequest() {
+        const newRequest = {
+            id: Date.now(),
+            name: document.getElementById('dr-name').value,
+            vehicle: `${document.getElementById('v-brand').value} ${document.getElementById('v-model').value}`,
+            plate: document.getElementById('v-plate').value,
+            phone: document.getElementById('dr-phone').value,
+            status: 'pendiente',
+            date: new Date().toLocaleDateString()
+        };
+        let requests = JSON.parse(localStorage.getItem('driver_requests') || '[]');
+        requests.push(newRequest);
+        localStorage.setItem('driver_requests', JSON.stringify(requests));
+        alert('Registro completado.');
+        location.reload();
     }
-    
-    function goToStep(n) {
-        const steps = ['step-photo', 'step-name', 'step-ine-front', 'step-ine-back', 'step-vehicle', 'step-circ', 'step-v-photo', 'step-phone', 'step-finish'];
-        steps.forEach(s => document.getElementById(s).classList.add('hidden'));
-        document.getElementById(steps[n-1]).classList.remove('hidden');
-        currentStep = n;
-        lucide.createIcons();
+
+    function renderAdminRequests() {
+        const container = document.getElementById('admin-requests-container');
+        const requests = JSON.parse(localStorage.getItem('driver_requests') || '[]');
+        if(requests.length === 0) return;
+        container.innerHTML = '';
+        requests.forEach(req => {
+            container.innerHTML += `<div class="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm flex items-center justify-between"><div class="flex items-center gap-3"><div class="w-10 h-10 bg-red-50 rounded-xl flex items-center justify-center text-red-600 font-black italic text-xs uppercase">${req.name.charAt(0)}</div><div><h4 class="text-[11px] font-black uppercase italic">${req.name}</h4><p class="text-[8px] font-bold text-gray-400 uppercase tracking-tighter">${req.vehicle}</p></div></div><span class="text-[7px] font-black px-2 py-1 bg-yellow-100 text-yellow-600 rounded-full uppercase">Pendiente</span></div>`;
+        });
     }
-    
-    function handleDriverBack() {
-        if(currentStep > 1) {
-            goToStep(currentStep - 1);
-        } else {
-            document.getElementById('driver-registration-view').classList.add('hidden');
-            document.getElementById('passenger-view').classList.remove('hidden');
-            lucide.createIcons();
-        }
-    }
-    
-    function processImage(input) {
-        if (input.files[0]) {
-            document.getElementById('driver-photo-preview').src = URL.createObjectURL(input.files[0]);
-            document.getElementById('driver-photo-preview').classList.remove('hidden');
-            document.getElementById('placeholder-icon').classList.add('hidden');
-            const btn = document.getElementById('btn-photo-next');
-            btn.disabled = false; btn.classList.replace('bg-gray-300', 'bg-red-600');
-        }
-    }
-    
-    function processFile(input, previewId, btnId) {
-        if (input.files[0]) {
-            document.getElementById(previewId).src = URL.createObjectURL(input.files[0]);
-            document.getElementById(previewId).classList.remove('hidden');
-            const btn = document.getElementById(btnId);
-            btn.disabled = false; btn.classList.replace('bg-gray-300', 'bg-red-600');
-        }
-    }
-    
-    function checkName(input) {
-        const btn = document.getElementById('btn-name-next');
-        if(input.value.length > 3) { btn.disabled = false; btn.classList.replace('bg-gray-300', 'bg-red-600'); }
-    }
-    
-    function checkVehicle() {
-        const ins = document.querySelectorAll('.v-in');
-        let ok = true;
-        ins.forEach(i => { if(!i.value) ok = false; });
-        if(ok) {
-            const btn = document.getElementById('btn-v-next');
-            btn.disabled = false; btn.classList.replace('bg-gray-300', 'bg-red-600');
-        }
-    }
-    
-    function checkPhone(input) {
-        const btn = document.getElementById('btn-phone-next');
-        if(input.value.length >= 10) { 
-            btn.disabled = false;
-            btn.classList.replace('bg-gray-300', 'bg-red-600'); 
-        } else {
-            btn.disabled = true;
-            btn.classList.replace('bg-red-600', 'bg-gray-300');
-        }
-    }
+
+    setTimeout(() => {
+        document.getElementById('splash').style.opacity = '0';
+        setTimeout(() => { document.getElementById('splash').style.display = 'none'; document.getElementById('login-screen').classList.remove('hidden'); }, 500);
+    }, 1000);
+
+    // Registro Driver Navigation
+    function applyToBeDriver() { closeAll(); document.getElementById('passenger-view').classList.add('hidden'); document.getElementById('driver-registration-view').classList.remove('hidden'); goToStep(1); }
+    function goToStep(n) { const steps = ['step-photo', 'step-name', 'step-ine-front', 'step-ine-back', 'step-vehicle', 'step-circ', 'step-v-photo', 'step-phone', 'step-finish']; steps.forEach(s => document.getElementById(s).classList.add('hidden')); document.getElementById(steps[n-1]).classList.remove('hidden'); currentStep = n; lucide.createIcons(); }
+    function handleDriverBack() { if(currentStep > 1) goToStep(currentStep - 1); else { document.getElementById('driver-registration-view').classList.add('hidden'); document.getElementById('passenger-view').classList.remove('hidden'); } }
+
+    // Procesamiento de Imágenes/Validaciones básicas
+    function processImage(input) { if (input.files[0]) { document.getElementById('driver-photo-preview').src = URL.createObjectURL(input.files[0]); document.getElementById('driver-photo-preview').classList.remove('hidden'); document.getElementById('placeholder-icon').classList.add('hidden'); const btn = document.getElementById('btn-photo-next'); btn.disabled = false; btn.classList.replace('bg-gray-300', 'bg-red-600'); } }
+    function processFile(input, previewId, btnId) { if (input.files[0]) { document.getElementById(previewId).src = URL.createObjectURL(input.files[0]); document.getElementById(previewId).classList.remove('hidden'); const btn = document.getElementById(btnId); btn.disabled = false; btn.classList.replace('bg-gray-300', 'bg-red-600'); } }
+    function checkName(input) { const btn = document.getElementById('btn-name-next'); if(input.value.length > 3) { btn.disabled = false; btn.classList.replace('bg-gray-300', 'bg-red-600'); } }
+    function checkVehicle() { const ins = document.querySelectorAll('.v-in'); let ok = true; ins.forEach(i => { if(!i.value) ok = false; }); if(ok) { const btn = document.getElementById('btn-v-next'); btn.disabled = false; btn.classList.replace('bg-gray-300', 'bg-red-600'); } }
+    function checkPhone(input) { const btn = document.getElementById('btn-phone-next'); if(input.value.length >= 10) { btn.disabled = false; btn.classList.replace('bg-gray-300', 'bg-red-600'); } else { btn.disabled = true; btn.classList.replace('bg-red-600', 'bg-gray-300'); } }
 </script>
 </body>
 </html>
+       
+    

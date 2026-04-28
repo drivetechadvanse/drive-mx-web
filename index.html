@@ -196,18 +196,19 @@
 <script>
     lucide.createIcons();
 
-    // VARIABLES GLOBALES E INICIALIZACIÓN DE LOCALSTORAGE
-    let savedSaldo = localStorage.getItem('drive_mx_saldo');
-    
+    // --- NUEVO: CARGA DE SALDO DESDE LOCALSTORAGE ---
+    const localSaldo = localStorage.getItem('drive_mx_saldo');
+
+    // VARIABLES GLOBALES
     let appState = {
         selectedPayment: 'efectivo',
-        saldoUsuario: savedSaldo !== null ? parseFloat(savedSaldo) : 350.00,
+        saldoUsuario: localSaldo !== null ? parseFloat(localSaldo) : 350.00,
         precioViaje: 120.00
     };
 
-    // Función para guardar el saldo cada vez que cambie
+    // --- NUEVO: FUNCIÓN PARA GUARDAR EN MEMORIA ---
     function saveSaldoToStorage() {
-        localStorage.setItem('drive_mx_saldo', appState.saldoUsuario.toFixed(2));
+        localStorage.setItem('drive_mx_saldo', appState.saldoUsuario.toString());
     }
 
     // --- FUNCIONES DE CARTERA ---
@@ -237,7 +238,7 @@
         if(appState.saldoUsuario < 0) saldoVista.classList.add('text-red-600');
         else saldoVista.classList.remove('text-red-600');
         
-        saveSaldoToStorage(); // Guardamos el cambio
+        saveSaldoToStorage(); // Guardar al modificar desde admin
         updateWalletDisplay();
     }
 
@@ -266,7 +267,7 @@
             if (appState.saldoUsuario >= appState.precioViaje) {
                 appState.saldoUsuario -= appState.precioViaje;
                 
-                saveSaldoToStorage(); // Guardamos el descuento por viaje
+                saveSaldoToStorage(); // Guardar al descontar viaje
                 updateWalletDisplay();
                 updateAdminWalletUI();
                 
@@ -335,7 +336,7 @@
         appState.selectedPayment = method; 
     }
 
-    // Inicialización de vista
+    // Inicialización
     setTimeout(() => {
         document.getElementById('splash').style.opacity = '0';
         setTimeout(() => { 

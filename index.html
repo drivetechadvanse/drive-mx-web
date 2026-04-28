@@ -89,6 +89,9 @@
                     <button class="w-full text-left p-3 pl-10 text-[9px] font-bold text-gray-500 uppercase border-b border-white">Pasajeros</button>
                     <button class="w-full text-left p-3 pl-10 text-[9px] font-bold text-gray-500 uppercase">Administradores</button>
                 </div>
+                <button onclick="openAdminWallet()" class="w-full flex items-center gap-3 p-3 text-gray-700 font-black hover:bg-gray-50 rounded-xl uppercase text-[10px] italic mt-1">
+                    <i data-lucide="wallet" class="text-red-600 w-4 h-4"></i><span>Cartera</span>
+                </button>
             </div>
             <div id="nav-passenger" class="hidden">
                 <button onclick="applyToBeDriver()" class="w-full flex items-center gap-3 p-3 text-red-600 font-black hover:bg-red-50 rounded-xl uppercase text-[10px] italic">
@@ -114,24 +117,38 @@
     </div>
 
     <div id="admin-view" class="hidden h-full flex flex-col bg-gray-100">
-        <header class="px-4 py-3 flex items-center justify-between bg-gray-900 text-white z-10 shrink-0">
-            <button onclick="openMenu()" class="p-1.5 bg-white/10 rounded-lg"><i data-lucide="menu" class="w-5 h-5 text-red-600"></i></button>
-            <h2 class="text-base font-black italic uppercase">PANEL <span class="text-red-600 text-lg">ADMIN</span></h2>
+        <header id="admin-header" class="px-4 py-3 flex items-center justify-between bg-gray-900 text-white z-10 shrink-0">
+            <button id="admin-menu-btn" onclick="openMenu()" class="p-1.5 bg-white/10 rounded-lg"><i data-lucide="menu" class="w-5 h-5 text-red-600"></i></button>
+            <button id="admin-back-btn" onclick="closeAdminWallet()" class="hidden p-1.5 bg-white/10 rounded-lg"><i data-lucide="arrow-left" class="w-5 h-5 text-red-600"></i></button>
+            <h2 id="admin-title" class="text-base font-black italic uppercase">PANEL <span class="text-red-600 text-lg">ADMIN</span></h2>
             <button onclick="location.reload()" class="w-8 h-8 rounded-lg bg-red-600 flex items-center justify-center"><i data-lucide="log-out" class="w-4 h-4 text-white"></i></button>
         </header>
-        <main class="flex-1 p-5 space-y-4 overflow-y-auto">
-            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
-                <p class="text-[8px] font-black text-gray-400 uppercase italic mb-1">Estado</p>
-                <h4 class="text-xl font-black italic text-gray-800 uppercase">Sistema Operativo</h4>
-            </div>
-            
-            <div>
-                <h3 class="text-[10px] font-black text-gray-400 uppercase italic mb-3 ml-1">Solicitudes de Conductor</h3>
-                <div id="admin-requests-container" class="space-y-3 pb-10">
-                    <div class="bg-white p-4 rounded-2xl border border-gray-200 text-center py-8">
-                        <p class="text-[9px] font-bold text-gray-400 uppercase">Sin solicitudes pendientes</p>
+
+        <main id="admin-content" class="flex-1 p-5 space-y-4 overflow-y-auto">
+            <div id="admin-dashboard">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 mb-4">
+                    <p class="text-[8px] font-black text-gray-400 uppercase italic mb-1">Estado</p>
+                    <h4 class="text-xl font-black italic text-gray-800 uppercase">Sistema Operativo</h4>
+                </div>
+                <div>
+                    <h3 class="text-[10px] font-black text-gray-400 uppercase italic mb-3 ml-1">Solicitudes de Conductor</h3>
+                    <div id="admin-requests-container" class="space-y-3 pb-10">
+                        <div class="bg-white p-4 rounded-2xl border border-gray-200 text-center py-8">
+                            <p class="text-[9px] font-bold text-gray-400 uppercase">Sin solicitudes pendientes</p>
+                        </div>
                     </div>
                 </div>
+            </div>
+
+            <div id="admin-wallet-section" class="hidden flex flex-col gap-6 pt-4">
+                <div class="space-y-2">
+                    <label class="reg-label">Buscar Pasajero</label>
+                    <div class="relative">
+                        <input type="text" id="admin-search-user" class="reg-input pl-12" placeholder="Nombre o ID del pasajero">
+                        <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"></i>
+                    </div>
+                </div>
+                <button class="w-full bg-gray-900 text-white py-4 rounded-xl font-black text-[10px] uppercase italic shadow-lg active:scale-95">Consultar Historial</button>
             </div>
         </main>
     </div>
@@ -203,7 +220,6 @@
             <button onclick="handleDriverBack()" class="p-2 hover:bg-gray-100 rounded-full transition-all"><i data-lucide="arrow-left" class="w-6 h-6 text-gray-700"></i></button>
             <h2 class="ml-3 text-lg font-black italic uppercase tracking-tighter">REGISTRO <span class="text-red-600 uppercase">DRIVER</span></h2>
         </header>
-        
         <div class="flex-1 overflow-y-auto p-6 pb-12">
             <div id="step-photo" class="w-full flex flex-col items-center">
                 <div class="relative mb-8 mt-6">
@@ -216,13 +232,11 @@
                 </div>
                 <button id="btn-photo-next" disabled onclick="goToStep(2)" class="w-full bg-gray-300 text-white py-4 rounded-xl font-black text-[10px] uppercase italic transition-all">Siguiente</button>
             </div>
-
             <div id="step-name" class="hidden w-full flex flex-col">
                 <label class="reg-label">Nombre Completo</label>
                 <input type="text" id="dr-name" class="reg-input mb-8" placeholder="Ej: Juan Pérez" oninput="checkName(this)">
                 <button id="btn-name-next" disabled onclick="goToStep(3)" class="w-full bg-gray-300 text-white py-4 rounded-xl font-black text-[10px] uppercase italic transition-all">Siguiente</button>
             </div>
-
             <div id="step-ine-front" class="hidden w-full flex flex-col">
                 <h3 class="text-center font-black text-[10px] text-gray-400 uppercase mb-4 italic">INE Frontal</h3>
                 <div class="w-full aspect-video bg-gray-50 rounded-2xl border-4 border-dashed border-gray-200 flex items-center justify-center mb-6 overflow-hidden" onclick="document.getElementById('ine-f-input').click()">
@@ -232,7 +246,6 @@
                 <input type="file" id="ine-f-input" accept="image/*" class="hidden" onchange="processFile(this, 'ine-f-preview', 'btn-ine-f-next')">
                 <button id="btn-ine-f-next" disabled onclick="goToStep(4)" class="w-full bg-gray-300 text-white py-4 rounded-xl font-black text-[10px] uppercase italic transition-all">Siguiente</button>
             </div>
-
             <div id="step-ine-back" class="hidden w-full flex flex-col">
                 <h3 class="text-center font-black text-[10px] text-gray-400 uppercase mb-4 italic">INE Trasera</h3>
                 <div class="w-full aspect-video bg-gray-50 rounded-2xl border-4 border-dashed border-gray-200 flex items-center justify-center mb-6 overflow-hidden" onclick="document.getElementById('ine-b-input').click()">
@@ -242,7 +255,6 @@
                 <input type="file" id="ine-b-input" accept="image/*" class="hidden" onchange="processFile(this, 'ine-b-preview', 'btn-ine-b-next')">
                 <button id="btn-ine-b-next" disabled onclick="goToStep(5)" class="w-full bg-gray-300 text-white py-4 rounded-xl font-black text-[10px] uppercase italic transition-all">Siguiente</button>
             </div>
-
             <div id="step-vehicle" class="hidden w-full flex flex-col space-y-3">
                 <h3 class="text-center font-black text-[10px] text-gray-400 uppercase mb-4 italic">Datos del Vehículo</h3>
                 <input type="number" id="v-year" placeholder="Año" class="reg-input v-in">
@@ -252,7 +264,6 @@
                 <input type="text" id="v-plate" placeholder="Placa" class="reg-input v-in uppercase" oninput="checkVehicle()">
                 <button id="btn-v-next" disabled onclick="goToStep(6)" class="w-full mt-4 bg-gray-300 text-white py-4 rounded-xl font-black text-[10px] uppercase italic">Siguiente</button>
             </div>
-
             <div id="step-circ" class="hidden w-full flex flex-col">
                 <h3 class="text-center font-black text-[10px] text-gray-400 uppercase mb-4 italic">Tarjeta de Circulación</h3>
                 <div class="w-full aspect-video bg-gray-50 rounded-2xl border-4 border-dashed border-gray-200 flex items-center justify-center mb-6 overflow-hidden" onclick="document.getElementById('circ-input').click()">
@@ -262,7 +273,6 @@
                 <input type="file" id="circ-input" accept="image/*" class="hidden" onchange="processFile(this, 'circ-preview', 'btn-circ-next')">
                 <button id="btn-circ-next" disabled onclick="goToStep(7)" class="w-full bg-gray-300 text-white py-4 rounded-xl font-black text-[10px] uppercase italic transition-all">Siguiente</button>
             </div>
-
             <div id="step-v-photo" class="hidden w-full flex flex-col">
                 <h3 class="text-center font-black text-[10px] text-gray-400 uppercase mb-4 italic">Foto del Vehículo</h3>
                 <div class="w-full aspect-video bg-gray-50 rounded-2xl border-4 border-dashed border-gray-200 flex items-center justify-center mb-6 overflow-hidden" onclick="document.getElementById('v-photo-input').click()">
@@ -272,7 +282,6 @@
                 <input type="file" id="v-photo-input" accept="image/*" class="hidden" onchange="processFile(this, 'v-photo-preview', 'btn-v-photo-next')">
                 <button id="btn-v-photo-next" disabled onclick="goToStep(8)" class="w-full bg-gray-300 text-white py-4 rounded-xl font-black text-[10px] uppercase italic transition-all">Siguiente</button>
             </div>
-
             <div id="step-phone" class="hidden w-full flex flex-col">
                 <h3 class="text-center font-black text-[10px] text-gray-400 uppercase mb-4 italic">Número Telefónico</h3>
                 <div class="relative mb-8 mt-4">
@@ -283,7 +292,6 @@
                 </div>
                 <button id="btn-phone-next" disabled onclick="goToStep(9)" class="w-full bg-gray-300 text-white py-4 rounded-xl font-black text-[11px] uppercase italic transition-all shadow-xl shadow-red-600/30">Siguiente</button>
             </div>
-
             <div id="step-finish" class="hidden w-full flex flex-col items-center justify-center text-center py-10">
                 <div class="w-24 h-24 bg-gray-900 rounded-3xl flex items-center justify-center mb-8 shadow-2xl shadow-gray-200">
                     <i data-lucide="hourglass" class="w-12 h-12 text-red-600 animate-[spin_3s_linear_infinite]"></i>
@@ -300,27 +308,50 @@
     lucide.createIcons();
     let currentStep = 1;
 
-    // ESTADO GLOBAL
     let appState = {
         selectedPayment: 'efectivo',
-        saldoUsuario: 350.00, // Prueba cambiar a -10 para ver bloqueo
+        saldoUsuario: 350.00,
         precioViaje: 120.00
     };
 
+    // LOGICA CARTERA ADMIN (NUEVA)
+    function openAdminWallet() {
+        closeAll();
+        // Ocultar Dashboard actual
+        document.getElementById('admin-dashboard').classList.add('hidden');
+        // Mostrar sección Cartera
+        document.getElementById('admin-wallet-section').classList.remove('hidden');
+        // Cambiar cabecera
+        document.getElementById('admin-menu-btn').classList.add('hidden');
+        document.getElementById('admin-back-btn').classList.remove('hidden');
+        document.getElementById('admin-title').innerHTML = 'CARTERA <span class="text-red-600 text-lg">ADMIN</span>';
+        lucide.createIcons();
+    }
+
+    function closeAdminWallet() {
+        // Mostrar Dashboard
+        document.getElementById('admin-dashboard').classList.remove('hidden');
+        // Ocultar sección Cartera
+        document.getElementById('admin-wallet-section').classList.add('hidden');
+        // Restaurar cabecera
+        document.getElementById('admin-menu-btn').classList.remove('hidden');
+        document.getElementById('admin-back-btn').classList.add('hidden');
+        document.getElementById('admin-title').innerHTML = 'PANEL <span class="text-red-600 text-lg">ADMIN</span>';
+        lucide.createIcons();
+    }
+
+    // RESTO DE FUNCIONES (SIN CAMBIOS)
     function updateWalletDisplay() {
         const saldoElement = document.getElementById('display-saldo');
         const btnConfirmar = document.getElementById('btn-confirmar');
-        
         if (appState.saldoUsuario < 0) {
             saldoElement.classList.add('text-red-600');
-            // Bloqueo de UI por saldo negativo
             btnConfirmar.disabled = true;
             btnConfirmar.classList.remove('bg-red-600');
             btnConfirmar.classList.add('bg-gray-400');
             btnConfirmar.innerText = "DEBES PAGAR TU DEUDA PARA CONTINUAR";
         } else {
             saldoElement.classList.remove('text-red-600');
-            // Habilitar botón si no hay deuda
             btnConfirmar.disabled = false;
             btnConfirmar.classList.remove('bg-gray-400');
             btnConfirmar.classList.add('bg-red-600');
@@ -329,16 +360,13 @@
         saldoElement.innerText = `$${appState.saldoUsuario.toFixed(2)} MXN`;
     }
 
-    // Inicialización al cargar
     updateWalletDisplay();
 
     function handleRequest() {
-        // Validación de bloqueo si hay deuda (seguridad extra)
         if (appState.saldoUsuario < 0) {
             alert("Debes pagar tu deuda para continuar");
             return;
         }
-
         if (appState.selectedPayment === 'cartera') {
             if (appState.saldoUsuario >= appState.precioViaje) {
                 appState.saldoUsuario -= appState.precioViaje;

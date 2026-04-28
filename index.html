@@ -48,7 +48,7 @@
     <div id="sidebar" class="absolute inset-y-0 left-0 w-64 bg-white z-[110] shadow-2xl flex flex-col">
         <div class="p-6 bg-gray-900 text-white">
             <div class="w-10 h-10 bg-red-600 rounded-xl flex items-center justify-center mb-3"><i data-lucide="cpu" class="w-6 h-6"></i></div>
-            <h2 class="text-lg font-black italic uppercase italic">DRIVE <span class="text-red-600 text-lg">MX</span></h2>
+            <h2 class="text-lg font-black italic uppercase">DRIVE <span class="text-red-600 text-lg">MX</span></h2>
             <p id="side-role" class="text-[8px] text-gray-500 font-bold uppercase italic tracking-widest">Iniciando...</p>
         </div>
         
@@ -92,7 +92,7 @@
     <div id="admin-view" class="hidden h-screen flex flex-col bg-gray-50">
         <header class="px-4 py-3 flex items-center justify-between bg-gray-900 text-white z-10">
             <button onclick="openMenu()" class="p-1.5 bg-white/10 rounded-lg"><i data-lucide="menu" class="w-5 h-5 text-red-600"></i></button>
-            <h2 class="text-base font-black italic uppercase italic">CONTROL <span class="text-red-600">CENTER</span></h2>
+            <h2 class="text-base font-black italic uppercase">CONTROL <span class="text-red-600">CENTER</span></h2>
             <div class="w-8 h-8 rounded-lg bg-red-600 flex items-center justify-center shadow-lg shadow-red-600/30"><i data-lucide="shield-check" class="w-4 h-4 text-white"></i></div>
         </header>
         <main class="flex-1 p-5 overflow-y-auto">
@@ -106,7 +106,7 @@
     <div id="passenger-view" class="hidden h-screen flex flex-col relative">
         <header id="p-header" class="px-4 py-3 flex items-center justify-between border-b bg-white z-10 transition-all">
             <button onclick="openMenu()" class="p-1.5 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"><i data-lucide="menu" class="w-5 h-5"></i></button>
-            <h2 class="text-xl font-black italic uppercase italic">DRIVE <span class="text-red-600 text-lg">MX</span></h2>
+            <h2 class="text-xl font-black italic uppercase">DRIVE <span class="text-red-600 text-lg">MX</span></h2>
             <div class="w-8 h-8 rounded-lg bg-gray-900 flex items-center justify-center shadow-lg"><i data-lucide="user" class="text-white w-4 h-4"></i></div>
         </header>
         
@@ -141,7 +141,7 @@
         </main>
 
         <div id="cost-sheet" class="absolute bottom-0 left-0 right-0 bg-white z-[120] rounded-t-[2.5rem] shadow-2xl p-6 space-y-4">
-            <h3 class="text-lg font-black italic uppercase italic">FORMA DE <span class="text-red-600">PAGO</span></h3>
+            <h3 class="text-lg font-black italic uppercase">FORMA DE <span class="text-red-600">PAGO</span></h3>
             <div class="grid grid-cols-3 gap-2">
                 <button onclick="setPay(this)" class="payment-opt selected p-3 rounded-xl border flex flex-col items-center gap-1 transition-all"><i data-lucide="banknote" class="w-4 h-4"></i><span class="text-[8px] font-black uppercase italic">Efectivo</span></button>
                 <button onclick="setPay(this)" class="payment-opt p-3 rounded-xl border flex flex-col items-center gap-1 transition-all"><i data-lucide="send" class="w-4 h-4"></i><span class="text-[8px] font-black uppercase italic">SPEI</span></button>
@@ -159,34 +159,24 @@
             <h2 class="ml-3 text-lg font-black italic uppercase">Registro <span class="text-red-600">Conductor</span></h2>
         </header>
         
-        <div class="flex-1 overflow-y-auto p-6 flex flex-col items-center">
+        <div class="flex-1 overflow-y-auto p-6 flex flex-col items-center justify-center">
             <div class="relative mb-8">
-                <div id="photo-preview-container" class="w-32 h-32 rounded-full border-4 border-gray-100 bg-gray-50 flex items-center justify-center overflow-hidden shadow-inner">
-                    <i id="placeholder-icon" data-lucide="user" class="w-12 h-12 text-gray-300"></i>
+                <div id="photo-preview-container" class="w-48 h-48 rounded-full border-4 border-gray-100 bg-gray-50 flex items-center justify-center overflow-hidden shadow-inner">
+                    <i id="placeholder-icon" data-lucide="user" class="w-16 h-16 text-gray-300"></i>
                     <img id="driver-photo-preview" class="hidden w-full h-full object-cover" src="">
                 </div>
-                <button onclick="document.getElementById('photo-input').click()" class="absolute bottom-0 right-0 bg-red-600 p-2.5 rounded-full text-white shadow-lg border-2 border-white active:scale-90 transition-transform">
-                    <i data-lucide="camera" class="w-4 h-4"></i>
+                <button onclick="document.getElementById('photo-input').click()" class="absolute bottom-2 right-2 bg-red-600 p-4 rounded-full text-white shadow-xl border-4 border-white active:scale-90 transition-transform">
+                    <i data-lucide="camera" class="w-6 h-6"></i>
                 </button>
                 <input type="file" id="photo-input" accept="image/*" class="hidden" onchange="processImage(this)">
             </div>
 
-            <div id="photo-error" class="hidden text-[10px] font-bold text-red-600 uppercase mb-4 animate-bounce">La foto de perfil es obligatoria</div>
+            <h3 class="text-[11px] font-black text-gray-400 uppercase tracking-widest mb-2 italic">Foto de Perfil Obligatoria</h3>
+            <p class="text-[9px] text-gray-400 text-center px-8 uppercase font-bold mb-10">Tu rostro debe ser claramente visible para la seguridad de la comunidad.</p>
 
-            <div class="w-full space-y-4">
-                <div>
-                    <label class="text-[9px] font-black uppercase text-gray-400 tracking-widest">Información Personal</label>
-                    <input type="text" id="dr-name" placeholder="Nombre Completo" class="w-full mt-2 p-4 bg-gray-50 rounded-xl outline-none border-2 border-transparent focus:border-red-600 text-xs font-bold">
-                    <input type="tel" id="dr-phone" placeholder="Teléfono de Contacto" class="w-full mt-2 p-4 bg-gray-50 rounded-xl outline-none border-2 border-transparent focus:border-red-600 text-xs font-bold">
-                </div>
-                <div>
-                    <label class="text-[9px] font-black uppercase text-gray-400 tracking-widest">Datos del Vehículo</label>
-                    <input type="text" id="dr-vehicle" placeholder="Modelo (Ej: Jetta / Dominar 400)" class="w-full mt-2 p-4 bg-gray-50 rounded-xl outline-none border-2 border-transparent focus:border-red-600 text-xs font-bold">
-                    <input type="text" id="dr-plate" placeholder="Placas / Matrícula" class="w-full mt-2 p-4 bg-gray-50 rounded-xl outline-none border-2 border-transparent focus:border-red-600 text-xs font-bold">
-                </div>
-            </div>
+            <div id="photo-error" class="hidden text-[10px] font-bold text-red-600 uppercase mb-4 animate-pulse italic">Carga una imagen para continuar</div>
             
-            <button id="btn-submit-driver" disabled onclick="submitDriverRegistration()" class="w-full mt-8 bg-gray-300 text-white py-4 rounded-xl font-black text-[10px] uppercase italic transition-all cursor-not-allowed">Finalizar Registro</button>
+            <button id="btn-submit-driver" disabled onclick="submitDriverRegistration()" class="w-full bg-gray-300 text-white py-4 rounded-xl font-black text-[10px] uppercase italic transition-all cursor-not-allowed">Seguir</button>
         </div>
     </div>
 </div>
@@ -241,51 +231,14 @@
     }
 
     function submitDriverRegistration() {
-        const name = document.getElementById('dr-name').value;
-        const phone = document.getElementById('dr-phone').value;
-        const vehicle = document.getElementById('dr-vehicle').value;
-        const plate = document.getElementById('dr-plate').value;
-
         if (!tempDriverData.photo) {
             document.getElementById('photo-error').classList.remove('hidden');
             return;
         }
-
-        if (name && vehicle && phone && plate) {
-            const newDriver = {
-                id: Date.now(),
-                nombre: name,
-                telefono: phone,
-                vehiculo: vehicle,
-                placas: plate,
-                foto: tempDriverData.photo,
-                estatus: 'Pendiente'
-            };
-            driveMxFleet.push(newDriver);
-            updateAdminFleetUI();
-            alert("¡Registro Exitoso! Tu perfil está en revisión.");
-            resetDriverForm();
-            closeDriverForm();
-        } else {
-            alert("Por favor completa todos los campos.");
-        }
-    }
-
-    function resetDriverForm() {
-        tempDriverData.photo = null;
-        document.getElementById('dr-name').value = '';
-        document.getElementById('dr-phone').value = '';
-        document.getElementById('dr-vehicle').value = '';
-        document.getElementById('dr-plate').value = '';
-        const preview = document.getElementById('driver-photo-preview');
-        const placeholder = document.getElementById('placeholder-icon');
-        preview.classList.add('hidden');
-        preview.src = '';
-        placeholder.classList.remove('hidden');
-        const submitBtn = document.getElementById('btn-submit-driver');
-        submitBtn.disabled = true;
-        submitBtn.classList.add('bg-gray-300', 'cursor-not-allowed');
-        submitBtn.classList.remove('bg-red-600');
+        
+        // Simulación de paso al siguiente módulo
+        alert("Fotografía validada. Procediendo al siguiente paso...");
+        // Aquí se conectaría con la siguiente vista de registro
     }
 
     function updateAdminFleetUI() {

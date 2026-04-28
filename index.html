@@ -2,23 +2,40 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Drive MX | Pro System</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
-        body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; overflow: hidden; background-color: #000; }
         
+        /* Ajuste para altura dinámica en móviles */
+        body { 
+            font-family: 'Inter', sans-serif; 
+            -webkit-tap-highlight-color: transparent; 
+            overflow: hidden; 
+            background-color: #000; 
+            height: 100dvh;
+        }
+        
+        #app-container { height: 100dvh; }
+
         #sidebar { transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); transform: translateX(-100%); }
         #sidebar.open { transform: translateX(0); }
-        #cost-sheet { transition: transform 0.5s cubic-bezier(0.32, 0.72, 0, 1); transform: translateY(100%); }
+        
+        /* Ajuste de la hoja de costos para móviles */
+        #cost-sheet { 
+            transition: transform 0.5s cubic-bezier(0.32, 0.72, 0, 1); 
+            transform: translateY(100%); 
+            padding-bottom: env(safe-area-inset-bottom, 2rem);
+        }
         #cost-sheet.active { transform: translateY(0); }
 
         .accordion-content { max-height: 0; overflow: hidden; transition: max-height 0.4s ease-out; }
         .accordion-content.expanded { max-height: 500px; }
         
-        .map-sim { background-color: #f3f4f6; background-image: radial-gradient(#d1d5db 1px, transparent 1px); background-size: 25px 25px; }
+        .map-sim { background-color: #f3f4f6; background-image: radial-gradient(#d1d5db 1px, transparent 1px); background-size: 25px 25px; flex-grow: 1; }
+        
         .radar-pulse {
             position: absolute; width: 100px; height: 100px;
             background: rgba(239, 68, 68, 0.15); border-radius: 100%;
@@ -28,7 +45,6 @@
 
         .hidden-view { opacity: 0; transform: translateY(-20px); pointer-events: none; transition: all 0.4s ease; }
 
-        /* Nueva animación de rebote tipo pelotita */
         @keyframes bounce-custom {
             0%, 100% { transform: translateY(0) scaleY(1); }
             40% { transform: translateY(-30px) scaleY(1.1); }
@@ -43,9 +59,9 @@
 </head>
 <body>
 
-<div id="app-container" class="max-w-md mx-auto min-h-screen bg-white shadow-2xl overflow-hidden relative flex flex-col">
+<div id="app-container" class="max-w-md mx-auto bg-white shadow-2xl overflow-hidden relative flex flex-col">
     
-    <div id="splash" class="absolute inset-0 z-[200] bg-white flex flex-col items-center justify-center transition-opacity duration-500">
+    <div id="splash" class="absolute inset-0 z-[250] bg-white flex flex-col items-center justify-center transition-opacity duration-500">
         <div class="w-16 h-16 bg-red-600 rounded-2xl flex items-center justify-center animate-pulse"><i data-lucide="navigation" class="text-white w-8 h-8"></i></div>
         <h1 class="text-2xl font-black mt-6 italic uppercase">DRIVE <span class="text-red-600">MX</span></h1>
     </div>
@@ -76,14 +92,14 @@
                 </button>
             </div>
         </nav>
-        <div class="p-4 border-t"><button onclick="location.reload()" class="w-full py-3 bg-red-50 text-red-600 rounded-xl font-black text-[9px] uppercase italic">Cerrar Sesión</button></div>
+        <div class="p-4 border-t mb-4"> <button onclick="location.reload()" class="w-full py-3 bg-red-50 text-red-600 rounded-xl font-black text-[9px] uppercase italic">Cerrar Sesión</button>
+        </div>
     </div>
 
     <div id="login-screen" class="hidden absolute inset-0 z-[150] bg-white p-8 flex flex-col items-center justify-center text-center">
         <div class="w-12 h-12 bg-red-600 rounded-xl mb-6 animate-bounce-custom shadow-lg shadow-red-600/20 flex items-center justify-center">
             <i data-lucide="navigation" class="text-white w-6 h-6"></i>
         </div>
-        
         <h2 class="text-3xl font-black italic uppercase mb-12 leading-none tracking-tighter">BIENVENIDO</h2>
         <div class="space-y-4 w-full">
             <input type="email" id="login-email" placeholder="Usuario (admin para panel)" class="reg-input text-left">
@@ -92,11 +108,11 @@
         </div>
     </div>
 
-    <div id="admin-view" class="hidden h-screen flex flex-col bg-gray-100">
-        <header class="px-4 py-3 flex items-center justify-between bg-gray-900 text-white z-10">
+    <div id="admin-view" class="hidden h-full flex flex-col bg-gray-100">
+        <header class="px-4 py-3 flex items-center justify-between bg-gray-900 text-white z-10 shrink-0">
             <button onclick="openMenu()" class="p-1.5 bg-white/10 rounded-lg"><i data-lucide="menu" class="w-5 h-5 text-red-600"></i></button>
             <h2 class="text-base font-black italic uppercase">PANEL <span class="text-red-600 text-lg">ADMIN</span></h2>
-            <div class="w-8 h-8 rounded-lg bg-red-600 flex items-center justify-center"><i data-lucide="shield" class="w-4 h-4 text-white"></i></div>
+            <button onclick="location.reload()" class="w-8 h-8 rounded-lg bg-red-600 flex items-center justify-center"><i data-lucide="log-out" class="w-4 h-4 text-white"></i></button>
         </header>
         <main class="flex-1 p-5 space-y-4 overflow-y-auto">
             <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
@@ -106,8 +122,7 @@
             
             <div>
                 <h3 class="text-[10px] font-black text-gray-400 uppercase italic mb-3 ml-1">Solicitudes de Conductor</h3>
-                <div id="admin-requests-container" class="space-y-3">
-                    <div class="bg-white p-4 rounded-2xl border border-gray-200 text-center py-8">
+                <div id="admin-requests-container" class="space-y-3 pb-10"> <div class="bg-white p-4 rounded-2xl border border-gray-200 text-center py-8">
                         <p class="text-[9px] font-bold text-gray-400 uppercase">Sin solicitudes pendientes</p>
                     </div>
                 </div>
@@ -115,14 +130,14 @@
         </main>
     </div>
 
-    <div id="passenger-view" class="hidden h-screen flex flex-col relative">
-        <header id="p-header" class="px-4 py-3 flex items-center justify-between border-b bg-white z-10 transition-all">
+    <div id="passenger-view" class="hidden h-full flex flex-col relative">
+        <header id="p-header" class="px-4 py-3 flex items-center justify-between border-b bg-white z-10 transition-all shrink-0">
             <button onclick="openMenu()" class="p-1.5 bg-gray-100 rounded-lg"><i data-lucide="menu" class="w-5 h-5"></i></button>
             <h2 class="text-xl font-black italic uppercase">DRIVE <span class="text-red-600">MX</span></h2>
             <div class="w-8 h-8 rounded-lg bg-gray-900 flex items-center justify-center"><i data-lucide="user" class="text-white w-4 h-4"></i></div>
         </header>
         
-        <main class="flex-1 map-sim relative overflow-hidden">
+        <main class="flex-1 map-sim relative overflow-hidden flex flex-col">
             <div id="p-banners" class="absolute top-4 left-4 right-4 z-20 space-y-3">
                 <div class="bg-white/90 backdrop-blur-md p-3 rounded-2xl shadow-xl border border-black/5 flex items-center gap-3">
                     <div class="relative flex h-2 w-2"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span></div>
@@ -139,7 +154,7 @@
                 <div id="search-msg" class="hidden bg-black text-white text-[8px] font-black uppercase px-6 py-3 rounded-full italic animate-pulse mt-40">Buscando el mejor conductor</div>
             </div>
 
-            <div id="p-wallet" class="absolute bottom-4 left-4 right-4">
+            <div id="p-wallet" class="absolute bottom-6 left-4 right-4 z-30">
                 <div class="bg-gray-900 rounded-2xl p-4 flex items-center justify-between text-white shadow-2xl">
                     <div class="flex items-center gap-3">
                         <div class="w-10 h-10 bg-red-600/20 rounded-xl flex items-center justify-center text-red-600 border border-red-600/30"><i data-lucide="wallet" class="w-5 h-5"></i></div>
@@ -150,24 +165,24 @@
             </div>
         </main>
 
-        <div id="cost-sheet" class="absolute bottom-0 left-0 right-0 bg-white z-[120] rounded-t-[2.5rem] shadow-2xl p-8 space-y-5">
-            <h3 class="text-lg font-black italic uppercase text-center tracking-tighter">FORMA DE <span class="text-red-600">PAGO</span></h3>
+        <div id="cost-sheet" class="absolute bottom-0 left-0 right-0 bg-white z-[120] rounded-t-[2.5rem] shadow-[0_-10px_40px_rgba(0,0,0,0.15)] p-8 pt-6 space-y-5">
+            <div class="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-2"></div> <h3 class="text-lg font-black italic uppercase text-center tracking-tighter">FORMA DE <span class="text-red-600">PAGO</span></h3>
             <div class="grid grid-cols-3 gap-3">
                 <button onclick="setPay(this)" class="payment-opt selected p-4 rounded-2xl border flex flex-col items-center gap-2 transition-all"><i data-lucide="banknote" class="w-5 h-5"></i><span class="text-[9px] font-black uppercase italic">Efectivo</span></button>
                 <button onclick="setPay(this)" class="payment-opt p-4 rounded-2xl border flex flex-col items-center gap-2 transition-all"><i data-lucide="send" class="w-5 h-5"></i><span class="text-[9px] font-black uppercase italic">SPEI</span></button>
                 <button onclick="setPay(this)" class="payment-opt p-4 rounded-2xl border flex flex-col items-center gap-2 transition-all"><i data-lucide="credit-card" class="w-5 h-5"></i><span class="text-[9px] font-black uppercase italic">Tarjeta</span></button>
             </div>
-            <button onclick="startRadar()" class="w-full bg-red-600 text-white py-4 rounded-2xl font-black text-[12px] uppercase italic shadow-xl shadow-red-600/30 active:scale-95 transition-all">CONFIRMAR SOLICITUD</button>
+            <button onclick="startRadar()" class="w-full bg-red-600 text-white py-4 rounded-2xl font-black text-[12px] uppercase italic shadow-xl shadow-red-600/30 active:scale-95 transition-all mb-4">CONFIRMAR SOLICITUD</button>
         </div>
     </div>
 
-    <div id="driver-registration-view" class="hidden absolute inset-0 z-[160] bg-white flex flex-col">
-        <header class="px-4 py-4 flex items-center border-b bg-white sticky top-0 z-10">
+    <div id="driver-registration-view" class="hidden absolute inset-0 z-[200] bg-white flex flex-col">
+        <header class="px-4 py-4 flex items-center border-b bg-white sticky top-0 z-10 shrink-0">
             <button onclick="handleDriverBack()" class="p-2 hover:bg-gray-100 rounded-full transition-all"><i data-lucide="arrow-left" class="w-6 h-6 text-gray-700"></i></button>
             <h2 class="ml-3 text-lg font-black italic uppercase tracking-tighter">REGISTRO <span class="text-red-600 uppercase">DRIVER</span></h2>
         </header>
         
-        <div class="flex-1 overflow-y-auto p-6">
+        <div class="flex-1 overflow-y-auto p-6 pb-12">
             <div id="step-photo" class="w-full flex flex-col items-center">
                 <div class="relative mb-8 mt-6">
                     <div id="photo-preview-container" class="w-40 h-40 rounded-full border-4 border-gray-100 bg-gray-50 flex items-center justify-center overflow-hidden">
@@ -244,7 +259,7 @@
                     </div>
                     <input type="tel" id="dr-phone" class="reg-input pl-20" placeholder="55 0000 0000" oninput="checkPhone(this)">
                 </div>
-                <button id="btn-phone-next" disabled onclick="goToStep(9)" class="w-full bg-gray-300 text-white py-4 rounded-xl font-black text-[11px] uppercase italic transition-all shadow-xl">Siguiente</button>
+                <button id="btn-phone-next" disabled onclick="goToStep(9)" class="w-full bg-gray-300 text-white py-4 rounded-xl font-black text-[11px] uppercase italic transition-all shadow-xl shadow-red-600/30">Siguiente</button>
             </div>
 
             <div id="step-finish" class="hidden w-full flex flex-col items-center justify-center text-center py-10">
@@ -335,6 +350,7 @@
     function toggleAccordion(id) { document.getElementById(id).classList.toggle('expanded'); }
     function openCosts() { document.getElementById('cost-sheet').classList.add('active'); document.getElementById('overlay').classList.add('opacity-100', 'pointer-events-auto'); }
     function setPay(btn) { document.querySelectorAll('.payment-opt').forEach(b => b.classList.remove('selected')); btn.classList.add('selected'); }
+    
     function startRadar() {
         closeAll();
         document.getElementById('radar').classList.remove('hidden');
@@ -343,7 +359,9 @@
         document.getElementById('p-wallet').classList.add('hidden-view');
         document.getElementById('p-header').classList.add('hidden-view');
     }
+    
     function applyToBeDriver() { closeAll(); document.getElementById('driver-registration-view').classList.remove('hidden'); }
+    
     function goToStep(n) {
         const steps = ['step-photo', 'step-name', 'step-ine-front', 'step-ine-back', 'step-vehicle', 'step-circ', 'step-v-photo', 'step-phone', 'step-finish'];
         document.getElementById(steps[currentStep-1]).classList.add('hidden');
@@ -351,10 +369,12 @@
         currentStep = n;
         lucide.createIcons();
     }
+    
     function handleDriverBack() {
         if(currentStep > 1) goToStep(currentStep-1);
         else document.getElementById('driver-registration-view').classList.add('hidden');
     }
+    
     function processImage(input) {
         if (input.files[0]) {
             document.getElementById('driver-photo-preview').src = URL.createObjectURL(input.files[0]);
@@ -364,6 +384,7 @@
             btn.disabled = false; btn.classList.replace('bg-gray-300', 'bg-red-600');
         }
     }
+    
     function processFile(input, previewId, btnId) {
         if (input.files[0]) {
             document.getElementById(previewId).src = URL.createObjectURL(input.files[0]);
@@ -372,10 +393,12 @@
             btn.disabled = false; btn.classList.replace('bg-gray-300', 'bg-red-600');
         }
     }
+    
     function checkName(input) {
         const btn = document.getElementById('btn-name-next');
         if(input.value.length > 3) { btn.disabled = false; btn.classList.replace('bg-gray-300', 'bg-red-600'); }
     }
+    
     function checkVehicle() {
         const ins = document.querySelectorAll('.v-in');
         let ok = true;
@@ -385,6 +408,7 @@
             btn.disabled = false; btn.classList.replace('bg-gray-300', 'bg-red-600');
         }
     }
+    
     function checkPhone(input) {
         const btn = document.getElementById('btn-phone-next');
         if(input.value.length >= 10) { 

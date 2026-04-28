@@ -217,13 +217,24 @@
 
             <div id="step-v-photo" class="hidden w-full flex flex-col">
                 <h3 class="text-center font-black text-[10px] text-gray-400 uppercase mb-4 italic">Foto del Vehículo</h3>
-                <p class="text-[8px] text-center text-gray-400 uppercase font-bold mb-4">Asegúrate de que la matrícula sea visible</p>
                 <div class="w-full aspect-video bg-gray-50 rounded-2xl border-4 border-dashed border-gray-200 flex items-center justify-center mb-6 overflow-hidden" onclick="document.getElementById('v-photo-input').click()">
                     <img id="v-photo-preview" class="hidden w-full h-full object-cover">
                     <i data-lucide="car" class="text-gray-300 w-12 h-12"></i>
                 </div>
-                <input type="file" id="v-photo-input" accept="image/*" class="hidden" onchange="processFile(this, 'v-photo-preview', 'btn-final')">
-                <button id="btn-final" disabled onclick="alert('Registro enviado con éxito')" class="w-full bg-gray-300 text-white py-4 rounded-xl font-black text-[10px] uppercase italic transition-all">Finalizar Registro</button>
+                <input type="file" id="v-photo-input" accept="image/*" class="hidden" onchange="processFile(this, 'v-photo-preview', 'btn-v-photo-next')">
+                <button id="btn-v-photo-next" disabled onclick="goToStep(8)" class="w-full bg-gray-300 text-white py-4 rounded-xl font-black text-[10px] uppercase italic transition-all">Siguiente</button>
+            </div>
+
+            <div id="step-phone" class="hidden w-full flex flex-col">
+                <h3 class="text-center font-black text-[10px] text-gray-400 uppercase mb-4 italic">Número Telefónico</h3>
+                <p class="text-[8px] text-center text-gray-400 uppercase font-bold mb-6 italic">A donde te contactaremos para validación</p>
+                <div class="relative mb-8">
+                    <div class="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-2 border-r pr-3 border-gray-200">
+                        <span class="text-[10px] font-black text-gray-400">+52</span>
+                    </div>
+                    <input type="tel" id="dr-phone" class="reg-input pl-20" placeholder="55 0000 0000" oninput="checkPhone(this)">
+                </div>
+                <button id="btn-final" disabled onclick="alert('Registro completado. Entraremos en revisión.')" class="w-full bg-gray-300 text-white py-4 rounded-xl font-black text-[11px] uppercase italic transition-all shadow-xl shadow-red-600/10">Finalizar Registro</button>
             </div>
         </div>
     </div>
@@ -273,13 +284,15 @@
     }
 
     function applyToBeDriver() { closeAll(); document.getElementById('driver-registration-view').classList.remove('hidden'); }
+    
     function goToStep(n) {
-        const steps = ['step-photo', 'step-name', 'step-ine-front', 'step-ine-back', 'step-vehicle', 'step-circ', 'step-v-photo'];
+        const steps = ['step-photo', 'step-name', 'step-ine-front', 'step-ine-back', 'step-vehicle', 'step-circ', 'step-v-photo', 'step-phone'];
         document.getElementById(steps[currentStep-1]).classList.add('hidden');
         document.getElementById(steps[n-1]).classList.remove('hidden');
         currentStep = n;
         lucide.createIcons();
     }
+    
     function handleDriverBack() {
         if(currentStep > 1) goToStep(currentStep-1);
         else document.getElementById('driver-registration-view').classList.add('hidden');
@@ -313,6 +326,16 @@
         if(ok) {
             const btn = document.getElementById('btn-v-next');
             btn.disabled = false; btn.classList.replace('bg-gray-300', 'bg-red-600');
+        }
+    }
+    function checkPhone(input) {
+        const btn = document.getElementById('btn-final');
+        if(input.value.length >= 10) { 
+            btn.disabled = false; 
+            btn.classList.replace('bg-gray-300', 'bg-red-600'); 
+        } else {
+            btn.disabled = true;
+            btn.classList.replace('bg-red-600', 'bg-gray-300');
         }
     }
 </script>

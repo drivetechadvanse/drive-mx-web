@@ -31,7 +31,6 @@
         .payment-opt.selected { border: 1.5px solid #ef4444; background: #fef2f2; color: #ef4444; }
         .hidden-view { opacity: 0; transform: translateY(-20px); pointer-events: none; transition: all 0.4s ease; }
 
-        /* Estilo para inputs de registro */
         .reg-input { width: 100%; padding: 1rem; background-color: #f9fafb; border-radius: 0.75rem; border: 2px solid transparent; outline: none; font-size: 0.75rem; font-weight: 700; transition: all 0.2s; }
         .reg-input:focus { border-color: #ef4444; background-color: #fff; }
         .reg-label { font-size: 9px; font-weight: 900; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em; margin-left: 0.5rem; margin-bottom: 0.5rem; display: block; }
@@ -42,10 +41,10 @@
 <div id="app-container" class="max-w-md mx-auto min-h-screen bg-white shadow-2xl overflow-hidden relative flex flex-col">
     
     <div id="splash" class="absolute inset-0 z-[200] bg-white flex flex-col items-center justify-center transition-opacity duration-500">
-        <div class="w-16 h-16 bg-red-600 rounded-2xl flex items-center justify-center animate-pulse">
+        <div class="w-16 h-16 bg-red-600 rounded-2xl flex items-center justify-center animate-pulse shadow-xl shadow-red-600/20">
             <i data-lucide="navigation" class="text-white w-8 h-8"></i>
         </div>
-        <h1 class="text-2xl font-black mt-6 italic uppercase">DRIVE <span class="text-red-600">MX</span></h1>
+        <h1 class="text-2xl font-black mt-6 italic uppercase tracking-tighter">DRIVE <span class="text-red-600">MX</span></h1>
     </div>
 
     <div id="overlay" onclick="closeAll()" class="absolute inset-0 bg-black/60 z-[100] opacity-0 pointer-events-none transition-opacity"></div>
@@ -53,28 +52,28 @@
     <div id="sidebar" class="absolute inset-y-0 left-0 w-64 bg-white z-[110] shadow-2xl flex flex-col">
         <div class="p-6 bg-gray-900 text-white">
             <div class="w-10 h-10 bg-red-600 rounded-xl flex items-center justify-center mb-3"><i data-lucide="cpu" class="w-6 h-6"></i></div>
-            <h2 class="text-lg font-black italic uppercase">DRIVE <span class="text-red-600 text-lg">MX</span></h2>
-            <p id="side-role" class="text-[8px] text-gray-400 font-bold uppercase italic tracking-widest">Sesión</p>
+            <h2 class="text-lg font-black italic uppercase">DRIVE <span class="text-red-600">MX</span></h2>
+            <p id="side-role" class="text-[8px] text-gray-400 font-bold uppercase italic tracking-widest">Iniciando...</p>
         </div>
         <nav class="flex-1 p-4 space-y-2">
             <div id="nav-admin" class="hidden">
                 <button onclick="toggleAccordion('admin-acc', 'admin-chev')" class="w-full flex items-center justify-between p-3 text-gray-700 font-black hover:bg-gray-50 rounded-xl uppercase text-[10px] italic">
-                    <div class="flex items-center gap-3"><i data-lucide="shield" class="text-red-600 w-4 h-4"></i><span>Usuarios</span></div>
+                    <div class="flex items-center gap-3"><i data-lucide="shield" class="text-red-600 w-4 h-4"></i><span>Gestión</span></div>
                     <i data-lucide="chevron-down" id="admin-chev" class="w-3 h-3 chevron-rotate"></i>
                 </button>
                 <div id="admin-acc" class="accordion-content bg-gray-50/50 rounded-xl ml-2">
                     <button class="w-full text-left p-3 pl-9 text-[9px] font-bold text-gray-500 uppercase border-b border-white/50">Conductores</button>
                     <button class="w-full text-left p-3 pl-9 text-[9px] font-bold text-gray-500 uppercase border-b border-white/50">Pasajeros</button>
-                    <button class="w-full text-left p-3 pl-9 text-[9px] font-bold text-gray-500 uppercase">Administradores</button>
+                    <button class="w-full text-left p-3 pl-9 text-[9px] font-bold text-gray-500 uppercase">Configuración</button>
                 </div>
             </div>
             <div id="nav-passenger" class="hidden">
                 <button onclick="toggleAccordion('pass-acc', 'pass-chev')" class="w-full flex items-center justify-between p-3 text-gray-700 font-black hover:bg-gray-50 rounded-xl uppercase text-[10px] italic">
-                    <div class="flex items-center gap-3"><i data-lucide="user" class="text-red-600 w-4 h-4"></i><span>Cuenta</span></div>
+                    <div class="flex items-center gap-3"><i data-lucide="user" class="text-red-600 w-4 h-4"></i><span>Mi Cuenta</span></div>
                     <i data-lucide="chevron-down" id="pass-chev" class="w-3 h-3 chevron-rotate"></i>
                 </button>
                 <div id="pass-acc" class="accordion-content bg-gray-50/50 rounded-xl ml-2">
-                    <button onclick="applyToBeDriver()" class="w-full text-left p-3 pl-9 text-[9px] font-black text-red-600 uppercase hover:bg-red-50 transition-all italic">Quiero ser Conductor</button>
+                    <button onclick="applyToBeDriver()" class="w-full text-left p-3 pl-9 text-[9px] font-black text-red-600 uppercase hover:bg-red-50 italic">Quiero ser Conductor</button>
                 </div>
             </div>
         </nav>
@@ -82,31 +81,73 @@
     </div>
 
     <div id="login-screen" class="hidden absolute inset-0 z-[150] bg-white p-8 flex flex-col justify-center">
-        <h2 class="text-2xl font-black italic uppercase mb-6 leading-none tracking-tighter">ACCESO<br><span class="text-red-600">DRIVE MX</span></h2>
-        <div class="space-y-3">
+        <h2 class="text-2xl font-black italic uppercase mb-8 leading-none tracking-tighter">SISTEMA<br><span class="text-red-600">DRIVE MX</span></h2>
+        <div class="space-y-4">
             <input type="email" id="login-email" placeholder="Usuario (admin para panel)" class="reg-input">
             <input type="password" id="login-pass" placeholder="Contraseña" class="reg-input">
-            <button onclick="handleAuth()" class="w-full bg-red-600 text-white py-4 rounded-xl font-black text-[10px] uppercase italic shadow-lg shadow-red-600/20 active:scale-95 transition-all">Ingresar</button>
+            <button onclick="handleAuth()" class="w-full bg-red-600 text-white py-4 rounded-xl font-black text-[11px] uppercase italic shadow-lg shadow-red-600/20 active:scale-95 transition-all">Ingresar al Sistema</button>
         </div>
     </div>
 
+    <div id="admin-view" class="hidden h-screen flex flex-col bg-gray-50">
+        <header class="px-4 py-3 flex items-center justify-between bg-gray-900 text-white z-10 shadow-lg">
+            <button onclick="openMenu()" class="p-1.5 bg-white/10 rounded-lg"><i data-lucide="menu" class="w-5 h-5 text-red-600"></i></button>
+            <h2 class="text-base font-black italic uppercase">CONTROL <span class="text-red-600">CENTER</span></h2>
+            <div class="w-8 h-8 rounded-lg bg-red-600 flex items-center justify-center shadow-lg"><i data-lucide="shield-check" class="w-4 h-4 text-white"></i></div>
+        </header>
+        <main class="flex-1 p-5 overflow-y-auto space-y-4">
+            <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
+                <p class="text-[8px] font-bold text-gray-400 uppercase mb-1 tracking-widest italic">Estado Global</p>
+                <h4 class="text-xl font-black italic text-gray-800">SISTEMA EN LÍNEA</h4>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm">
+                    <p class="text-[8px] font-bold text-gray-400 uppercase">Activos</p>
+                    <h4 class="text-lg font-black italic text-red-600">124</h4>
+                </div>
+                <div class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm">
+                    <p class="text-[8px] font-bold text-gray-400 uppercase">Viajes Hoy</p>
+                    <h4 class="text-lg font-black italic">1,052</h4>
+                </div>
+            </div>
+        </main>
+    </div>
+
     <div id="passenger-view" class="hidden h-screen flex flex-col relative">
-        <header id="p-header" class="px-4 py-3 flex items-center justify-between border-b bg-white z-10">
-            <button onclick="openMenu()" class="p-1.5 bg-gray-100 rounded-lg"><i data-lucide="menu" class="w-5 h-5"></i></button>
+        <header id="p-header" class="px-4 py-3 flex items-center justify-between border-b bg-white z-10 transition-all">
+            <button onclick="openMenu()" class="p-1.5 bg-gray-100 rounded-lg active:scale-90 transition-transform"><i data-lucide="menu" class="w-5 h-5"></i></button>
             <h2 class="text-xl font-black italic uppercase">DRIVE <span class="text-red-600 text-lg">MX</span></h2>
             <div class="w-8 h-8 rounded-lg bg-gray-900 flex items-center justify-center"><i data-lucide="user" class="text-white w-4 h-4"></i></div>
         </header>
+        
         <main class="flex-1 map-sim relative overflow-hidden">
-            <div id="p-banners" class="absolute top-4 left-4 right-4 z-20 space-y-2">
-                <div onclick="openCosts()" class="bg-white p-1 rounded-xl shadow-xl flex items-center gap-2 cursor-pointer border border-black/5">
-                    <div class="w-10 h-10 bg-red-600 rounded-lg flex items-center justify-center text-white"><i data-lucide="search" class="w-5 h-5"></i></div>
+            <div id="p-banners" class="absolute top-4 left-4 right-4 z-20 space-y-2 transition-all">
+                <div class="bg-white/90 backdrop-blur p-2 rounded-xl shadow border flex items-center gap-2">
+                    <div class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
+                    <p class="text-[9px] font-black text-gray-800 uppercase italic">Ubicación Actual Detectada</p>
+                </div>
+                <div onclick="openCosts()" class="bg-white p-1 rounded-xl shadow-xl flex items-center gap-2 cursor-pointer border border-black/5 active:scale-[0.98] transition-all">
+                    <div class="w-10 h-10 bg-red-600 rounded-lg flex items-center justify-center text-white shadow-lg"><i data-lucide="search" class="w-5 h-5"></i></div>
                     <span class="text-[11px] font-black text-gray-400 italic uppercase">¿A dónde vamos hoy?</span>
                 </div>
             </div>
+
             <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
                 <div id="radar" class="hidden"><div class="radar-pulse"></div></div>
+                <div id="search-msg" class="hidden bg-black text-white text-[7px] font-black uppercase px-4 py-2 rounded-full italic animate-pulse mt-32">Buscando el conductor más cercano</div>
+            </div>
+
+            <div id="p-wallet" class="absolute bottom-4 left-4 right-4 transition-all">
+                <div class="bg-gray-900 rounded-2xl p-4 flex items-center justify-between text-white shadow-2xl">
+                    <div class="flex items-center gap-3">
+                        <div class="w-9 h-9 bg-red-600/20 rounded-lg flex items-center justify-center text-red-600 shadow-inner"><i data-lucide="wallet" class="w-4 h-4"></i></div>
+                        <div><p class="text-[7px] text-gray-500 font-black uppercase">Saldo Disponible</p><h3 class="text-sm font-black italic">$150.00</h3></div>
+                    </div>
+                    <button class="bg-white/10 p-2 rounded-lg"><i data-lucide="plus" class="w-4 h-4"></i></button>
+                </div>
             </div>
         </main>
+
         <div id="cost-sheet" class="absolute bottom-0 left-0 right-0 bg-white z-[120] rounded-t-[2.5rem] shadow-2xl p-6 space-y-4">
             <h3 class="text-lg font-black italic uppercase text-center">FORMA DE <span class="text-red-600">PAGO</span></h3>
             <div class="grid grid-cols-3 gap-2">
@@ -114,14 +155,14 @@
                 <button onclick="setPay(this)" class="payment-opt p-3 rounded-xl border flex flex-col items-center gap-1 transition-all"><i data-lucide="send" class="w-4 h-4"></i><span class="text-[8px] font-black uppercase italic">SPEI</span></button>
                 <button onclick="setPay(this)" class="payment-opt p-3 rounded-xl border flex flex-col items-center gap-1 transition-all"><i data-lucide="credit-card" class="w-4 h-4"></i><span class="text-[8px] font-black uppercase italic">Cartera</span></button>
             </div>
-            <button onclick="startRadar()" class="w-full bg-red-600 text-white py-4 rounded-2xl font-black text-[10px] uppercase italic">SOLICITAR AHORA</button>
+            <button onclick="startRadar()" class="w-full bg-red-600 text-white py-4 rounded-2xl font-black text-[11px] uppercase italic shadow-lg shadow-red-600/20">CONFIRMAR SOLICITUD</button>
         </div>
     </div>
 
     <div id="driver-registration-view" class="hidden absolute inset-0 z-[160] bg-white flex flex-col">
         <header class="px-4 py-4 flex items-center border-b bg-white sticky top-0 z-10">
             <button onclick="handleDriverBack()" class="p-2 hover:bg-gray-100 rounded-full transition-colors"><i data-lucide="arrow-left" class="w-6 h-6 text-gray-700"></i></button>
-            <h2 class="ml-3 text-lg font-black italic uppercase">Registro <span class="text-red-600">Conductor</span></h2>
+            <h2 class="ml-3 text-lg font-black italic uppercase">REGISTRO <span class="text-red-600">CONDUCTOR</span></h2>
         </header>
         
         <div class="flex-1 overflow-y-auto p-6">
@@ -135,63 +176,46 @@
                     <input type="file" id="photo-input" accept="image/*" class="hidden" onchange="processImage(this)">
                 </div>
                 <h3 class="text-[11px] font-black text-gray-400 uppercase mb-8 italic">Foto de Perfil</h3>
-                <button id="btn-photo-next" disabled onclick="goToStepName()" class="w-full bg-gray-300 text-white py-4 rounded-xl font-black text-[10px] uppercase italic transition-all">Seguir</button>
+                <button id="btn-photo-next" disabled onclick="goToStepName()" class="w-full bg-gray-300 text-white py-4 rounded-xl font-black text-[10px] uppercase italic transition-all">Siguiente Paso</button>
             </div>
 
             <div id="step-name" class="hidden w-full flex flex-col">
-                <h3 class="text-[11px] font-black text-gray-400 uppercase mb-10 text-center italic">Identificación</h3>
+                <h3 class="text-[11px] font-black text-gray-400 uppercase mb-10 text-center italic">Identificación Personal</h3>
                 <label class="reg-label">Nombre Completo</label>
                 <input type="text" id="dr-full-name" placeholder="Ej: Juan Pérez" class="reg-input" oninput="validateNameInput(this)">
-                <button id="btn-name-next" disabled onclick="goToStepIneFront()" class="w-full mt-10 bg-gray-300 text-white py-4 rounded-xl font-black text-[10px] uppercase italic transition-all">Seguir</button>
+                <button id="btn-name-next" disabled onclick="goToStepIneFront()" class="w-full mt-10 bg-gray-300 text-white py-4 rounded-xl font-black text-[10px] uppercase italic transition-all">Siguiente Paso</button>
             </div>
 
             <div id="step-ine-frontal" class="hidden w-full flex flex-col items-center">
-                <h3 class="text-[11px] font-black text-gray-400 uppercase mb-10 text-center italic">Captura INE Frontal</h3>
+                <h3 class="text-[11px] font-black text-gray-400 uppercase mb-10 text-center italic">Documentación: INE Frontal</h3>
                 <div class="w-full aspect-video bg-gray-50 rounded-2xl border-4 border-dashed border-gray-200 flex flex-col items-center justify-center mb-6 overflow-hidden relative" onclick="document.getElementById('ine-input').click()">
                     <img id="ine-preview" class="hidden w-full h-full object-cover">
-                    <div id="ine-placeholder" class="flex flex-col items-center gap-2"><i data-lucide="credit-card" class="text-gray-300 w-10 h-10"></i><span class="text-[8px] font-black text-gray-400 uppercase tracking-widest">Tocar para subir</span></div>
+                    <div id="ine-placeholder" class="flex flex-col items-center gap-2"><i data-lucide="credit-card" class="text-gray-300 w-10 h-10"></i><span class="text-[8px] font-black text-gray-400 uppercase tracking-widest">Tocar para capturar frontal</span></div>
                 </div>
                 <input type="file" id="ine-input" accept="image/*" class="hidden" onchange="processIneFront(this)">
-                <button id="btn-ine-front-next" disabled onclick="goToStepIneBack()" class="w-full bg-gray-300 text-white py-4 rounded-xl font-black text-[10px] uppercase italic transition-all">Seguir</button>
+                <button id="btn-ine-front-next" disabled onclick="goToStepIneBack()" class="w-full bg-gray-300 text-white py-4 rounded-xl font-black text-[10px] uppercase italic transition-all">Siguiente Paso</button>
             </div>
 
             <div id="step-ine-trasera" class="hidden w-full flex flex-col items-center">
-                <h3 class="text-[11px] font-black text-gray-400 uppercase mb-10 text-center italic">Captura INE Trasera</h3>
+                <h3 class="text-[11px] font-black text-gray-400 uppercase mb-10 text-center italic">Documentación: INE Trasera</h3>
                 <div class="w-full aspect-video bg-gray-50 rounded-2xl border-4 border-dashed border-gray-200 flex flex-col items-center justify-center mb-6 overflow-hidden relative" onclick="document.getElementById('ine-back-input').click()">
                     <img id="ine-back-preview" class="hidden w-full h-full object-cover">
-                    <div id="ine-back-placeholder" class="flex flex-col items-center gap-2"><i data-lucide="credit-card" class="text-gray-300 w-10 h-10"></i><span class="text-[8px] font-black text-gray-400 uppercase tracking-widest">Tocar para subir trasera</span></div>
+                    <div id="ine-back-placeholder" class="flex flex-col items-center gap-2"><i data-lucide="credit-card" class="text-gray-300 w-10 h-10"></i><span class="text-[8px] font-black text-gray-400 uppercase tracking-widest">Tocar para capturar trasera</span></div>
                 </div>
                 <input type="file" id="ine-back-input" accept="image/*" class="hidden" onchange="processIneBack(this)">
-                <button id="btn-ine-back-next" disabled onclick="goToStepVehicle()" class="w-full bg-gray-300 text-white py-4 rounded-xl font-black text-[10px] uppercase italic transition-all">Seguir</button>
+                <button id="btn-ine-back-next" disabled onclick="goToStepVehicle()" class="w-full bg-gray-300 text-white py-4 rounded-xl font-black text-[10px] uppercase italic transition-all">Siguiente Paso</button>
             </div>
 
             <div id="step-vehicle" class="hidden w-full flex flex-col">
-                <h3 class="text-[11px] font-black text-gray-400 uppercase mb-6 text-center italic tracking-widest">Detalles del Vehículo</h3>
-                
+                <h3 class="text-[11px] font-black text-gray-400 uppercase mb-6 text-center italic tracking-widest">Información del Vehículo</h3>
                 <div class="space-y-4">
-                    <div>
-                        <label class="reg-label">Año</label>
-                        <input type="number" id="v-year" placeholder="Ej: 2024" class="reg-input v-field" oninput="validateVehicleForm()">
-                    </div>
-                    <div>
-                        <label class="reg-label">Color</label>
-                        <input type="text" id="v-color" placeholder="Ej: Rojo Cereza" class="reg-input v-field" oninput="validateVehicleForm()">
-                    </div>
-                    <div>
-                        <label class="reg-label">Modelo</label>
-                        <input type="text" id="v-model" placeholder="Ej: Jetta" class="reg-input v-field" oninput="validateVehicleForm()">
-                    </div>
-                    <div>
-                        <label class="reg-label">Marca</label>
-                        <input type="text" id="v-brand" placeholder="Ej: Volkswagen" class="reg-input v-field" oninput="validateVehicleForm()">
-                    </div>
-                    <div>
-                        <label class="reg-label">Placa</label>
-                        <input type="text" id="v-plate" placeholder="Ej: ABC-123-D" class="reg-input v-field uppercase" oninput="validateVehicleForm()">
-                    </div>
+                    <div><label class="reg-label">Año</label><input type="number" placeholder="2024" class="reg-input v-field" oninput="validateVehicleForm()"></div>
+                    <div><label class="reg-label">Color</label><input type="text" placeholder="Rojo" class="reg-input v-field" oninput="validateVehicleForm()"></div>
+                    <div><label class="reg-label">Modelo</label><input type="text" placeholder="Jetta" class="reg-input v-field" oninput="validateVehicleForm()"></div>
+                    <div><label class="reg-label">Marca</label><input type="text" placeholder="Volkswagen" class="reg-input v-field" oninput="validateVehicleForm()"></div>
+                    <div><label class="reg-label">Placa</label><input type="text" placeholder="ABC-123-X" class="reg-input v-field uppercase" oninput="validateVehicleForm()"></div>
                 </div>
-
-                <button id="btn-vehicle-finish" disabled onclick="alert('Registro enviado exitosamente.')" class="w-full mt-10 bg-gray-300 text-white py-4 rounded-xl font-black text-[10px] uppercase italic transition-all cursor-not-allowed">Finalizar Registro</button>
+                <button id="btn-vehicle-finish" disabled onclick="alert('Registro enviado. ¡Pronto serás conductor!')" class="w-full mt-10 bg-gray-300 text-white py-4 rounded-xl font-black text-[11px] uppercase italic transition-all">Finalizar Registro</button>
             </div>
         </div>
     </div>
@@ -201,7 +225,7 @@
     lucide.createIcons();
     let currentRegStep = 1;
 
-    // Splash & Auth Logic
+    // 1. Splash y Auth
     setTimeout(() => {
         document.getElementById('splash').style.opacity = '0';
         setTimeout(() => { document.getElementById('splash').style.display = 'none'; document.getElementById('login-screen').classList.remove('hidden'); }, 500);
@@ -222,21 +246,40 @@
         lucide.createIcons();
     }
 
-    // REGISTRO - FLUJO
+    // 2. Navegación Global y Sidebar
+    function openMenu() { document.getElementById('sidebar').classList.add('open'); document.getElementById('overlay').classList.add('opacity-100', 'pointer-events-auto'); }
+    function closeAll() { 
+        document.getElementById('sidebar').classList.remove('open'); 
+        document.getElementById('cost-sheet').classList.remove('active'); 
+        document.getElementById('overlay').classList.remove('opacity-100', 'pointer-events-auto'); 
+    }
+    function toggleAccordion(id, chevId) { document.getElementById(id).classList.toggle('expanded'); document.getElementById(chevId).classList.toggle('active'); }
+
+    // 3. Funciones Pasajero (Radar y Pagos)
+    function openCosts() { document.getElementById('cost-sheet').classList.add('active'); document.getElementById('overlay').classList.add('opacity-100', 'pointer-events-auto'); }
+    function setPay(btn) { document.querySelectorAll('.payment-opt').forEach(b => b.classList.remove('selected')); btn.classList.add('selected'); }
+    function startRadar() {
+        closeAll();
+        document.getElementById('radar').classList.remove('hidden');
+        document.getElementById('search-msg').classList.remove('hidden');
+        document.getElementById('p-banners').classList.add('hidden-view');
+        document.getElementById('p-wallet').classList.add('hidden-view');
+        document.getElementById('p-header').classList.add('hidden-view');
+    }
+
+    // 4. Lógica de Registro (Filtros)
     function applyToBeDriver() { closeAll(); document.getElementById('driver-registration-view').classList.remove('hidden'); currentRegStep = 1; }
 
     function handleDriverBack() {
         const steps = ['step-photo', 'step-name', 'step-ine-frontal', 'step-ine-trasera', 'step-vehicle'];
-        if (currentRegStep === 1) { 
-            document.getElementById('driver-registration-view').classList.add('hidden'); 
-        } else {
+        if (currentRegStep === 1) { document.getElementById('driver-registration-view').classList.add('hidden'); }
+        else {
             document.getElementById(steps[currentRegStep-1]).classList.add('hidden');
             currentRegStep--;
             document.getElementById(steps[currentRegStep-1]).classList.remove('hidden');
         }
     }
 
-    // Procesamiento de Imágenes
     function processImage(input) {
         if (input.files && input.files[0]) {
             const reader = new FileReader();
@@ -276,7 +319,6 @@
         }
     }
 
-    // Navegación entre pasos
     function goToStepName() { switchStep('step-photo', 'step-name', 2); }
     function goToStepIneFront() { switchStep('step-name', 'step-ine-frontal', 3); }
     function goToStepIneBack() { switchStep('step-ine-frontal', 'step-ine-trasera', 4); }
@@ -286,21 +328,16 @@
         document.getElementById(oldId).classList.add('hidden');
         document.getElementById(newId).classList.remove('hidden');
         currentRegStep = stepNum;
+        lucide.createIcons();
     }
 
-    // Validaciones
-    function validateNameInput(input) {
-        if (input.value.trim().length >= 3) activateBtn('btn-name-next');
-        else deactivateBtn('btn-name-next');
-    }
+    function validateNameInput(input) { if (input.value.trim().length >= 3) activateBtn('btn-name-next'); else deactivateBtn('btn-name-next'); }
 
     function validateVehicleForm() {
         const fields = document.querySelectorAll('.v-field');
         let allFilled = true;
         fields.forEach(f => { if (f.value.trim() === '') allFilled = false; });
-        
-        if (allFilled) activateBtn('btn-vehicle-finish');
-        else deactivateBtn('btn-vehicle-finish');
+        if (allFilled) activateBtn('btn-vehicle-finish'); else deactivateBtn('btn-vehicle-finish');
     }
 
     function activateBtn(id) {
@@ -316,23 +353,6 @@
         btn.classList.replace('bg-red-600', 'bg-gray-300');
         btn.classList.add('cursor-not-allowed');
     }
-
-    // Pasajero UI
-    function openCosts() { document.getElementById('cost-sheet').classList.add('active'); document.getElementById('overlay').classList.add('opacity-100', 'pointer-events-auto'); }
-    function setPay(btn) { document.querySelectorAll('.payment-opt').forEach(b => b.classList.remove('selected')); btn.classList.add('selected'); }
-    function startRadar() {
-        closeAll();
-        document.getElementById('radar').classList.remove('hidden');
-    }
-
-    // Global UI
-    function openMenu() { document.getElementById('sidebar').classList.add('open'); document.getElementById('overlay').classList.add('opacity-100', 'pointer-events-auto'); }
-    function closeAll() { 
-        document.getElementById('sidebar').classList.remove('open'); 
-        document.getElementById('cost-sheet').classList.remove('active'); 
-        document.getElementById('overlay').classList.remove('opacity-100', 'pointer-events-auto'); 
-    }
-    function toggleAccordion(id, chevId) { document.getElementById(id).classList.toggle('expanded'); document.getElementById(chevId).classList.toggle('active'); }
 </script>
 </body>
 </html>

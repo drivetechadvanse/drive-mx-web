@@ -83,7 +83,7 @@
     <div id="admin-view" class="hidden h-screen flex flex-col bg-gray-100">
         <header class="px-4 py-3 flex items-center justify-between bg-gray-900 text-white z-10">
             <button onclick="openMenu()" class="p-1.5 bg-white/10 rounded-lg"><i data-lucide="menu" class="w-5 h-5 text-red-600"></i></button>
-            <h2 class="text-base font-black italic uppercase">PANEL <span class="text-red-600">ADMIN</span></h2>
+            <h2 class="text-base font-black italic uppercase">PANEL <span class="text-red-600 text-lg">ADMIN</span></h2>
             <div class="w-8 h-8 rounded-lg bg-red-600 flex items-center justify-center"><i data-lucide="shield" class="w-4 h-4 text-white"></i></div>
         </header>
         <main class="flex-1 p-5 space-y-4 overflow-y-auto">
@@ -91,14 +91,13 @@
                 <p class="text-[8px] font-black text-gray-400 uppercase italic mb-1">Estado</p>
                 <h4 class="text-xl font-black italic text-gray-800 uppercase">Sistema Operativo</h4>
             </div>
-            <div class="grid grid-cols-2 gap-4">
-                <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-200">
-                    <p class="text-[8px] font-black text-gray-400 uppercase">Conductores</p>
-                    <h4 class="text-lg font-black italic text-red-600">24</h4>
-                </div>
-                <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-200">
-                    <p class="text-[8px] font-black text-gray-400 uppercase">Pasajeros</p>
-                    <h4 class="text-lg font-black italic text-gray-800">142</h4>
+            
+            <div>
+                <h3 class="text-[10px] font-black text-gray-400 uppercase italic mb-3 ml-1">Solicitudes de Conductor</h3>
+                <div id="admin-requests-container" class="space-y-3">
+                    <div class="bg-white p-4 rounded-2xl border border-gray-200 text-center py-8">
+                        <p class="text-[9px] font-bold text-gray-400 uppercase">Sin solicitudes pendientes</p>
+                    </div>
                 </div>
             </div>
         </main>
@@ -197,11 +196,11 @@
 
             <div id="step-vehicle" class="hidden w-full flex flex-col space-y-3">
                 <h3 class="text-center font-black text-[10px] text-gray-400 uppercase mb-4 italic">Datos del Vehículo</h3>
-                <input type="number" placeholder="Año" class="reg-input v-in">
-                <input type="text" placeholder="Color" class="reg-input v-in">
-                <input type="text" placeholder="Modelo" class="reg-input v-in">
-                <input type="text" placeholder="Marca" class="reg-input v-in">
-                <input type="text" placeholder="Placa" class="reg-input v-in uppercase" oninput="checkVehicle()">
+                <input type="number" id="v-year" placeholder="Año" class="reg-input v-in">
+                <input type="text" id="v-color" placeholder="Color" class="reg-input v-in">
+                <input type="text" id="v-model" placeholder="Modelo" class="reg-input v-in">
+                <input type="text" id="v-brand" placeholder="Marca" class="reg-input v-in">
+                <input type="text" id="v-plate" placeholder="Placa" class="reg-input v-in uppercase" oninput="checkVehicle()">
                 <button id="btn-v-next" disabled onclick="goToStep(6)" class="w-full mt-4 bg-gray-300 text-white py-4 rounded-xl font-black text-[10px] uppercase italic">Siguiente</button>
             </div>
 
@@ -241,10 +240,8 @@
                     <i data-lucide="hourglass" class="w-12 h-12 text-red-600 animate-[spin_3s_linear_infinite]"></i>
                 </div>
                 <h2 class="text-xl font-black italic uppercase leading-none mb-4">REVISIÓN EN<br><span class="text-red-600">PROGRESO</span></h2>
-                <p class="text-[11px] font-bold text-gray-500 uppercase tracking-tight italic mb-10 px-4">
-                    Si todo sale bien, te activaremos en<br><span class="text-gray-900">menos de 24 hrs.</span>
-                </p>
-                <button onclick="alert('Registro completado. Entraremos en revisión.'); location.reload();" class="w-full bg-red-600 text-white py-4 rounded-xl font-black text-[12px] uppercase italic transition-all shadow-xl shadow-red-600/30 active:scale-95">CONFIRMAR</button>
+                <p class="text-[11px] font-bold text-gray-500 uppercase tracking-tight italic mb-10 px-4">Si todo sale bien, te activaremos en<br><span class="text-gray-900">menos de 24 hrs.</span></p>
+                <button onclick="saveDriverRequest()" class="w-full bg-red-600 text-white py-4 rounded-xl font-black text-[12px] uppercase italic transition-all shadow-xl shadow-red-600/30 active:scale-95">CONFIRMAR</button>
             </div>
         </div>
     </div>
@@ -254,6 +251,55 @@
     lucide.createIcons();
     let currentStep = 1;
 
+    // --- LÓGICA API / PERSISTENCIA ---
+    function saveDriverRequest() {
+        const newRequest = {
+            id: Date.now(),
+            name: document.getElementById('dr-name').value,
+            vehicle: `${document.getElementById('v-brand').value} ${document.getElementById('v-model').value}`,
+            plate: document.getElementById('v-plate').value,
+            phone: document.getElementById('dr-phone').value,
+            status: 'pendiente',
+            date: new Date().toLocaleDateString()
+        };
+
+        let requests = JSON.parse(localStorage.getItem('driver_requests') || '[]');
+        requests.push(newRequest);
+        localStorage.setItem('driver_requests', JSON.stringify(requests));
+        
+        alert('Registro completado y enviado a revisión.');
+        location.reload();
+    }
+
+    function renderAdminRequests() {
+        const container = document.getElementById('admin-requests-container');
+        const requests = JSON.parse(localStorage.getItem('driver_requests') || '[]');
+        
+        if(requests.length === 0) return;
+
+        container.innerHTML = '';
+        requests.forEach(req => {
+            container.innerHTML += `
+                <div class="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-red-50 rounded-xl flex items-center justify-center text-red-600 font-black italic text-xs uppercase">
+                            ${req.name.charAt(0)}
+                        </div>
+                        <div>
+                            <h4 class="text-[11px] font-black uppercase italic">${req.name}</h4>
+                            <p class="text-[8px] font-bold text-gray-400 uppercase tracking-tighter">${req.vehicle} • ${req.plate}</p>
+                        </div>
+                    </div>
+                    <div class="flex flex-col items-end gap-1">
+                        <span class="text-[7px] font-black px-2 py-1 bg-yellow-100 text-yellow-600 rounded-full uppercase">Pendiente</span>
+                        <p class="text-[7px] font-bold text-gray-400">${req.phone}</p>
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    // --- LÓGICA EXISTENTE ---
     setTimeout(() => {
         document.getElementById('splash').style.opacity = '0';
         setTimeout(() => { document.getElementById('splash').style.display = 'none'; document.getElementById('login-screen').classList.remove('hidden'); }, 500);
@@ -266,6 +312,7 @@
             document.getElementById('admin-view').classList.remove('hidden');
             document.getElementById('nav-admin').classList.remove('hidden');
             document.getElementById('side-role').innerText = 'ADMINISTRADOR';
+            renderAdminRequests(); // Cargar solicitudes al entrar como admin
         } else {
             document.getElementById('passenger-view').classList.remove('hidden');
             document.getElementById('nav-passenger').classList.remove('hidden');
@@ -281,9 +328,9 @@
         document.getElementById('overlay').classList.remove('opacity-100', 'pointer-events-auto'); 
     }
     function toggleAccordion(id) { document.getElementById(id).classList.toggle('expanded'); }
-
     function openCosts() { document.getElementById('cost-sheet').classList.add('active'); document.getElementById('overlay').classList.add('opacity-100', 'pointer-events-auto'); }
     function setPay(btn) { document.querySelectorAll('.payment-opt').forEach(b => b.classList.remove('selected')); btn.classList.add('selected'); }
+    
     function startRadar() {
         closeAll();
         document.getElementById('radar').classList.remove('hidden');

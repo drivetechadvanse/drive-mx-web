@@ -196,29 +196,24 @@
 <script>
     lucide.createIcons();
 
-    // --- NUEVO: CARGA DE SALDO DESDE LOCALSTORAGE ---
-    const localSaldo = localStorage.getItem('drive_mx_saldo');
-
-    // VARIABLES GLOBALES
+    // VARIABLES GLOBALES (Requisitos)
     let appState = {
         selectedPayment: 'efectivo',
-        saldoUsuario: localSaldo !== null ? parseFloat(localSaldo) : 350.00,
+        saldoUsuario: 350.00,  // Variable solicitada
         precioViaje: 120.00
     };
 
-    // --- NUEVO: FUNCIÓN PARA GUARDAR EN MEMORIA ---
-    function saveSaldoToStorage() {
-        localStorage.setItem('drive_mx_saldo', appState.saldoUsuario.toString());
-    }
+    // --- FUNCIONES DE CARTERA (REQUISITOS) ---
 
-    // --- FUNCIONES DE CARTERA ---
-
+    // Mostrar saldo: Actualiza las etiquetas en tiempo real
     function updateWalletDisplay() {
         const saldoElement = document.getElementById('display-saldo');
         const btnConfirmar = document.getElementById('btn-confirmar');
         
+        // Ver saldo (Actualiza vista pasajero)
         saldoElement.innerText = `$${appState.saldoUsuario.toFixed(2)} MXN`;
         
+        // Lógica de validación de saldo
         if (appState.saldoUsuario < 0) {
             saldoElement.classList.add('text-red-600');
             btnConfirmar.disabled = true;
@@ -232,14 +227,13 @@
         }
     }
 
+    // Funciones del Panel Admin
     function updateAdminWalletUI() {
         const saldoVista = document.getElementById('admin-view-saldo');
         saldoVista.innerText = `$${appState.saldoUsuario.toFixed(2)} MXN`;
         if(appState.saldoUsuario < 0) saldoVista.classList.add('text-red-600');
         else saldoVista.classList.remove('text-red-600');
-        
-        saveSaldoToStorage(); // Guardar al modificar desde admin
-        updateWalletDisplay();
+        updateWalletDisplay(); // Sincroniza pasajero
     }
 
     function adminModificarSaldo(tipo) {
@@ -248,15 +242,15 @@
         if (isNaN(monto) || monto <= 0) return alert("Monto no válido");
 
         if (tipo === 'sumar') {
-            appState.saldoUsuario += monto;
+            appState.saldoUsuario += monto; // Agregar saldo
         } else {
-            appState.saldoUsuario -= monto;
+            appState.saldoUsuario -= monto; // Descontar saldo
         }
         montoInput.value = '';
         updateAdminWalletUI();
     }
 
-    // --- LÓGICA DE SOLICITUD ---
+    // --- LÓGICA DE SOLICITUD (CORRECCIÓN DESCUENTO) ---
     function handleRequest() {
         if (appState.saldoUsuario < 0) {
             alert("Debes pagar tu deuda para continuar");
@@ -265,9 +259,10 @@
 
         if (appState.selectedPayment === 'cartera') {
             if (appState.saldoUsuario >= appState.precioViaje) {
+                // DESCUENTO EN TIEMPO REAL
                 appState.saldoUsuario -= appState.precioViaje;
                 
-                saveSaldoToStorage(); // Guardar al descontar viaje
+                // ACTUALIZACIÓN INMEDIATA DE INTERFACES
                 updateWalletDisplay();
                 updateAdminWalletUI();
                 
@@ -276,6 +271,7 @@
                 alert('Saldo insuficiente en tu Cartera');
             }
         } else {
+            // Efectivo o SPEI no descuentan de la variable saldoUsuario
             startRadar();
         }
     }

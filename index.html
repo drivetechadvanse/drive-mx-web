@@ -54,7 +54,6 @@
         .reg-input:focus { border-color: #ef4444; background-color: #fff; }
         .reg-label { font-size: 9px; font-weight: 900; color: #9ca3af; text-transform: uppercase; margin-bottom: 0.4rem; display: block; margin-left: 0.5rem; }
         
-        /* Estilo para selección visual de pago */
         .payment-opt.selected {
             border-color: #ef4444;
             background-color: #fef2f2;
@@ -195,7 +194,7 @@
             <div class="text-center py-1">
                 <p class="text-[9px] font-black text-gray-400 uppercase italic tracking-widest">Costo Estimado: <span class="text-gray-900">$120.00 MXN</span></p>
             </div>
-            <button onclick="handleRequest()" class="w-full bg-red-600 text-white py-4 rounded-2xl font-black text-[12px] uppercase italic shadow-xl shadow-red-600/30 active:scale-95 transition-all mb-4">CONFIRMAR SOLICITUD</button>
+            <button id="btn-confirmar" onclick="handleRequest()" class="w-full bg-red-600 text-white py-4 rounded-2xl font-black text-[12px] uppercase italic shadow-xl shadow-red-600/30 active:scale-95 transition-all mb-4">CONFIRMAR SOLICITUD</button>
         </div>
     </div>
 
@@ -304,27 +303,44 @@
     // ESTADO GLOBAL
     let appState = {
         selectedPayment: 'efectivo',
-        saldoUsuario: 350.00,
+        saldoUsuario: 350.00, // Prueba cambiar a -10 para ver bloqueo
         precioViaje: 120.00
     };
 
     function updateWalletDisplay() {
         const saldoElement = document.getElementById('display-saldo');
+        const btnConfirmar = document.getElementById('btn-confirmar');
+        
         if (appState.saldoUsuario < 0) {
             saldoElement.classList.add('text-red-600');
+            // Bloqueo de UI por saldo negativo
+            btnConfirmar.disabled = true;
+            btnConfirmar.classList.remove('bg-red-600');
+            btnConfirmar.classList.add('bg-gray-400');
+            btnConfirmar.innerText = "DEBES PAGAR TU DEUDA PARA CONTINUAR";
         } else {
             saldoElement.classList.remove('text-red-600');
+            // Habilitar botón si no hay deuda
+            btnConfirmar.disabled = false;
+            btnConfirmar.classList.remove('bg-gray-400');
+            btnConfirmar.classList.add('bg-red-600');
+            btnConfirmar.innerText = "CONFIRMAR SOLICITUD";
         }
         saldoElement.innerText = `$${appState.saldoUsuario.toFixed(2)} MXN`;
     }
 
-    // Inicialización del saldo al cargar
+    // Inicialización al cargar
     updateWalletDisplay();
 
     function handleRequest() {
+        // Validación de bloqueo si hay deuda (seguridad extra)
+        if (appState.saldoUsuario < 0) {
+            alert("Debes pagar tu deuda para continuar");
+            return;
+        }
+
         if (appState.selectedPayment === 'cartera') {
             if (appState.saldoUsuario >= appState.precioViaje) {
-                // Descontar saldo y guardar en estado
                 appState.saldoUsuario -= appState.precioViaje;
                 updateWalletDisplay();
                 startRadar();
@@ -332,7 +348,6 @@
                 alert('Saldo insuficiente en tu Cartera');
             }
         } else {
-            // Para Efectivo o SPEI
             startRadar();
         }
     }
@@ -489,8 +504,7 @@
         ins.forEach(i => { if(!i.value) ok = false; });
         if(ok) {
             const btn = document.getElementById('btn-v-next');
-            btn.disabled = false;
-            btn.classList.replace('bg-gray-300', 'bg-red-600');
+            btn.disabled = false; btn.classList.replace('bg-gray-300', 'bg-red-600');
         }
     }
     

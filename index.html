@@ -8,38 +8,19 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
-        body { 
-            font-family: 'Inter', sans-serif; 
-            -webkit-tap-highlight-color: transparent;
-            overflow: hidden; 
-            background-color: #000; 
-            height: 100dvh;
-        }
+        body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; overflow: hidden; background-color: #000; height: 100dvh; }
         #app-container { height: 100dvh; }
         #sidebar { transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); transform: translateX(-100%); }
         #sidebar.open { transform: translateX(0); }
-        #cost-sheet { 
-            transition: transform 0.5s cubic-bezier(0.32, 0.72, 0, 1);
-            transform: translateY(100%); 
-            padding-bottom: env(safe-area-inset-bottom, 2rem);
-        }
+        #cost-sheet { transition: transform 0.5s cubic-bezier(0.32, 0.72, 0, 1); transform: translateY(100%); padding-bottom: env(safe-area-inset-bottom, 2rem); }
         #cost-sheet.active { transform: translateY(0); }
         .accordion-content { max-height: 0; overflow: hidden; transition: max-height 0.4s ease-out; }
         .accordion-content.expanded { max-height: 500px; }
         .map-sim { background-color: #f3f4f6; background-image: radial-gradient(#d1d5db 1px, transparent 1px); background-size: 25px 25px; flex-grow: 1; }
-        .radar-pulse {
-            position: absolute;
-            width: 100px; height: 100px;
-            background: rgba(239, 68, 68, 0.15); border-radius: 100%;
-            animation: radar 2s infinite;
-        }
+        .radar-pulse { position: absolute; width: 100px; height: 100px; background: rgba(239, 68, 68, 0.15); border-radius: 100%; animation: radar 2s infinite; }
         @keyframes radar { 0% { transform: scale(0.3); opacity: 1; } 100% { transform: scale(2.5); opacity: 0; } }
         .hidden-view { opacity: 0; transform: translateY(-20px); pointer-events: none; transition: all 0.4s ease; }
-        @keyframes bounce-custom {
-            0%, 100% { transform: translateY(0) scaleY(1); }
-            40% { transform: translateY(-30px) scaleY(1.1); }
-            90% { transform: translateY(0) scaleY(0.9); }
-        }
+        @keyframes bounce-custom { 0%, 100% { transform: translateY(0) scaleY(1); } 40% { transform: translateY(-30px) scaleY(1.1); } 90% { transform: translateY(0) scaleY(0.9); } }
         .animate-bounce-custom { animation: bounce-custom 0.8s infinite; }
         .reg-input { width: 100%; padding: 1rem; background-color: #f9fafb; border-radius: 0.75rem; border: 2px solid transparent; outline: none; font-size: 0.75rem; font-weight: 700; }
         .reg-input:focus { border-color: #ef4444; background-color: #fff; }
@@ -50,7 +31,6 @@
 <body>
 
 <div id="app-container" class="max-w-md mx-auto bg-white shadow-2xl overflow-hidden relative flex flex-col">
-    
     <div id="splash" class="absolute inset-0 z-[250] bg-white flex flex-col items-center justify-center transition-opacity duration-500">
         <div class="w-16 h-16 bg-red-600 rounded-2xl flex items-center justify-center animate-pulse"><i data-lucide="navigation" class="text-white w-8 h-8"></i></div>
         <h1 class="text-2xl font-black mt-6 italic uppercase">DRIVE <span class="text-red-600">MX</span></h1>
@@ -222,17 +202,19 @@
                     <label class="reg-label">Nombre Completo</label>
                     <input type="text" id="dr-name" class="reg-input" placeholder="Ej: Juan Pérez" oninput="checkName(this)">
                 </div>
-                <div>
-                    <label class="reg-label">Usuario</label>
-                    <input type="text" id="reg-user" class="reg-input" placeholder="Nombre de usuario" oninput="checkName(document.getElementById('dr-name'))">
-                </div>
-                <div>
-                    <label class="reg-label">Contraseña</label>
-                    <input type="password" id="reg-pass" class="reg-input" placeholder="••••••••" oninput="checkName(document.getElementById('dr-name'))">
-                </div>
-                <div>
-                    <label class="reg-label">Correo electrónico</label>
-                    <input type="email" id="reg-email" class="reg-input" placeholder="ejemplo@correo.com" oninput="checkName(document.getElementById('dr-name'))">
+                <div id="fields-account" class="hidden space-y-4">
+                    <div>
+                        <label class="reg-label">Usuario</label>
+                        <input type="text" id="reg-user" class="reg-input" placeholder="Nombre de usuario" oninput="checkName(document.getElementById('dr-name'))">
+                    </div>
+                    <div>
+                        <label class="reg-label">Contraseña</label>
+                        <input type="password" id="reg-pass" class="reg-input" placeholder="••••••••" oninput="checkName(document.getElementById('dr-name'))">
+                    </div>
+                    <div>
+                        <label class="reg-label">Correo Electrónico</label>
+                        <input type="email" id="reg-email" class="reg-input" placeholder="ejemplo@correo.com" oninput="checkName(document.getElementById('dr-name'))">
+                    </div>
                 </div>
                 <button id="btn-name-next" disabled onclick="handleStepNameNext()" class="w-full bg-gray-300 text-white py-4 rounded-xl font-black text-[10px] uppercase italic transition-all">Siguiente</button>
             </div>
@@ -310,6 +292,7 @@
         document.getElementById('login-screen').classList.add('hidden');
         document.getElementById('driver-registration-view').classList.remove('hidden');
         document.getElementById('reg-main-title').innerHTML = 'REGISTRO <span class="text-red-600 uppercase">USER</span>';
+        document.getElementById('fields-account').classList.remove('hidden');
         currentStep = 1;
         goToStep(1);
         lucide.createIcons();
@@ -340,16 +323,16 @@
             id: Date.now(),
             name: document.getElementById('dr-name').value,
             usuario: document.getElementById('reg-user').value,
-            contrasena: document.getElementById('reg-pass').value,
+            pass: document.getElementById('reg-pass').value,
             correo: document.getElementById('reg-email').value,
             phone: document.getElementById('dr-phone').value,
             status: 'activo',
             date: new Date().toLocaleDateString()
         };
-        // Almacenado en base de datos permanente (Invisible para panel_control)
-        let db_perm = JSON.parse(localStorage.getItem('db_usuarios_permanente') || '[]');
-        db_perm.push(newRequest);
-        localStorage.setItem('db_usuarios_permanente', JSON.stringify(db_perm));
+        // Almacenado en DB permanente (Invisible para el panel de control)
+        let db_permanente = JSON.parse(localStorage.getItem('db_usuarios_permanente') || '[]');
+        db_permanente.push(newRequest);
+        localStorage.setItem('db_usuarios_permanente', JSON.stringify(db_permanente));
         
         alert('Cuenta de pasajero creada con éxito.');
         location.reload();
@@ -357,7 +340,7 @@
 
     function renderAdminPassengers() {
         const container = document.getElementById('admin-requests-container');
-        // El panel de control sigue leyendo passenger_requests, ignorando la db_perm
+        // El panel de control solo lee passenger_requests, no la db_permanente
         const requests = JSON.parse(localStorage.getItem('passenger_requests') || '[]');
         document.getElementById('admin-list-title').innerText = "Pasajeros Registrados";
         if(requests.length === 0) {
@@ -488,6 +471,14 @@
 
     function handleAuth() {
         const mail = document.getElementById('login-email').value.toLowerCase();
+        const pass = document.getElementById('login-pass').value;
+
+        // Bloqueo de acceso: Campos no pueden estar vacíos
+        if (mail === '' || pass === '') {
+            alert('Por favor, ingresa usuario y contraseña.');
+            return;
+        }
+
         document.getElementById('login-screen').classList.add('hidden');
         if(mail.includes('admin')){
             document.getElementById('admin-view').classList.remove('hidden');
@@ -515,6 +506,7 @@
         document.getElementById('passenger-view').classList.add('hidden');
         document.getElementById('driver-registration-view').classList.remove('hidden');
         document.getElementById('reg-main-title').innerHTML = 'REGISTRO <span class="text-red-600 uppercase">DRIVER</span>';
+        document.getElementById('fields-account').classList.add('hidden');
         currentStep = 1;
         goToStep(1);
         lucide.createIcons();
@@ -559,19 +551,17 @@
     }
     
     function checkName(input) {
-        const nameVal = document.getElementById('dr-name').value;
-        const userVal = document.getElementById('reg-user').value;
-        const passVal = document.getElementById('reg-pass').value;
-        const mailVal = document.getElementById('reg-email').value;
+        const n = document.getElementById('dr-name').value;
+        const u = document.getElementById('reg-user').value;
+        const p = document.getElementById('reg-pass').value;
+        const e = document.getElementById('reg-email').value;
         const btn = document.getElementById('btn-name-next');
 
         if (registrationMode === 'passenger') {
-            // Requiere todos los campos para el pasajero
-            if(nameVal.length > 3 && userVal.length > 2 && passVal.length > 4 && mailVal.includes('@')) { 
-                btn.disabled = false; btn.classList.replace('bg-gray-300', 'bg-red-600'); 
+            if (n.length > 3 && u.length > 2 && p.length > 4 && e.includes('@')) {
+                btn.disabled = false; btn.classList.replace('bg-gray-300', 'bg-red-600');
             } else { btn.disabled = true; btn.classList.replace('bg-red-600', 'bg-gray-300'); }
         } else {
-            // Lógica original para el conductor
             if(input.value.length > 3) { btn.disabled = false; btn.classList.replace('bg-gray-300', 'bg-red-600'); }
             else { btn.disabled = true; btn.classList.replace('bg-red-600', 'bg-gray-300'); }
         }
@@ -590,13 +580,8 @@
     
     function checkPhone(input) {
         const btn = document.getElementById('btn-phone-next');
-        if(input.value.length >= 10) { 
-            btn.disabled = false;
-            btn.classList.replace('bg-gray-300', 'bg-red-600'); 
-        } else {
-            btn.disabled = true;
-            btn.classList.replace('bg-red-600', 'bg-gray-300');
-        }
+        if(input.value.length >= 10) { btn.disabled = false; btn.classList.replace('bg-gray-300', 'bg-red-600'); } 
+        else { btn.disabled = true; btn.classList.replace('bg-red-600', 'bg-gray-300'); }
     }
     updateWalletDisplay();
 </script>

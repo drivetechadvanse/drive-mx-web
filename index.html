@@ -19,7 +19,7 @@
         .map-sim { background-color: #f3f4f6; background-image: radial-gradient(#d1d5db 1px, transparent 1px); background-size: 25px 25px; flex-grow: 1; }
         .radar-pulse { position: absolute; width: 100px; height: 100px; background: rgba(239, 68, 68, 0.15); border-radius: 100%; animation: radar 2s infinite; }
         @keyframes radar { 0% { transform: scale(0.3); opacity: 1; } 100% { transform: scale(2.5); opacity: 0; } }
-        .hidden-view { opacity: 0; transform: translateY(-20px); pointer-events: none; transition: all 0.4s ease; }
+        .hidden-view { opacity: 0; transform: translateY(-20px); pointer-events: none; transition: all 0.4s ease; display: none !important; }
         @keyframes bounce-custom { 0%, 100% { transform: translateY(0) scaleY(1); } 40% { transform: translateY(-30px) scaleY(1.1); } 90% { transform: translateY(0) scaleY(0.9); } }
         .animate-bounce-custom { animation: bounce-custom 0.8s infinite; }
         .reg-input { width: 100%; padding: 1rem; background-color: #f9fafb; border-radius: 0.75rem; border: 2px solid transparent; outline: none; font-size: 0.75rem; font-weight: 700; }
@@ -43,7 +43,7 @@
         <div class="p-6 bg-gray-900 text-white">
             <div class="w-10 h-10 bg-red-600 rounded-xl flex items-center justify-center mb-3"><i data-lucide="cpu" class="w-6 h-6"></i></div>
             <h2 class="text-lg font-black italic uppercase">DRIVE <span class="text-red-600 text-lg">MX</span></h2>
-            <p id="side-role" class="text-[8px] text-gray-400 font-bold uppercase tracking-widest italic">Sesión activa</p>
+            <p class="text-[8px] text-gray-400 font-bold uppercase tracking-widest italic">Sesión activa</p>
         </div>
         <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
             <div id="nav-admin" class="hidden">
@@ -54,7 +54,6 @@
                 <div id="admin-acc" class="accordion-content bg-gray-50/50 rounded-xl">
                     <button onclick="renderAdminRequests()" class="w-full text-left p-3 pl-10 text-[9px] font-bold text-gray-500 uppercase border-b border-white">Conductores</button>
                     <button onclick="renderAdminPassengers()" class="w-full text-left p-3 pl-10 text-[9px] font-bold text-gray-500 uppercase border-b border-white">Pasajeros</button>
-                    <button class="w-full text-left p-3 pl-10 text-[9px] font-bold text-gray-500 uppercase">Administradores</button>
                 </div>
                 <button onclick="openAdminWallet()" class="w-full flex items-center gap-3 p-3 text-gray-700 font-black hover:bg-gray-50 rounded-xl uppercase text-[10px] italic mt-1">
                     <i data-lucide="wallet" class="text-red-600 w-4 h-4"></i><span>Cartera</span>
@@ -72,9 +71,7 @@
     </div>
 
     <div id="login-screen" class="hidden absolute inset-0 z-[150] bg-white p-8 flex flex-col items-center justify-center text-center">
-        <div class="w-12 h-12 bg-red-600 rounded-xl mb-6 animate-bounce-custom shadow-lg shadow-red-600/20 flex items-center justify-center">
-            <i data-lucide="navigation" class="text-white w-6 h-6"></i>
-        </div>
+        <div class="w-12 h-12 bg-red-600 rounded-xl mb-6 animate-bounce-custom shadow-lg shadow-red-600/20 flex items-center justify-center"><i data-lucide="navigation" class="text-white w-6 h-6"></i></div>
         <h2 class="text-3xl font-black italic uppercase mb-12 leading-none tracking-tighter">BIENVENIDO</h2>
         <div class="space-y-4 w-full">
             <input type="text" id="login-email" placeholder="Usuario o Correo" class="reg-input text-left">
@@ -85,18 +82,16 @@
     </div>
 
     <div id="admin-view" class="hidden h-full flex flex-col bg-gray-100">
-        <header id="admin-header" class="px-4 py-3 flex items-center justify-between bg-gray-900 text-white z-10 shrink-0">
+        <header class="px-4 py-3 flex items-center justify-between bg-gray-900 text-white z-10 shrink-0">
             <button id="admin-menu-btn" onclick="openMenu()" class="p-1.5 bg-white/10 rounded-lg"><i data-lucide="menu" class="w-5 h-5 text-red-600"></i></button>
             <button id="admin-back-btn" onclick="closeAdminWallet()" class="hidden p-1.5 bg-white/10 rounded-lg"><i data-lucide="arrow-left" class="w-5 h-5 text-red-600"></i></button>
             <h2 id="admin-title" class="text-base font-black italic uppercase">PANEL <span class="text-red-600 text-lg">ADMIN</span></h2>
             <button onclick="location.reload()" class="w-8 h-8 rounded-lg bg-red-600 flex items-center justify-center"><i data-lucide="log-out" class="w-4 h-4 text-white"></i></button>
         </header>
         <div class="w-full h-12 bg-gray-400 flex items-center px-4 shrink-0">
-            <button onclick="eliminarSeleccionados()" class="bg-red-600 text-white px-3 py-1.5 rounded font-black text-[10px] uppercase italic flex items-center gap-2 active:scale-95 transition-all shadow-lg">
-                <i data-lucide="trash-2" class="w-4 h-4"></i> Eliminar Selección
-            </button>
+            <button onclick="eliminarSeleccionados()" class="bg-red-600 text-white px-3 py-1.5 rounded font-black text-[10px] uppercase italic flex items-center gap-2 active:scale-95 shadow-lg"><i data-lucide="trash-2" class="w-4 h-4"></i> Eliminar Selección</button>
         </div>
-        <main id="admin-content" class="flex-1 p-5 space-y-4 overflow-y-auto">
+        <main class="flex-1 p-5 space-y-4 overflow-y-auto">
             <div id="admin-dashboard">
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 mb-4">
                     <p class="text-[8px] font-black text-gray-400 uppercase italic mb-1">Estado</p>
@@ -107,7 +102,7 @@
                     <div id="admin-requests-container" class="space-y-3 pb-10"></div>
                 </div>
             </div>
-            <div id="admin-wallet-section" class="hidden flex flex-col gap-4 pt-2">
+            <div id="admin-wallet-section" class="hidden flex flex-col gap-4">
                 <div class="space-y-2">
                     <label class="reg-label">Buscar Pasajero</label>
                     <div class="relative">
@@ -115,16 +110,16 @@
                         <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"></i>
                     </div>
                 </div>
-                <div class="bg-white p-5 rounded-2xl border border-gray-200 space-y-4 shadow-sm">
-                    <div class="flex flex-col items-center justify-center py-2 border-b border-gray-100 mb-2">
-                        <p id="admin-search-status" class="text-[9px] font-black text-gray-400 uppercase italic">Saldo Actual del Pasajero</p>
-                        <h2 id="admin-view-saldo" class="text-2xl font-black italic text-gray-900 tracking-tighter">$0.00 MXN</h2>
+                <div class="bg-white p-5 rounded-2xl border border-gray-200 space-y-4">
+                    <div class="flex flex-col items-center justify-center py-2 border-b">
+                        <p id="admin-search-status" class="text-[9px] font-black text-gray-400 uppercase italic">Saldo Actual</p>
+                        <h2 id="admin-view-saldo" class="text-2xl font-black italic text-gray-900">$0.00 MXN</h2>
                     </div>
                     <div class="space-y-3">
                         <input type="number" id="admin-monto-input" class="reg-input" placeholder="$0.00">
                         <div class="grid grid-cols-2 gap-3">
-                            <button onclick="adminModificarSaldo('sumar')" class="bg-green-600 text-white py-3 rounded-xl font-black text-[10px] uppercase italic flex items-center justify-center gap-2">Recarga</button>
-                            <button onclick="adminModificarSaldo('restar')" class="bg-red-600 text-white py-3 rounded-xl font-black text-[10px] uppercase italic flex items-center justify-center gap-2">Descuento</button>
+                            <button onclick="adminModificarSaldo('sumar')" class="bg-green-600 text-white py-3 rounded-xl font-black text-[10px] uppercase italic">Recarga</button>
+                            <button onclick="adminModificarSaldo('restar')" class="bg-red-600 text-white py-3 rounded-xl font-black text-[10px] uppercase italic">Descuento</button>
                         </div>
                     </div>
                 </div>
@@ -145,15 +140,17 @@
                     <div class="relative flex h-2 w-2"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span></div>
                     <p class="text-[9px] font-black text-gray-800 uppercase italic tracking-tighter">Ubicación Actual Detectada</p>
                 </div>
-                <div onclick="openCosts()" class="bg-white p-1 rounded-xl shadow-2xl flex items-center gap-2 cursor-pointer border border-black/5 active:scale-95 transition-transform">
+                <div id="search-trigger" onclick="openCosts()" class="bg-white p-1 rounded-xl shadow-2xl flex items-center gap-2 cursor-pointer border border-black/5 active:scale-95 transition-transform">
                     <div class="w-10 h-10 bg-red-600 rounded-lg flex items-center justify-center text-white shadow-lg shadow-red-600/30"><i data-lucide="search" class="w-5 h-5"></i></div>
                     <span class="text-[11px] font-black text-gray-400 italic uppercase">¿A dónde vamos hoy?</span>
                 </div>
             </div>
+            
             <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                 <div id="radar" class="hidden"><div class="radar-pulse"></div></div>
                 <div id="search-msg" class="hidden bg-black text-white text-[8px] font-black uppercase px-6 py-3 rounded-full italic animate-pulse mt-40">Buscando el mejor conductor</div>
             </div>
+
             <div id="p-wallet" class="absolute bottom-6 left-4 right-4 z-30">
                 <div class="bg-gray-900 rounded-2xl p-4 flex items-center justify-between text-white shadow-2xl">
                     <div class="flex items-center gap-3">
@@ -194,7 +191,7 @@
         <div class="flex-1 overflow-y-auto p-6 pb-12">
             <div id="step-photo" class="w-full flex flex-col items-center">
                 <div class="relative mb-8 mt-6">
-                    <div id="photo-preview-container" class="w-40 h-40 rounded-full border-4 border-gray-100 bg-gray-50 flex items-center justify-center overflow-hidden"><i id="placeholder-icon" data-lucide="user" class="w-12 h-12 text-gray-300"></i><img id="driver-photo-preview" class="hidden w-full h-full object-cover"></div>
+                    <div class="w-40 h-40 rounded-full border-4 border-gray-100 bg-gray-50 flex items-center justify-center overflow-hidden"><i id="placeholder-icon" data-lucide="user" class="w-12 h-12 text-gray-300"></i><img id="driver-photo-preview" class="hidden w-full h-full object-cover"></div>
                     <button onclick="document.getElementById('photo-input').click()" class="absolute bottom-1 right-1 bg-red-600 p-3 rounded-full text-white border-4 border-white shadow-lg"><i data-lucide="camera" class="w-5 h-5"></i></button>
                     <input type="file" id="photo-input" accept="image/*" class="hidden" onchange="processImage(this)">
                 </div>
@@ -223,8 +220,7 @@
             </div>
             <div id="step-finish" class="hidden w-full flex flex-col items-center justify-center text-center py-10">
                 <i data-lucide="hourglass" class="w-12 h-12 text-red-600 animate-spin mb-8"></i>
-                <h2 class="text-xl font-black italic uppercase leading-none mb-4">REVISIÓN EN PROGRESO</h2>
-                <button id="btn-final-save" onclick="saveDriverRequest()" class="w-full bg-red-600 text-white py-4 rounded-xl font-black text-[12px] uppercase italic shadow-xl active:scale-95">CONFIRMAR</button>
+                <button id="btn-final-save" onclick="saveDriverRequest()" class="w-full bg-red-600 text-white py-4 rounded-xl font-black text-[12px] uppercase italic shadow-xl active:scale-95 transition-all">CONFIRMAR</button>
             </div>
         </div>
     </div>
@@ -234,14 +230,13 @@
     lucide.createIcons();
     let currentStep = 1;
     let registrationMode = 'driver'; 
-    let currentAdminView = 'requests'; 
-    let selectedIds = [];
     let currentUser = null; 
     let appState = {
         selectedPayment: 'efectivo',
         precioViaje: 120.00
     };
 
+    // --- CARTERA LOGIC ---
     function getWalletData(userId) {
         return JSON.parse(localStorage.getItem(`wallet_${userId}`)) || { saldo: 0.00, historial: [] };
     }
@@ -250,52 +245,24 @@
     }
     function addMovement(userId, tipo, monto, descripcion) {
         let wallet = getWalletData(userId);
-        if (tipo === 'sumar') wallet.saldo += monto;
-        else wallet.saldo -= monto;
+        if (tipo === 'sumar') wallet.saldo += monto; else wallet.saldo -= monto;
         wallet.historial.unshift({ fecha: new Date().toLocaleString(), tipo: tipo, monto: monto, desc: descripcion });
         saveWalletData(userId, wallet);
         return wallet;
     }
 
-    function startPassengerRegistration() {
-        registrationMode = 'passenger';
-        document.getElementById('login-screen').classList.add('hidden');
-        document.getElementById('driver-registration-view').classList.remove('hidden');
-        document.getElementById('reg-main-title').innerHTML = 'REGISTRO <span class="text-red-600 uppercase">USER</span>';
-        document.getElementById('fields-account').classList.remove('hidden');
-        currentStep = 1; goToStep(1); lucide.createIcons();
-    }
-    function handleStepNameNext() {
-        if (registrationMode === 'passenger') goToStep(8); else goToStep(5);
-    }
-    function handleStepPhoneNext() {
-        document.getElementById('btn-final-save').setAttribute('onclick', registrationMode === 'passenger' ? 'savePassengerRequest()' : 'saveDriverRequest()');
-        goToStep(9);
-    }
-    function savePassengerRequest() {
-        const userId = String(Date.now());
-        const userValue = document.getElementById('reg-user').value.toLowerCase().trim();
-        const newRequest = { id: userId, name: document.getElementById('dr-name').value, usuario: userValue, pass: document.getElementById('reg-pass').value, correo: document.getElementById('reg-email').value, phone: document.getElementById('dr-phone').value, status: 'activo', date: new Date().toLocaleDateString() };
-        let db = JSON.parse(localStorage.getItem('db_usuarios_permanente') || '[]');
-        db.push(newRequest); localStorage.setItem('db_usuarios_permanente', JSON.stringify(db));
-        saveWalletData(userId, { saldo: 0.00, historial: [] });
-        alert(`Cuenta creada.`); location.reload();
-    }
-
-    // --- SELECCIÓN DE CONDUCTOR ---
+    // --- SELECCIÓN CONDUCTOR ---
     function renderDriverSelection() {
         const container = document.getElementById('driver-list-container');
-        // Filtramos conductores activos (en este sistema simulado, los que enviaron solicitud y fueron guardados)
         const allDrivers = JSON.parse(localStorage.getItem('driver_requests') || '[]');
         container.innerHTML = '';
 
         if(allDrivers.length === 0) {
-            container.innerHTML = '<p class="text-center text-gray-500 font-bold uppercase italic mt-20">No hay conductores disponibles cerca</p>';
+            container.innerHTML = '<p class="text-center text-gray-500 font-bold uppercase italic mt-20">No hay conductores disponibles</p>';
             return;
         }
 
         allDrivers.forEach(dr => {
-            // Solo conductores que tengan datos completos (simulación de "disponibilidad")
             container.innerHTML += `
                 <div id="dr-card-${dr.id}" class="bg-white rounded-[2rem] p-6 shadow-xl border border-gray-100 flex flex-col items-center text-center space-y-4">
                     <div class="w-24 h-24 rounded-full border-4 border-red-600 overflow-hidden bg-gray-100">
@@ -303,8 +270,7 @@
                     </div>
                     <div>
                         <div class="flex items-center justify-center gap-1 text-yellow-500 mb-1">
-                            <i data-lucide="star" class="w-4 h-4 fill-yellow-500"></i>
-                            <span class="text-sm font-black text-gray-900 italic">4.9</span>
+                            <i data-lucide="star" class="w-4 h-4 fill-yellow-500"></i><span class="text-sm font-black text-gray-900 italic">4.9</span>
                         </div>
                         <h3 class="text-lg font-black uppercase italic tracking-tight">${dr.name}</h3>
                         <p class="text-[10px] font-bold text-gray-400 uppercase italic">${dr.vehicle} • ${dr.plate}</p>
@@ -314,8 +280,8 @@
                         <div><p class="text-[8px] font-black text-gray-400 uppercase italic">Costo</p><p class="text-xs font-black italic text-red-600">$${appState.precioViaje.toFixed(2)}</p></div>
                     </div>
                     <div class="w-full flex gap-3">
-                        <button onclick="rejectDriver('${dr.id}')" class="flex-1 py-4 bg-gray-100 text-gray-500 rounded-2xl font-black text-[10px] uppercase italic active:scale-95 transition-all">Rechazar</button>
-                        <button onclick="acceptTrip('${dr.id}')" class="flex-1 py-4 bg-red-600 text-white rounded-2xl font-black text-[10px] uppercase italic shadow-lg shadow-red-600/20 active:scale-95 transition-all">Aceptar</button>
+                        <button onclick="rejectDriver('${dr.id}')" class="flex-1 py-4 bg-gray-100 text-gray-500 rounded-2xl font-black text-[10px] uppercase italic active:scale-95">Rechazar</button>
+                        <button onclick="acceptTrip('${dr.id}')" class="flex-1 py-4 bg-red-600 text-white rounded-2xl font-black text-[10px] uppercase italic shadow-lg active:scale-95">Aceptar</button>
                     </div>
                 </div>`;
         });
@@ -324,79 +290,53 @@
 
     function rejectDriver(id) {
         const card = document.getElementById(`dr-card-${id}`);
-        card.style.opacity = '0';
-        card.style.transform = 'scale(0.9)';
+        card.style.opacity = '0'; card.style.transform = 'scale(0.9)';
         setTimeout(() => card.remove(), 300);
     }
 
     function acceptTrip(id) {
-        alert("¡Viaje confirmado! El conductor va en camino.");
-        location.reload();
+        alert("¡Viaje confirmado!"); location.reload();
     }
 
+    // --- FLUJO DE SOLICITUD ---
     function handleRequest() {
         const wallet = getWalletData(currentUser.id);
-        if (wallet.saldo < 0) { alert("Debes liquidar tu saldo negativo."); return; }
         if (appState.selectedPayment === 'cartera' && wallet.saldo < appState.precioViaje) { alert('Saldo insuficiente.'); return; }
         
-        // Iniciamos radar de búsqueda
+        // OCULTAR TODO LO RELACIONADO A LA PANTALLA PRINCIPAL
         closeAll(); 
+        document.getElementById('p-banners').classList.add('hidden-view');
+        document.getElementById('p-wallet').classList.add('hidden-view');
+        document.getElementById('p-header').classList.add('hidden-view');
+        
+        // MOSTRAR RADAR
         document.getElementById('radar').classList.remove('hidden'); 
         document.getElementById('search-msg').classList.remove('hidden');
         
-        // Simulación de búsqueda exitosa tras 3 segundos
         setTimeout(() => {
+            // MOSTRAR SELECCIÓN DE CONDUCTOR Y OCULTAR VISTA PASAJERO COMPLETAMENTE
             document.getElementById('passenger-view').classList.add('hidden');
             document.getElementById('driver-selection-view').classList.remove('hidden');
             renderDriverSelection();
         }, 3500);
     }
 
-    // --- AUTH & ADMIN ---
+    // --- AUTH & MISC ---
     function handleAuth() {
-        const userInput = document.getElementById('login-email').value.trim();
-        const passInput = document.getElementById('login-pass').value.trim();
-        if(userInput === 'admincentral' && passInput === '9271@'){
+        const u = document.getElementById('login-email').value.trim();
+        const p = document.getElementById('login-pass').value.trim();
+        if(u === 'admincentral' && p === '9271@'){
             document.getElementById('login-screen').classList.add('hidden');
             document.getElementById('admin-view').classList.remove('hidden');
             document.getElementById('nav-admin').classList.remove('hidden');
             renderAdminRequests();
         } else {
             const db = JSON.parse(localStorage.getItem('db_usuarios_permanente') || '[]');
-            const user = db.find(u => (u.usuario === userInput.toLowerCase() || u.correo === userInput.toLowerCase()) && u.pass === passInput);
+            const user = db.find(x => (x.usuario === u.toLowerCase() || x.correo === u.toLowerCase()) && x.pass === p);
             if (user) { currentUser = user; document.getElementById('login-screen').classList.add('hidden'); document.getElementById('passenger-view').classList.remove('hidden'); document.getElementById('nav-passenger').classList.remove('hidden'); updateWalletDisplay(); } 
-            else { alert('Error de credenciales.'); }
+            else { alert('Credenciales incorrectas.'); }
         }
         lucide.createIcons();
-    }
-
-    function searchPassengerInWallet() {
-        const term = document.getElementById('admin-search-user').value.toLowerCase().trim();
-        const displaySaldo = document.getElementById('admin-view-saldo');
-        const histContainer = document.getElementById('admin-movimientos-list');
-        const db = JSON.parse(localStorage.getItem('db_usuarios_permanente') || '[]');
-        userTargetAdmin = db.find(u => u.name.toLowerCase().includes(term) || u.usuario === term || u.id === term);
-        if (userTargetAdmin) {
-            const wallet = getWalletData(userTargetAdmin.id);
-            displaySaldo.innerText = `$${wallet.saldo.toFixed(2)} MXN`;
-            renderHistorial(wallet.historial, histContainer);
-        } else { displaySaldo.innerText = "$0.00 MXN"; histContainer.innerHTML = ''; }
-    }
-
-    function renderHistorial(historial, container) {
-        container.innerHTML = historial.map(m => `
-            <div class="bg-white p-3 rounded-xl border border-gray-100 flex justify-between items-center">
-                <div><p class="text-[9px] font-black uppercase italic">${m.desc}</p><p class="text-[7px] text-gray-400 font-bold">${m.fecha}</p></div>
-                <p class="text-[10px] font-black ${m.tipo === 'sumar' ? 'text-green-600' : 'text-red-600'}">${m.tipo === 'sumar' ? '+' : '-'} $${m.monto.toFixed(2)}</p>
-            </div>`).join('');
-    }
-
-    function adminModificarSaldo(tipo) {
-        if (!userTargetAdmin) return;
-        const monto = parseFloat(document.getElementById('admin-monto-input').value);
-        if (isNaN(monto) || monto <= 0) return;
-        addMovement(userTargetAdmin.id, tipo, monto, tipo === 'sumar' ? 'Recarga Administrativa' : 'Ajuste Admin');
-        searchPassengerInWallet();
     }
 
     function updateWalletDisplay() {
@@ -408,68 +348,29 @@
         else { btn.disabled = false; btn.classList.replace('bg-gray-400', 'bg-red-600'); btn.innerText = "CONFIRMAR SOLICITUD"; }
     }
 
-    function renderAdminPassengers() {
-        currentAdminView = 'passengers';
-        const container = document.getElementById('admin-requests-container');
-        const db = JSON.parse(localStorage.getItem('db_usuarios_permanente') || '[]');
-        container.innerHTML = db.map(req => `
-            <div id="card-${req.id}" onclick="toggleCardSelection('${req.id}')" class="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm flex items-center justify-between cursor-pointer">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600 font-black italic text-xs uppercase">${req.name.charAt(0)}</div>
-                    <div><h4 class="text-[11px] font-black uppercase italic">${req.name}</h4><p class="text-[8px] font-bold text-gray-400 uppercase">ID: ${req.id}</p></div>
-                </div>
-            </div>`).join('');
-    }
-
+    // --- ADMIN PANEL RENDERING ---
     function renderAdminRequests() {
-        currentAdminView = 'requests';
-        const container = document.getElementById('admin-requests-container');
+        const cont = document.getElementById('admin-requests-container');
         const db = JSON.parse(localStorage.getItem('driver_requests') || '[]');
-        container.innerHTML = db.map(req => `
-            <div id="card-${req.id}" onclick="toggleCardSelection('${req.id}')" class="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm flex items-center justify-between cursor-pointer">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 bg-red-50 rounded-xl flex items-center justify-center text-red-600 font-black italic text-xs uppercase">${req.name.charAt(0)}</div>
-                    <div><h4 class="text-[11px] font-black uppercase italic">${req.name}</h4><p class="text-[8px] font-bold text-gray-400 uppercase">${req.vehicle}</p></div>
-                </div>
-            </div>`).join('');
+        cont.innerHTML = db.map(dr => `<div class="bg-white p-4 rounded-2xl border shadow-sm flex items-center justify-between"><h4 class="text-xs font-black uppercase italic">${dr.name}</h4><p class="text-[8px] font-bold text-gray-400 uppercase">${dr.vehicle}</p></div>`).join('');
     }
 
+    // --- REGISTRO HELPERS ---
+    function goToStep(n) { const steps = ['step-photo', 'step-name', 'step-vehicle', 'step-phone', 'step-finish']; steps.forEach(s => { if(document.getElementById(s)) document.getElementById(s).classList.add('hidden'); }); document.getElementById(steps[n-1]).classList.remove('hidden'); currentStep = n; lucide.createIcons(); }
+    function checkName(i) { const b = document.getElementById('btn-name-next'); if(i.value.length > 3) { b.disabled = false; b.classList.replace('bg-gray-300', 'bg-red-600'); } else { b.disabled = true; b.classList.replace('bg-red-600', 'bg-gray-300'); } }
+    function checkVehicle() { const b = document.getElementById('btn-v-next'); if(document.getElementById('v-plate').value) { b.disabled = false; b.classList.replace('bg-gray-300', 'bg-red-600'); } }
+    function checkPhone(i) { const b = document.getElementById('btn-phone-next'); if(i.value.length >= 10) { b.disabled = false; b.classList.replace('bg-gray-300', 'bg-red-600'); } }
     function saveDriverRequest() {
-        const dr = { id: String(Date.now()), name: document.getElementById('dr-name').value, vehicle: `${document.getElementById('v-brand').value} ${document.getElementById('v-model').value}`, plate: document.getElementById('v-plate').value, phone: document.getElementById('dr-phone').value };
-        let db = JSON.parse(localStorage.getItem('driver_requests') || '[]');
-        db.push(dr); localStorage.setItem('driver_requests', JSON.stringify(db));
-        alert('Enviado.'); location.reload();
-    }
-
-    function toggleCardSelection(id) {
-        const card = document.getElementById(`card-${id}`);
-        const idx = selectedIds.indexOf(id);
-        if (idx > -1) { selectedIds.splice(idx, 1); card.classList.remove('card-selected'); } 
-        else { selectedIds.push(id); card.classList.add('card-selected'); }
-    }
-    function eliminarSeleccionados() {
-        const key = currentAdminView === 'passengers' ? 'db_usuarios_permanente' : 'driver_requests';
-        let db = JSON.parse(localStorage.getItem(key) || '[]');
-        db = db.filter(item => !selectedIds.includes(item.id));
-        localStorage.setItem(key, JSON.stringify(db));
+        const dr = { id: String(Date.now()), name: document.getElementById('dr-name').value, vehicle: `${document.getElementById('v-brand').value} ${document.getElementById('v-model').value}`, plate: document.getElementById('v-plate').value };
+        let db = JSON.parse(localStorage.getItem('driver_requests') || '[]'); db.push(dr); localStorage.setItem('driver_requests', JSON.stringify(db));
         location.reload();
     }
-
-    // --- UI HELPERS ---
+    
     function openMenu() { document.getElementById('sidebar').classList.add('open'); document.getElementById('overlay').classList.add('opacity-100', 'pointer-events-auto'); }
     function closeAll() { document.getElementById('sidebar').classList.remove('open'); document.getElementById('cost-sheet').classList.remove('active'); document.getElementById('overlay').classList.remove('opacity-100', 'pointer-events-auto'); }
-    function toggleAccordion(id) { document.getElementById(id).classList.toggle('expanded'); }
     function openCosts() { document.getElementById('cost-sheet').classList.add('active'); document.getElementById('overlay').classList.add('opacity-100', 'pointer-events-auto'); }
     function setPay(btn, method) { document.querySelectorAll('.payment-opt').forEach(b => b.classList.remove('selected')); btn.classList.add('selected'); appState.selectedPayment = method; }
-    function applyToBeDriver() { registrationMode = 'driver'; closeAll(); document.getElementById('passenger-view').classList.add('hidden'); document.getElementById('driver-registration-view').classList.remove('hidden'); goToStep(1); }
-    function goToStep(n) { const steps = ['step-photo', 'step-name', 'step-ine-front', 'step-ine-back', 'step-vehicle', 'step-circ', 'step-v-photo', 'step-phone', 'step-finish']; steps.forEach(s => document.getElementById(s).classList.add('hidden')); document.getElementById(steps[n-1]).classList.remove('hidden'); currentStep = n; lucide.createIcons(); }
-    function handleDriverBack() { if (currentStep > 1) goToStep(currentStep - 1); else location.reload(); }
-    function processImage(input) { if (input.files[0]) { document.getElementById('driver-photo-preview').src = URL.createObjectURL(input.files[0]); document.getElementById('driver-photo-preview').classList.remove('hidden'); document.getElementById('placeholder-icon').classList.add('hidden'); document.getElementById('btn-photo-next').disabled = false; document.getElementById('btn-photo-next').classList.replace('bg-gray-300', 'bg-red-600'); } }
-    function processFile(input, previewId, btnId) { if (input.files[0]) { document.getElementById(previewId).src = URL.createObjectURL(input.files[0]); document.getElementById(previewId).classList.remove('hidden'); document.getElementById(btnId).disabled = false; document.getElementById(btnId).classList.replace('bg-gray-300', 'bg-red-600'); } }
-    function checkName(input) { const btn = document.getElementById('btn-name-next'); if(input.value.length > 3) { btn.disabled = false; btn.classList.replace('bg-gray-300', 'bg-red-600'); } else { btn.disabled = true; btn.classList.replace('bg-red-600', 'bg-gray-300'); } }
-    function checkVehicle() { const ins = document.querySelectorAll('.v-in'); let ok = true; ins.forEach(i => { if(!i.value) ok = false; }); if(ok) { document.getElementById('btn-v-next').disabled = false; document.getElementById('btn-v-next').classList.replace('bg-gray-300', 'bg-red-600'); } }
-    function checkPhone(input) { const btn = document.getElementById('btn-phone-next'); if(input.value.length >= 10) { btn.disabled = false; btn.classList.replace('bg-gray-300', 'bg-red-600'); } else { btn.disabled = true; btn.classList.replace('bg-red-600', 'bg-gray-300'); } }
-    
+
     setTimeout(() => { document.getElementById('splash').style.opacity = '0'; setTimeout(() => { document.getElementById('splash').style.display = 'none'; document.getElementById('login-screen').classList.remove('hidden'); }, 500); }, 1500);
 </script>
 </body>

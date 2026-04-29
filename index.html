@@ -26,7 +26,8 @@
         .reg-input:focus { border-color: #ef4444; background-color: #fff; }
         .reg-label { font-size: 9px; font-weight: 900; color: #9ca3af; text-transform: uppercase; margin-bottom: 0.4rem; display: block; margin-left: 0.5rem; }
         .payment-opt.selected { border-color: #ef4444; background-color: #fef2f2; color: #ef4444; }
-        .card-selected { border-color: #ef4444 !important; background-color: #fef2f2 !important; }
+        /* Estilo Selección */
+        .card-selected { border: 2px solid #ef4444 !important; background-color: #fef2f2 !important; }
     </style>
 </head>
 <body>
@@ -92,9 +93,9 @@
             <button onclick="location.reload()" class="w-8 h-8 rounded-lg bg-red-600 flex items-center justify-center"><i data-lucide="log-out" class="w-4 h-4 text-white"></i></button>
         </header>
 
-        <div class="w-full h-12 bg-gray-400 flex items-center px-4 shrink-0">
-            <button onclick="eliminarSeleccionados()" class="bg-red-600 text-white px-3 py-1.5 rounded font-black text-[10px] uppercase italic flex items-center gap-2 active:scale-95 transition-all">
-                <i data-lucide="trash-2" class="w-4 h-4"></i> Eliminar Selección
+        <div id="admin-top-bar" class="w-full h-12 bg-gray-400 flex items-center px-4 gap-4 shrink-0">
+            <button onclick="eliminarSeleccionados()" class="bg-red-600 text-white px-3 py-1.5 rounded font-black text-[10px] uppercase italic flex items-center gap-2">
+                <i data-lucide="trash-2" class="w-4 h-4"></i> Eliminar
             </button>
         </div>
         <div class="w-full h-12 bg-gray-400 border-t border-gray-500 shrink-0"></div>
@@ -106,7 +107,7 @@
                     <h4 class="text-xl font-black italic text-gray-800 uppercase">Sistema Operativo</h4>
                 </div>
                 <div>
-                    <h3 id="admin-list-title" class="text-[10px] font-black text-gray-400 uppercase italic mb-3 ml-1">Solicitudes</h3>
+                    <h3 id="admin-list-title" class="text-[10px] font-black text-gray-400 uppercase italic mb-3 ml-1">Registros</h3>
                     <div id="admin-requests-container" class="space-y-3 pb-10"></div>
                 </div>
             </div>
@@ -115,15 +116,14 @@
                 <div class="space-y-2">
                     <label class="reg-label">Buscar Pasajero</label>
                     <div class="relative">
-                        <input type="text" id="admin-search-user" oninput="buscarPasajeroEnCartera()" class="reg-input pl-12" placeholder="Nombre, Correo o ID">
+                        <input type="text" id="admin-search-user" oninput="buscarPasajerosCartera()" class="reg-input pl-12" placeholder="Nombre, ID, Tel o Correo">
                         <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"></i>
                     </div>
-                    <div id="admin-search-results" class="space-y-2 mt-2"></div>
+                    <div id="admin-search-results" class="space-y-2"></div>
                 </div>
-
                 <div class="bg-white p-5 rounded-2xl border border-gray-200 space-y-4 shadow-sm">
                     <div class="flex flex-col items-center justify-center py-2 border-b border-gray-100 mb-2">
-                        <p id="admin-wallet-username" class="text-[9px] font-black text-gray-400 uppercase italic">Saldo Actual del Usuario</p>
+                        <p id="admin-wallet-name" class="text-[9px] font-black text-gray-400 uppercase italic">Saldo del Usuario</p>
                         <h2 id="admin-view-saldo" class="text-2xl font-black italic text-gray-900 tracking-tighter">$0.00 MXN</h2>
                     </div>
                     <div class="space-y-3">
@@ -192,7 +192,7 @@
 
     <div id="driver-registration-view" class="hidden absolute inset-0 z-[200] bg-white flex flex-col">
         <header class="px-4 py-4 flex items-center border-b bg-white sticky top-0 z-10 shrink-0">
-            <button onclick="handleRegBack()" class="p-2 hover:bg-gray-100 rounded-full transition-all"><i data-lucide="arrow-left" class="w-6 h-6 text-gray-700"></i></button>
+            <button onclick="handleDriverBack()" class="p-2 hover:bg-gray-100 rounded-full transition-all"><i data-lucide="arrow-left" class="w-6 h-6 text-gray-700"></i></button>
             <h2 id="reg-main-title" class="ml-3 text-lg font-black italic uppercase tracking-tighter">REGISTRO</h2>
         </header>
         <div class="flex-1 overflow-y-auto p-6 pb-12">
@@ -204,7 +204,6 @@
                 </div>
                 <button id="btn-photo-next" disabled onclick="goToStep(2)" class="w-full bg-gray-300 text-white py-4 rounded-xl font-black text-[10px] uppercase italic transition-all">Siguiente</button>
             </div>
-
             <div id="step-name" class="hidden w-full flex flex-col space-y-4">
                 <div><label class="reg-label">Nombre Completo</label><input type="text" id="dr-name" class="reg-input" placeholder="Ej: Juan Pérez" oninput="checkName(this)"></div>
                 <div id="fields-account" class="hidden space-y-4">
@@ -214,7 +213,6 @@
                 </div>
                 <button id="btn-name-next" disabled onclick="handleStepNameNext()" class="w-full bg-gray-300 text-white py-4 rounded-xl font-black text-[10px] uppercase italic transition-all">Siguiente</button>
             </div>
-
             <div id="step-ine-front" class="hidden w-full flex flex-col">
                 <h3 class="text-center font-black text-[10px] text-gray-400 uppercase mb-4 italic">INE Frontal</h3>
                 <div class="w-full aspect-video bg-gray-50 rounded-2xl border-4 border-dashed border-gray-200 flex items-center justify-center mb-6 overflow-hidden" onclick="document.getElementById('ine-f-input').click()"><img id="ine-f-preview" class="hidden w-full h-full object-cover"><i data-lucide="image" class="text-gray-300 w-10 h-10"></i></div>
@@ -229,12 +227,10 @@
                 </div>
                 <button id="btn-phone-next" disabled onclick="handleStepPhoneNext()" class="w-full bg-gray-300 text-white py-4 rounded-xl font-black text-[11px] uppercase italic transition-all shadow-xl shadow-red-600/30">Siguiente</button>
             </div>
-
             <div id="step-finish" class="hidden w-full flex flex-col items-center justify-center text-center py-10">
                 <div class="w-24 h-24 bg-gray-900 rounded-3xl flex items-center justify-center mb-8 shadow-2xl shadow-gray-200"><i data-lucide="hourglass" class="w-12 h-12 text-red-600 animate-[spin_3s_linear_infinite]"></i></div>
                 <h2 id="finish-title" class="text-xl font-black italic uppercase leading-none mb-4">REVISIÓN EN<br><span class="text-red-600">PROGRESO</span></h2>
-                <p id="finish-desc" class="text-[11px] font-bold text-gray-500 uppercase tracking-tight italic mb-10 px-4">En revisión.</p>
-                <button id="btn-final-save" class="w-full bg-red-600 text-white py-4 rounded-xl font-black text-[12px] uppercase italic transition-all active:scale-95 shadow-lg shadow-red-600/20">CONFIRMAR</button>
+                <button id="btn-final-save" onclick="saveDriverRequest()" class="w-full bg-red-600 text-white py-4 rounded-xl font-black text-[12px] uppercase italic">CONFIRMAR</button>
             </div>
         </div>
     </div>
@@ -246,7 +242,7 @@
     let registrationMode = 'driver'; 
     let currentAdminView = 'requests'; 
     let selectedIds = [];
-    let userWalletSelected = null; // Para la búsqueda en cartera
+    let selectedUserWallet = null;
 
     let appState = {
         selectedPayment: 'efectivo',
@@ -254,10 +250,10 @@
         precioViaje: 120.00
     };
 
-    // --- SEPARACIÓN DE REGISTROS ---
+    // --- SEPARACIÓN DE NAVEGACIÓN REGISTROS ---
     function startPassengerRegistration() {
         registrationMode = 'passenger';
-        resetRegForm();
+        resetRegUI();
         document.getElementById('login-screen').classList.add('hidden');
         document.getElementById('driver-registration-view').classList.remove('hidden');
         document.getElementById('reg-main-title').innerHTML = 'REGISTRO <span class="text-red-600 uppercase">USER</span>';
@@ -267,7 +263,7 @@
 
     function applyToBeDriver() {
         registrationMode = 'driver';
-        resetRegForm();
+        resetRegUI();
         closeAll();
         document.getElementById('passenger-view').classList.add('hidden');
         document.getElementById('driver-registration-view').classList.remove('hidden');
@@ -276,9 +272,8 @@
         goToStep(1);
     }
 
-    function handleRegBack() {
+    function handleDriverBack() {
         if(currentStep > 1) {
-            // Navegación inteligente por modo
             if(registrationMode === 'passenger' && currentStep === 8) return goToStep(2);
             goToStep(currentStep - 1);
         } else {
@@ -288,7 +283,7 @@
         }
     }
 
-    function resetRegForm() {
+    function resetRegUI() {
         currentStep = 1;
         document.getElementById('dr-name').value = '';
         document.getElementById('reg-user').value = '';
@@ -299,82 +294,68 @@
         document.getElementById('placeholder-icon').classList.remove('hidden');
     }
 
-    // --- BÚSQUEDA EXCLUSIVA PASAJEROS EN CARTERA ---
-    function buscarPasajeroEnCartera() {
+    // --- BUSQUEDA CARTERA (SÓLO PASAJEROS) ---
+    function buscarPasajerosCartera() {
         const query = document.getElementById('admin-search-user').value.toLowerCase();
-        const resultsContainer = document.getElementById('admin-search-results');
+        const results = document.getElementById('admin-search-results');
         const passengers = JSON.parse(localStorage.getItem('db_usuarios_permanente') || '[]');
         
-        resultsContainer.innerHTML = '';
+        results.innerHTML = '';
         if(query.length < 2) return;
 
         const filtered = passengers.filter(p => 
-            p.name.toLowerCase().includes(query) || 
-            p.correo.toLowerCase().includes(query) || 
-            p.phone.includes(query) ||
-            String(p.id).includes(query)
+            p.name.toLowerCase().includes(query) || p.correo.toLowerCase().includes(query) || 
+            p.phone.includes(query) || String(p.id).includes(query)
         );
 
         filtered.forEach(p => {
             const div = document.createElement('div');
-            div.className = "bg-white p-3 rounded-xl border border-gray-200 flex justify-between items-center cursor-pointer hover:border-red-600 transition-all";
-            div.onclick = () => seleccionarUsuarioCartera(p);
-            div.innerHTML = `
-                <div>
-                    <p class="text-[10px] font-black uppercase italic">${p.name}</p>
-                    <p class="text-[8px] text-gray-400 font-bold">${p.phone}</p>
-                </div>
-                <i data-lucide="chevron-right" class="w-3 h-3 text-red-600"></i>
-            `;
-            resultsContainer.appendChild(div);
+            div.className = "bg-white p-3 rounded-xl border border-gray-200 flex justify-between items-center cursor-pointer active:scale-95 transition-all";
+            div.onclick = () => selectUserForWallet(p);
+            div.innerHTML = `<div><p class="text-[10px] font-black uppercase italic">${p.name}</p><p class="text-[8px] text-gray-400 font-bold">${p.phone}</p></div><i data-lucide="chevron-right" class="w-3 h-3 text-red-600"></i>`;
+            results.appendChild(div);
         });
         lucide.createIcons();
     }
 
-    function seleccionarUsuarioCartera(user) {
-        userWalletSelected = user;
-        document.getElementById('admin-wallet-username').innerText = `Saldo de: ${user.name}`;
+    function selectUserForWallet(user) {
+        selectedUserWallet = user;
+        document.getElementById('admin-wallet-name').innerText = `Saldo de: ${user.name}`;
         document.getElementById('admin-view-saldo').innerText = `$${(user.saldo || 0).toFixed(2)} MXN`;
         document.getElementById('admin-search-results').innerHTML = '';
         document.getElementById('admin-search-user').value = user.name;
     }
 
-    // Sobrescribir lógica de saldo para afectar al usuario buscado
     function adminModificarSaldo(tipo) {
-        if(!userWalletSelected) { alert("Busca y selecciona un pasajero primero"); return; }
+        if(!selectedUserWallet) { alert("Primero busca y selecciona un pasajero."); return; }
         const monto = parseFloat(document.getElementById('admin-monto-input').value);
-        if (isNaN(monto) || monto <= 0) return;
+        if(isNaN(monto) || monto <= 0) return;
 
         let passengers = JSON.parse(localStorage.getItem('db_usuarios_permanente') || '[]');
-        const idx = passengers.findIndex(p => p.id === userWalletSelected.id);
+        const idx = passengers.findIndex(p => p.id === selectedUserWallet.id);
         
         if(idx !== -1) {
             if(!passengers[idx].saldo) passengers[idx].saldo = 0;
-            if(tipo === 'sumar') passengers[idx].saldo += monto;
-            else passengers[idx].saldo -= monto;
-            
+            if(tipo === 'sumar') passengers[idx].saldo += monto; else passengers[idx].saldo -= monto;
             localStorage.setItem('db_usuarios_permanente', JSON.stringify(passengers));
-            userWalletSelected = passengers[idx];
-            seleccionarUsuarioCartera(userWalletSelected);
+            selectedUserWallet = passengers[idx];
+            selectUserForWallet(selectedUserWallet);
             document.getElementById('admin-monto-input').value = '';
         }
     }
 
-    // --- GESTIÓN DE LISTAS Y SELECCIÓN ---
+    // --- LISTAS Y ELIMINACIÓN ---
     function renderAdminPassengers() {
         currentAdminView = 'passengers';
         selectedIds = [];
         const container = document.getElementById('admin-requests-container');
-        const requests = JSON.parse(localStorage.getItem('db_usuarios_permanente') || '[]');
+        const data = JSON.parse(localStorage.getItem('db_usuarios_permanente') || '[]');
         document.getElementById('admin-list-title').innerText = "Pasajeros Registrados";
         container.innerHTML = '';
-        if(requests.length === 0) {
-            container.innerHTML = '<div class="bg-white p-4 rounded-2xl border border-gray-200 text-center py-8"><p class="text-[9px] font-bold text-gray-400 uppercase">Sin pasajeros</p></div>';
-            return;
-        }
-        requests.forEach(req => {
+        if(data.length === 0) { container.innerHTML = '<div class="bg-white p-4 rounded-2xl border border-gray-200 text-center py-8"><p class="text-[9px] font-bold text-gray-400 uppercase">Vacío</p></div>'; return; }
+        data.forEach(req => {
             container.innerHTML += `
-                <div id="card-${req.id}" onclick="toggleCardSelection('${req.id}')" class="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm flex items-center justify-between transition-all cursor-pointer">
+                <div id="card-${req.id}" onclick="toggleSelect('${req.id}')" class="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm flex items-center justify-between transition-all cursor-pointer">
                     <div class="flex items-center gap-3">
                         <div class="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600 font-black italic text-xs uppercase">${req.name.charAt(0)}</div>
                         <div><h4 class="text-[11px] font-black uppercase italic">${req.name}</h4><p class="text-[8px] font-bold text-gray-400 uppercase tracking-tighter">Tel: ${req.phone}</p></div>
@@ -388,16 +369,13 @@
         currentAdminView = 'requests';
         selectedIds = [];
         const container = document.getElementById('admin-requests-container');
-        const requests = JSON.parse(localStorage.getItem('driver_requests') || '[]');
+        const data = JSON.parse(localStorage.getItem('driver_requests') || '[]');
         document.getElementById('admin-list-title').innerText = "Solicitudes Conductor";
         container.innerHTML = '';
-        if(requests.length === 0) {
-            container.innerHTML = '<div class="bg-white p-4 rounded-2xl border border-gray-200 text-center py-8"><p class="text-[9px] font-bold text-gray-400 uppercase">Sin solicitudes</p></div>';
-            return;
-        }
-        requests.forEach(req => {
+        if(data.length === 0) { container.innerHTML = '<div class="bg-white p-4 rounded-2xl border border-gray-200 text-center py-8"><p class="text-[9px] font-bold text-gray-400 uppercase">Vacío</p></div>'; return; }
+        data.forEach(req => {
             container.innerHTML += `
-                <div id="card-${req.id}" onclick="toggleCardSelection('${req.id}')" class="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm flex items-center justify-between transition-all cursor-pointer">
+                <div id="card-${req.id}" onclick="toggleSelect('${req.id}')" class="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm flex items-center justify-between transition-all cursor-pointer">
                     <div class="flex items-center gap-3">
                         <div class="w-10 h-10 bg-red-50 rounded-xl flex items-center justify-center text-red-600 font-black italic text-xs uppercase">${req.name.charAt(0)}</div>
                         <div><h4 class="text-[11px] font-black uppercase italic">${req.name}</h4><p class="text-[8px] font-bold text-gray-400 uppercase tracking-tighter">${req.vehicle}</p></div>
@@ -407,32 +385,25 @@
         });
     }
 
-    function toggleCardSelection(id) {
+    function toggleSelect(id) {
         const card = document.getElementById(`card-${id}`);
         const idx = selectedIds.indexOf(String(id));
-        if (idx > -1) {
-            selectedIds.splice(idx, 1);
-            card.classList.remove('card-selected');
-        } else {
-            selectedIds.push(String(id));
-            card.classList.add('card-selected');
-        }
+        if (idx > -1) { selectedIds.splice(idx, 1); card.classList.remove('card-selected'); } 
+        else { selectedIds.push(String(id)); card.classList.add('card-selected'); }
     }
 
     function eliminarSeleccionados() {
-        if (selectedIds.length === 0) return alert("Selecciona registros primero");
-        if (!confirm("¿Deseas eliminar los seleccionados?")) return;
-
+        if(selectedIds.length === 0) { alert("Toca un registro primero."); return; }
+        if(!confirm("¿Eliminar seleccionados?")) return;
         const key = (currentAdminView === 'passengers') ? 'db_usuarios_permanente' : 'driver_requests';
         let data = JSON.parse(localStorage.getItem(key) || '[]');
         data = data.filter(item => !selectedIds.includes(String(item.id)));
         localStorage.setItem(key, JSON.stringify(data));
-
-        if (currentAdminView === 'passengers') renderAdminPassengers(); else renderAdminRequests();
+        if(currentAdminView === 'passengers') renderAdminPassengers(); else renderAdminRequests();
         selectedIds = [];
     }
 
-    // --- FUNCIONES CORE ---
+    // --- FUNCIONES CORE SISTEMA ---
     function handleAuth() {
         const mail = document.getElementById('login-email').value.toLowerCase();
         const pass = document.getElementById('login-pass').value;
@@ -449,107 +420,44 @@
         lucide.createIcons();
     }
 
-    function openAdminWallet() {
-        closeAll();
-        document.getElementById('admin-dashboard').classList.add('hidden');
-        document.getElementById('admin-wallet-section').classList.remove('hidden');
-        document.getElementById('admin-menu-btn').classList.add('hidden');
-        document.getElementById('admin-back-btn').classList.remove('hidden');
-        document.getElementById('admin-title').innerHTML = 'CARTERA <span class="text-red-600 text-lg">ADMIN</span>';
-        lucide.createIcons();
-    }
-
-    function closeAdminWallet() {
-        document.getElementById('admin-dashboard').classList.remove('hidden');
-        document.getElementById('admin-wallet-section').classList.add('hidden');
-        document.getElementById('admin-menu-btn').classList.remove('hidden');
-        document.getElementById('admin-back-btn').classList.add('hidden');
-        document.getElementById('admin-title').innerHTML = 'PANEL <span class="text-red-600 text-lg">ADMIN</span>';
-        lucide.createIcons();
-    }
-
-    function goToStep(n) {
-        const steps = ['step-photo', 'step-name', 'step-ine-front', 'step-ine-back', 'step-vehicle', 'step-circ', 'step-v-photo', 'step-phone', 'step-finish'];
-        steps.forEach(s => { if(document.getElementById(s)) document.getElementById(s).classList.add('hidden'); });
-        if(document.getElementById(steps[n-1])) document.getElementById(steps[n-1]).classList.remove('hidden');
-        currentStep = n;
-        lucide.createIcons();
-    }
-
-    function handleStepNameNext() {
-        if (registrationMode === 'passenger') goToStep(8); else goToStep(3);
-    }
-
-    function handleStepPhoneNext() {
-        const btnSave = document.getElementById('btn-final-save');
-        if (registrationMode === 'passenger') {
-            document.getElementById('finish-title').innerHTML = 'CREANDO<br><span class="text-red-600">CUENTA</span>';
-            btnSave.onclick = savePassengerRequest;
-            goToStep(9);
-        } else {
-            document.getElementById('finish-title').innerHTML = 'REVISIÓN EN<br><span class="text-red-600">PROGRESO</span>';
-            btnSave.onclick = saveDriverRequest;
-            goToStep(9);
-        }
-    }
-
-    function saveDriverRequest() {
-        const newRequest = {
-            id: String(Date.now()),
-            name: document.getElementById('dr-name').value,
-            vehicle: 'Coche Driver',
-            status: 'pendiente',
-            date: new Date().toLocaleDateString()
-        };
-        let requests = JSON.parse(localStorage.getItem('driver_requests') || '[]');
-        requests.push(newRequest);
-        localStorage.setItem('driver_requests', JSON.stringify(requests));
-        alert('Solicitud enviada'); location.reload();
-    }
-
+    function openAdminWallet() { closeAll(); document.getElementById('admin-dashboard').classList.add('hidden'); document.getElementById('admin-wallet-section').classList.remove('hidden'); document.getElementById('admin-menu-btn').classList.add('hidden'); document.getElementById('admin-back-btn').classList.remove('hidden'); document.getElementById('admin-title').innerHTML = 'CARTERA <span class="text-red-600 text-lg">ADMIN</span>'; lucide.createIcons(); }
+    function closeAdminWallet() { document.getElementById('admin-dashboard').classList.remove('hidden'); document.getElementById('admin-wallet-section').classList.add('hidden'); document.getElementById('admin-menu-btn').classList.remove('hidden'); document.getElementById('admin-back-btn').classList.add('hidden'); document.getElementById('admin-title').innerHTML = 'PANEL <span class="text-red-600 text-lg">ADMIN</span>'; lucide.createIcons(); }
     function openMenu() { document.getElementById('sidebar').classList.add('open'); document.getElementById('overlay').classList.add('opacity-100', 'pointer-events-auto'); }
     function closeAll() { document.getElementById('sidebar').classList.remove('open'); document.getElementById('cost-sheet').classList.remove('active'); document.getElementById('overlay').classList.remove('opacity-100', 'pointer-events-auto'); }
     function toggleAccordion(id) { document.getElementById(id).classList.toggle('expanded'); }
     function openCosts() { document.getElementById('cost-sheet').classList.add('active'); document.getElementById('overlay').classList.add('opacity-100', 'pointer-events-auto'); }
     function setPay(btn, method) { document.querySelectorAll('.payment-opt').forEach(b => b.classList.remove('selected')); btn.classList.add('selected'); appState.selectedPayment = method; }
 
-    // Auxiliares de validación
-    function checkName(input) {
-        const btn = document.getElementById('btn-name-next');
-        if(input.value.length > 3) { btn.disabled = false; btn.classList.replace('bg-gray-300', 'bg-red-600'); }
-        else { btn.disabled = true; btn.classList.replace('bg-red-600', 'bg-gray-300'); }
-    }
-    function checkPhone(input) {
-        const btn = document.getElementById('btn-phone-next');
-        if(input.value.length >= 10) { btn.disabled = false; btn.classList.replace('bg-gray-300', 'bg-red-600'); }
-        else { btn.disabled = true; btn.classList.replace('bg-red-600', 'bg-gray-300'); }
-    }
-    function processImage(input) {
-        if (input.files[0]) {
-            document.getElementById('driver-photo-preview').src = URL.createObjectURL(input.files[0]);
-            document.getElementById('driver-photo-preview').classList.remove('hidden');
-            document.getElementById('placeholder-icon').classList.add('hidden');
-            document.getElementById('btn-photo-next').disabled = false;
-            document.getElementById('btn-photo-next').classList.replace('bg-gray-300', 'bg-red-600');
-        }
-    }
-    function processFile(input, previewId, btnId) {
-        if (input.files[0]) {
-            document.getElementById(previewId).src = URL.createObjectURL(input.files[0]);
-            document.getElementById(previewId).classList.remove('hidden');
-            document.getElementById(btnId).disabled = false;
-            document.getElementById(btnId).classList.replace('bg-gray-300', 'bg-red-600');
-        }
+    function goToStep(n) {
+        const steps = ['step-photo', 'step-name', 'step-ine-front', 'step-ine-back', 'step-vehicle', 'step-circ', 'step-v-photo', 'step-phone', 'step-finish'];
+        steps.forEach(s => { if(document.getElementById(s)) document.getElementById(s).classList.add('hidden'); });
+        if(document.getElementById(steps[n-1])) document.getElementById(steps[n-1]).classList.remove('hidden');
+        currentStep = n; lucide.createIcons();
     }
 
-    setTimeout(() => {
-        document.getElementById('splash').style.opacity = '0';
-        setTimeout(() => { 
-            document.getElementById('splash').style.display = 'none'; 
-            document.getElementById('login-screen').classList.remove('hidden'); 
-        }, 500);
-    }, 1500);
+    function handleStepNameNext() { if (registrationMode === 'passenger') goToStep(8); else goToStep(3); }
+    function handleStepPhoneNext() { goToStep(9); }
 
+    function savePassengerRequest() {
+        const req = { id: String(Date.now()), name: document.getElementById('dr-name').value, phone: document.getElementById('dr-phone').value, correo: document.getElementById('reg-email').value, date: new Date().toLocaleDateString() };
+        let db = JSON.parse(localStorage.getItem('db_usuarios_permanente') || '[]');
+        db.push(req); localStorage.setItem('db_usuarios_permanente', JSON.stringify(db));
+        alert('Cuenta creada'); location.reload();
+    }
+
+    function saveDriverRequest() {
+        const req = { id: String(Date.now()), name: document.getElementById('dr-name').value, vehicle: 'Coche Driver', date: new Date().toLocaleDateString() };
+        let db = JSON.parse(localStorage.getItem('driver_requests') || '[]');
+        db.push(req); localStorage.setItem('driver_requests', JSON.stringify(db));
+        alert('Enviado'); location.reload();
+    }
+
+    function processImage(input) { if (input.files[0]) { document.getElementById('driver-photo-preview').src = URL.createObjectURL(input.files[0]); document.getElementById('driver-photo-preview').classList.remove('hidden'); document.getElementById('placeholder-icon').classList.add('hidden'); document.getElementById('btn-photo-next').disabled = false; document.getElementById('btn-photo-next').classList.replace('bg-gray-300', 'bg-red-600'); } }
+    function processFile(input, previewId, btnId) { if (input.files[0]) { document.getElementById(previewId).src = URL.createObjectURL(input.files[0]); document.getElementById(previewId).classList.remove('hidden'); document.getElementById(btnId).disabled = false; document.getElementById(btnId).classList.replace('bg-gray-300', 'bg-red-600'); } }
+    function checkName(i) { const b = document.getElementById('btn-name-next'); if(i.value.length > 3) { b.disabled = false; b.classList.replace('bg-gray-300', 'bg-red-600'); } else { b.disabled = true; b.classList.replace('bg-red-600', 'bg-gray-300'); } }
+    function checkPhone(i) { const b = document.getElementById('btn-phone-next'); if(i.value.length >= 10) { b.disabled = false; b.classList.replace('bg-gray-300', 'bg-red-600'); } else { b.disabled = true; b.classList.replace('bg-red-600', 'bg-gray-300'); } }
+
+    setTimeout(() => { document.getElementById('splash').style.opacity = '0'; setTimeout(() => { document.getElementById('splash').style.display = 'none'; document.getElementById('login-screen').classList.remove('hidden'); }, 500); }, 1500);
 </script>
 </body>
 </html>

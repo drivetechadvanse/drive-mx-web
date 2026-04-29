@@ -342,7 +342,6 @@
         const requests = JSON.parse(localStorage.getItem('db_usuarios_permanente') || '[]');
         document.getElementById('admin-list-title').innerText = "Pasajeros Registrados";
         
-        // Eliminado texto "Panel Admin", color gris y aumentado alto vertical
         container.innerHTML = `
             <div class="bg-gray-500 p-6 rounded-2xl shadow-sm border border-gray-600 mb-4 h-48">
             </div>
@@ -466,4 +465,142 @@
             container.innerHTML += `
                 <div class="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm flex items-center justify-between">
                     <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 bg-red-50 rounded
+                        <div class="w-10 h-10 bg-red-50 rounded-xl flex items-center justify-center text-red-600 font-black italic text-xs uppercase">${req.name.charAt(0)}</div>
+                        <div><h4 class="text-[11px] font-black uppercase italic">${req.name}</h4><p class="text-[8px] font-bold text-gray-400 uppercase tracking-tighter">${req.vehicle} • ${req.plate}</p></div>
+                    </div>
+                    <div class="flex flex-col items-end gap-1"><span class="text-[7px] font-black px-2 py-1 bg-yellow-100 text-yellow-600 rounded-full uppercase">Pendiente</span><p class="text-[7px] font-bold text-gray-400">${req.phone}</p></div>
+                </div>`;
+        });
+    }
+
+    setTimeout(() => {
+        document.getElementById('splash').style.opacity = '0';
+        setTimeout(() => { document.getElementById('splash').style.display = 'none'; document.getElementById('login-screen').classList.remove('hidden'); }, 500);
+    }, 1500);
+
+    function handleAuth() {
+        const mail = document.getElementById('login-email').value.toLowerCase();
+        const pass = document.getElementById('login-pass').value;
+        if (mail === '' || pass === '') {
+            alert('Por favor, ingresa usuario y contraseña.');
+            return;
+        }
+        document.getElementById('login-screen').classList.add('hidden');
+        if(mail.includes('admin')){
+            document.getElementById('admin-view').classList.remove('hidden');
+            document.getElementById('nav-admin').classList.remove('hidden');
+            document.getElementById('side-role').innerText = 'ADMINISTRADOR';
+            renderAdminRequests();
+        } else {
+            document.getElementById('passenger-view').classList.remove('hidden');
+            document.getElementById('nav-passenger').classList.remove('hidden');
+            document.getElementById('side-role').innerText = 'PASAJERO';
+        }
+        lucide.createIcons();
+    }
+
+    function openMenu() { document.getElementById('sidebar').classList.add('open'); document.getElementById('overlay').classList.add('opacity-100', 'pointer-events-auto'); }
+    function closeAll() { document.getElementById('sidebar').classList.remove('open'); document.getElementById('cost-sheet').classList.remove('active'); document.getElementById('overlay').classList.remove('opacity-100', 'pointer-events-auto'); }
+    function toggleAccordion(id) { document.getElementById(id).classList.toggle('expanded'); }
+    function openCosts() { document.getElementById('cost-sheet').classList.add('active'); document.getElementById('overlay').classList.add('opacity-100', 'pointer-events-auto'); }
+    function setPay(btn, method) { document.querySelectorAll('.payment-opt').forEach(b => b.classList.remove('selected')); btn.classList.add('selected'); appState.selectedPayment = method; }
+    function startRadar() { closeAll(); document.getElementById('radar').classList.remove('hidden'); document.getElementById('search-msg').classList.remove('hidden'); document.getElementById('p-banners').classList.add('hidden-view'); document.getElementById('p-wallet').classList.add('hidden-view'); document.getElementById('p-header').classList.add('hidden-view'); }
+    
+    function applyToBeDriver() { 
+        registrationMode = 'driver';
+        closeAll();
+        document.getElementById('passenger-view').classList.add('hidden');
+        document.getElementById('driver-registration-view').classList.remove('hidden');
+        document.getElementById('reg-main-title').innerHTML = 'REGISTRO <span class="text-red-600 uppercase">DRIVER</span>';
+        document.getElementById('fields-account').classList.add('hidden');
+        currentStep = 1;
+        goToStep(1);
+        lucide.createIcons();
+    }
+    
+    function goToStep(n) {
+        const steps = ['step-photo', 'step-name', 'step-ine-front', 'step-ine-back', 'step-vehicle', 'step-circ', 'step-v-photo', 'step-phone', 'step-finish'];
+        steps.forEach(s => {
+            const el = document.getElementById(s);
+            if (el) el.classList.add('hidden');
+        });
+        const target = document.getElementById(steps[n-1]);
+        if (target) target.classList.remove('hidden');
+        currentStep = n;
+        lucide.createIcons();
+    }
+    
+    function handleDriverBack() {
+        if(currentStep > 1) {
+            if (registrationMode === 'passenger' && currentStep === 8) { goToStep(2); } 
+            else { goToStep(currentStep - 1); }
+        } else {
+            document.getElementById('driver-registration-view').classList.add('hidden');
+            document.getElementById('login-screen').classList.remove('hidden');
+            lucide.createIcons();
+        }
+    }
+    
+    function processImage(input) {
+        if (input.files[0]) {
+            document.getElementById('driver-photo-preview').src = URL.createObjectURL(input.files[0]);
+            document.getElementById('driver-photo-preview').classList.remove('hidden');
+            document.getElementById('placeholder-icon').classList.add('hidden');
+            const btn = document.getElementById('btn-photo-next');
+            btn.disabled = false; btn.classList.replace('bg-gray-300', 'bg-red-600');
+        }
+    }
+    
+    function processFile(input, previewId, btnId) {
+        if (input.files[0]) {
+            const preview = document.getElementById(previewId);
+            if (preview) preview.src = URL.createObjectURL(input.files[0]);
+            if (preview) preview.classList.remove('hidden');
+            const btn = document.getElementById(btnId);
+            if (btn) {
+                btn.disabled = false; 
+                btn.classList.replace('bg-gray-300', 'bg-red-600');
+            }
+        }
+    }
+    
+    function checkName(input) {
+        const n = document.getElementById('dr-name').value;
+        const u = document.getElementById('reg-user').value;
+        const p = document.getElementById('reg-pass').value;
+        const e = document.getElementById('reg-email').value;
+        const btn = document.getElementById('btn-name-next');
+        if (registrationMode === 'passenger') {
+            if (n.length > 3 && u.length > 2 && p.length > 4 && e.includes('@')) {
+                btn.disabled = false;
+                btn.classList.replace('bg-gray-300', 'bg-red-600');
+            } else { btn.disabled = true; btn.classList.replace('bg-red-600', 'bg-gray-300'); }
+        } else {
+            if(input.value.length > 3) { btn.disabled = false;
+            btn.classList.replace('bg-gray-300', 'bg-red-600'); }
+            else { btn.disabled = true;
+            btn.classList.replace('bg-red-600', 'bg-gray-300'); }
+        }
+    }
+    
+    function checkVehicle() {
+        const ins = document.querySelectorAll('.v-in');
+        let ok = true;
+        ins.forEach(i => { if(!i.value) ok = false; });
+        if(ok) {
+            const btn = document.getElementById('btn-v-next');
+            btn.disabled = false;
+            btn.classList.replace('bg-gray-300', 'bg-red-600');
+        }
+    }
+    
+    function checkPhone(input) {
+        const btn = document.getElementById('btn-phone-next');
+        if(input.value.length >= 10) { btn.disabled = false; btn.classList.replace('bg-gray-300', 'bg-red-600'); } 
+        else { btn.disabled = true;
+        btn.classList.replace('bg-red-600', 'bg-gray-300'); }
+    }
+    updateWalletDisplay();
+</script>
+</body>
+</html>

@@ -208,6 +208,7 @@
             <h2 id="reg-main-title" class="ml-3 text-lg font-black italic uppercase tracking-tighter">REGISTRO <span class="text-red-600 uppercase">DRIVER</span></h2>
         </header>
         <div class="flex-1 overflow-y-auto p-6 pb-12">
+            
             <div id="step-photo" class="w-full flex flex-col items-center">
                 <div class="relative mb-8 mt-6">
                     <div id="photo-preview-container" class="w-40 h-40 rounded-full border-4 border-gray-100 bg-gray-50 flex items-center justify-center overflow-hidden"><i id="placeholder-icon" data-lucide="user" class="w-12 h-12 text-gray-300"></i><img id="driver-photo-preview" class="hidden w-full h-full object-cover"></div>
@@ -219,13 +220,13 @@
 
             <div id="step-name" class="hidden w-full flex flex-col space-y-4">
                 <div>
-                    <label class="reg-label">Nombre Completo</label>
+                    <label class="reg-label">Nombre Completo [cite: 62]</label>
                     <input type="text" id="dr-name" class="reg-input" placeholder="Ej: Juan Pérez" oninput="checkRegistrationFields()">
                 </div>
-                <div id="extra-fields" class="space-y-4">
+                <div id="extra-fields-group" class="hidden space-y-4">
                     <div>
                         <label class="reg-label">Usuario</label>
-                        <input type="text" id="reg-user" class="reg-input" placeholder="Crea un usuario" oninput="checkRegistrationFields()">
+                        <input type="text" id="reg-user" class="reg-input" placeholder="Nombre de usuario" oninput="checkRegistrationFields()">
                     </div>
                     <div>
                         <label class="reg-label">Contraseña</label>
@@ -236,7 +237,7 @@
                         <input type="email" id="reg-email" class="reg-input" placeholder="ejemplo@correo.com" oninput="checkRegistrationFields()">
                     </div>
                 </div>
-                <button id="btn-name-next" disabled onclick="handleStepNameNext()" class="w-full bg-gray-300 text-white py-4 rounded-xl font-black text-[10px] uppercase italic transition-all">Siguiente</button>
+                <button id="btn-name-next" disabled onclick="handleStepNameNext()" class="w-full bg-gray-300 text-white py-4 rounded-xl font-black text-[10px] uppercase italic transition-all">Siguiente [cite: 81]</button>
             </div>
 
             <div id="step-ine-front" class="hidden w-full flex flex-col">
@@ -312,7 +313,10 @@
         document.getElementById('login-screen').classList.add('hidden');
         document.getElementById('driver-registration-view').classList.remove('hidden');
         document.getElementById('reg-main-title').innerHTML = 'REGISTRO <span class="text-red-600 uppercase">USER</span>';
-        document.getElementById('extra-fields').classList.remove('hidden'); 
+        
+        // Muestra campos de usuario/pass solo para pasajeros
+        document.getElementById('extra-fields-group').classList.remove('hidden');
+        
         currentStep = 1;
         goToStep(1);
         lucide.createIcons();
@@ -320,9 +324,9 @@
 
     function handleStepNameNext() {
         if (registrationMode === 'passenger') {
-            goToStep(8);
+            goToStep(8); // Salta INE y Vehículo [cite: 81]
         } else {
-            goToStep(3);
+            goToStep(3); // Flujo conductor normal [cite: 82]
         }
     }
 
@@ -338,7 +342,7 @@
         }
     }
 
-    // NUEVA FUNCIÓN: Validación de campos agrupados
+    // NUEVA VALIDACIÓN AGRUPADA
     function checkRegistrationFields() {
         const name = document.getElementById('dr-name').value;
         const user = document.getElementById('reg-user').value;
@@ -347,7 +351,6 @@
         const btn = document.getElementById('btn-name-next');
 
         if (registrationMode === 'passenger') {
-            // Requiere todos los campos para pasajeros
             if (name.length > 3 && user.length > 2 && pass.length > 4 && mail.includes('@')) {
                 btn.disabled = false;
                 btn.classList.replace('bg-gray-300', 'bg-red-600');
@@ -356,7 +359,6 @@
                 btn.classList.replace('bg-red-600', 'bg-gray-300');
             }
         } else {
-            // Lógica original para conductores
             if (name.length > 3) {
                 btn.disabled = false;
                 btn.classList.replace('bg-gray-300', 'bg-red-600');
@@ -367,7 +369,7 @@
         }
     }
 
-    // MODIFICADO: Guardado en base de datos permanente (Panel no lo registra)
+    // GUARDADO EN DB PERMANENTE (INVENTADA)
     function savePassengerRequest() {
         const newRequest = {
             id: Date.now(),
@@ -380,18 +382,19 @@
             date: new Date().toLocaleDateString()
         };
 
-        // Almacenamiento en DB permanente (No consultada por el panel)
+        // Almacena en una clave que NO lee el panel de control
         let permDB = JSON.parse(localStorage.getItem('db_usuarios_permanente') || '[]');
         permDB.push(newRequest);
         localStorage.setItem('db_usuarios_permanente', JSON.stringify(permDB));
 
-        alert('Cuenta de usuario creada con éxito en base de datos permanente.');
+        alert('Cuenta de usuario creada con éxito en la base de datos permanente.');
         location.reload();
     }
 
     function renderAdminPassengers() {
         const container = document.getElementById('admin-requests-container');
-        const requests = JSON.parse(localStorage.getItem('passenger_requests') || '[]'); // Solo lee panel_requests
+        // El panel NO lee db_usuarios_permanente para cumplir tu solicitud
+        const requests = JSON.parse(localStorage.getItem('passenger_requests') || '[]');
         document.getElementById('admin-list-title').innerText = "Pasajeros Registrados";
         if(requests.length === 0) {
             container.innerHTML = '<div class="bg-white p-4 rounded-2xl border border-gray-200 text-center py-8"><p class="text-[9px] font-bold text-gray-400 uppercase">Sin pasajeros registrados</p></div>';
@@ -546,7 +549,7 @@
         document.getElementById('passenger-view').classList.add('hidden');
         document.getElementById('driver-registration-view').classList.remove('hidden');
         document.getElementById('reg-main-title').innerHTML = 'REGISTRO <span class="text-red-600 uppercase">DRIVER</span>';
-        document.getElementById('extra-fields').classList.add('hidden'); // Oculta campos extras para drivers
+        document.getElementById('extra-fields-group').classList.add('hidden'); // Oculta para drivers
         currentStep = 1;
         goToStep(1);
         lucide.createIcons();
@@ -590,7 +593,7 @@
         }
     }
     
-    function checkName(input) { checkRegistrationFields(); } // Redireccionado a la nueva lógica
+    function checkName(input) { checkRegistrationFields(); }
     
     function checkVehicle() {
         const ins = document.querySelectorAll('.v-in');

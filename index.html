@@ -336,7 +336,8 @@
 
     // Admin Panel
     function renderAdminPassengers() {
-        currentAdminView = 'passengers'; selectedIds = [];
+        currentAdminView = 'passengers';
+        selectedIds = [];
         const container = document.getElementById('admin-requests-container');
         const reqs = JSON.parse(localStorage.getItem('db_usuarios_permanente') || '[]');
         document.getElementById('admin-list-title').innerText = "Pasajeros Registrados";
@@ -360,8 +361,36 @@
     function toggleCardSelection(id) {
         const card = document.getElementById(`card-${id}`);
         const idx = selectedIds.indexOf(String(id));
-        if (idx > -1) { selectedIds.splice(idx, 1); card.classList.remove('card-selected'); }
-        else { selectedIds.push(String(id)); card.classList.add('card-selected'); }
+        if (idx > -1) { 
+            selectedIds.splice(idx, 1); 
+            card.classList.remove('card-selected');
+        } else { 
+            selectedIds.push(String(id)); 
+            card.classList.add('card-selected');
+            
+            // Lógica de activación de conductor
+            if (currentAdminView === 'requests') {
+                if (confirm("¿Deseas activar a este conductor para aceptar viajes?")) {
+                    activarConductor(id);
+                }
+            }
+        }
+    }
+
+    function activarConductor(id) {
+        let requests = JSON.parse(localStorage.getItem('driver_requests') || '[]');
+        let activos = JSON.parse(localStorage.getItem('db_conductores_activos') || '[]');
+        const idx = requests.findIndex(r => String(r.id) === String(id));
+        if (idx > -1) {
+            let conductor = requests[idx];
+            conductor.status = 'activo';
+            activos.push(conductor);
+            requests.splice(idx, 1);
+            localStorage.setItem('driver_requests', JSON.stringify(requests));
+            localStorage.setItem('db_conductores_activos', JSON.stringify(activos));
+            alert("Conductor activado exitosamente.");
+            renderAdminRequests();
+        }
     }
 
     function eliminarSeleccionados() {
@@ -370,7 +399,8 @@
         let data = JSON.parse(localStorage.getItem(key) || '[]');
         const newData = data.filter(item => !selectedIds.includes(String(item.id)));
         localStorage.setItem(key, JSON.stringify(newData));
-        if (currentAdminView === 'passengers') renderAdminPassengers(); else renderAdminRequests();
+        if (currentAdminView === 'passengers') renderAdminPassengers();
+        else renderAdminRequests();
         selectedIds = []; alert("Eliminado.");
     }
 
@@ -384,7 +414,7 @@
         document.getElementById('admin-title').innerHTML = 'CARTERA <span class="text-red-600 text-lg">ADMIN</span>';
     }
     function closeAdminWallet() { 
-        document.getElementById('admin-dashboard').classList.remove('hidden'); 
+        document.getElementById('admin-dashboard').classList.remove('hidden');
         document.getElementById('admin-wallet-section').classList.add('hidden');
         document.getElementById('admin-menu-btn').classList.remove('hidden');
         document.getElementById('admin-back-btn').classList.add('hidden');
@@ -443,7 +473,7 @@
         setTimeout(() => { showDriverSelection(); }, 3000);
     }
 
-    // Selección Conductor
+    // Selección Conductor Dinámica
     function showDriverSelection() {
         document.getElementById('radar').classList.add('hidden');
         document.getElementById('search-msg').classList.add('hidden');
@@ -455,23 +485,28 @@
     function renderAvailableDrivers() {
         const container = document.getElementById('driver-cards-container');
         container.innerHTML = '';
-        const drivers = [
-            { id: 'd1', name: "Luis Jiménez", rating: "4.9", vehicle: "Nissan Versa", plate: "ABC-123-D", time: "3 min" },
-            { id: 'd2', name: "Sofía Martínez", rating: "4.7", vehicle: "Chevrolet Aveo", plate: "XYZ-789-M", time: "5 min" }
-        ];
+        const drivers = JSON.parse(localStorage.getItem('db_conductores_activos') || '[]');
+
+        if (drivers.length === 0) {
+            container.innerHTML = '<p class="text-center text-[10px] uppercase italic mt-20">No hay conductores disponibles</p>';
+            return;
+        }
+
         drivers.forEach(dr => {
             container.innerHTML += `
                 <div id="dr-card-${dr.id}" class="bg-white p-5 rounded-[2rem] shadow-lg border flex flex-col space-y-4">
                     <div class="flex items-center gap-4">
-                        <div class="w-14 h-14 bg-red-600 rounded-full flex items-center justify-center text-white font-black italic border-2 border-white">${dr.name.charAt(0)}</div>
+                        <div class="w-14 h-14 bg-red-600 rounded-full flex items-center justify-center text-white font-black italic border-2 border-white overflow-hidden">
+                            ${dr.photo ? `<img src="${dr.photo}" class="w-full h-full object-cover">` : dr.name.charAt(0)}
+                        </div>
                         <div class="flex-1">
                             <h4 class="font-black italic uppercase text-xs">${dr.name}</h4>
-                            <p class="text-[9px] font-bold text-gray-400 uppercase">${dr.vehicle} • ${dr.plate}</p>
+                            <p class="text-[9px] font-bold text-gray-400 uppercase">${dr.vehicle.brand} ${dr.vehicle.model} • ${dr.vehicle.plate}</p>
                         </div>
                         <span class="text-[10px] font-black italic text-yellow-500">★ ${dr.rating}</span>
                     </div>
                     <div class="flex justify-between py-2 border-y border-gray-50 italic font-black text-[10px]">
-                        <span>${dr.time}</span><span>$${appState.precioViaje.toFixed(2)} MXN</span>
+                        <span>Tiempo: 5 min</span><span>$${appState.precioViaje.toFixed(2)} MXN</span>
                     </div>
                     <div class="grid grid-cols-2 gap-3">
                         <button onclick="document.getElementById('dr-card-${dr.id}').remove()" class="bg-gray-100 py-3 rounded-2xl text-[10px] font-black uppercase italic">Rechazar</button>
@@ -495,7 +530,8 @@
             const pasajeros = JSON.parse(localStorage.getItem('db_usuarios_permanente') || '[]');
             const user = pasajeros.find(u => (u.usuario === userIn.toLowerCase() || u.correo === userIn.toLowerCase()) && u.pass === passIn);
             if (user) { 
-                currentUser = user; document.getElementById('login-screen').classList.add('hidden'); 
+                currentUser = user;
+                document.getElementById('login-screen').classList.add('hidden'); 
                 document.getElementById('passenger-view').classList.remove('hidden');
                 document.getElementById('nav-passenger').classList.remove('hidden'); updateWalletDisplay();
             } else { alert('Incorrecto'); }
@@ -521,7 +557,35 @@
     function applyToBeDriver() { registrationMode = 'driver'; closeAll(); document.getElementById('passenger-view').classList.add('hidden'); document.getElementById('driver-registration-view').classList.remove('hidden'); goToStep(1); }
     function handleStepNameNext() { if (registrationMode === 'passenger') goToStep(8); else goToStep(3); }
     function handleStepPhoneNext() { if (registrationMode === 'passenger') { document.getElementById('btn-final-save').setAttribute('onclick', 'savePassengerRequest()'); goToStep(9); } else { goToStep(9); } }
-    function saveDriverRequest() { alert('Enviado'); location.reload(); }
+
+    // Función Guardar Conductor Mejorada
+    function saveDriverRequest() {
+        const driverId = String(Date.now());
+        const newRequest = {
+            id: driverId,
+            name: document.getElementById('dr-name').value,
+            usuario: document.getElementById('reg-user').value,
+            pass: document.getElementById('reg-pass').value,
+            correo: document.getElementById('reg-email').value,
+            phone: document.getElementById('dr-phone').value,
+            vehicle: {
+                year: document.getElementById('v-year').value,
+                color: document.getElementById('v-color').value,
+                model: document.getElementById('v-model').value,
+                brand: document.getElementById('v-brand').value,
+                plate: document.getElementById('v-plate').value
+            },
+            status: 'pendiente',
+            rating: '5.0',
+            date: new Date().toLocaleDateString(),
+            photo: document.getElementById('driver-photo-preview').src
+        };
+        let requests = JSON.parse(localStorage.getItem('driver_requests') || '[]');
+        requests.push(newRequest);
+        localStorage.setItem('driver_requests', JSON.stringify(requests));
+        alert('Solicitud enviada para revisión.');
+        location.reload();
+    }
 </script>
 </body>
 </html>

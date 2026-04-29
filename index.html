@@ -91,52 +91,50 @@
             <button onclick="location.reload()" class="w-8 h-8 rounded-lg bg-red-600 flex items-center justify-center"><i data-lucide="log-out" class="w-4 h-4 text-white"></i></button>
         </header>
         
-        <div class="flex flex-1 overflow-hidden">
-            <div class="w-16 bg-gray-400 flex flex-col items-center py-4 gap-4">
-                </div>
+        <div class="w-full h-12 bg-gray-400 flex items-center px-4 gap-4 shrink-0">
+            </div>
 
-            <main id="admin-content" class="flex-1 p-5 space-y-4 overflow-y-auto">
-                <div id="admin-dashboard">
-                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 mb-4">
-                        <p class="text-[8px] font-black text-gray-400 uppercase italic mb-1">Estado</p>
-                        <h4 class="text-xl font-black italic text-gray-800 uppercase">Sistema Operativo</h4>
-                    </div>
-                    <div>
-                        <h3 id="admin-list-title" class="text-[10px] font-black text-gray-400 uppercase italic mb-3 ml-1">Solicitudes de Conductor</h3>
-                        <div id="admin-requests-container" class="space-y-3 pb-10">
-                            <div class="bg-white p-4 rounded-2xl border border-gray-200 text-center py-8">
-                                <p class="text-[9px] font-bold text-gray-400 uppercase">Sin solicitudes pendientes</p>
-                            </div>
+        <main id="admin-content" class="flex-1 p-5 space-y-4 overflow-y-auto">
+            <div id="admin-dashboard">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 mb-4">
+                    <p class="text-[8px] font-black text-gray-400 uppercase italic mb-1">Estado</p>
+                    <h4 class="text-xl font-black italic text-gray-800 uppercase">Sistema Operativo</h4>
+                </div>
+                <div>
+                    <h3 id="admin-list-title" class="text-[10px] font-black text-gray-400 uppercase italic mb-3 ml-1">Solicitudes de Conductor</h3>
+                    <div id="admin-requests-container" class="space-y-3 pb-10">
+                        <div class="bg-white p-4 rounded-2xl border border-gray-200 text-center py-8">
+                            <p class="text-[9px] font-bold text-gray-400 uppercase">Sin solicitudes pendientes</p>
                         </div>
                     </div>
                 </div>
-                <div id="admin-wallet-section" class="hidden flex flex-col gap-4 pt-2">
-                    <div class="space-y-2">
-                        <label class="reg-label">Buscar Usuario</label>
-                        <div class="relative">
-                            <input type="text" id="admin-search-user" class="reg-input pl-12" placeholder="Nombre o ID">
-                            <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"></i>
-                        </div>
+            </div>
+            <div id="admin-wallet-section" class="hidden flex flex-col gap-4 pt-2">
+                <div class="space-y-2">
+                    <label class="reg-label">Buscar Usuario</label>
+                    <div class="relative">
+                        <input type="text" id="admin-search-user" class="reg-input pl-12" placeholder="Nombre o ID">
+                        <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"></i>
                     </div>
-                    <div class="bg-white p-5 rounded-2xl border border-gray-200 space-y-4 shadow-sm">
-                        <div class="flex flex-col items-center justify-center py-2 border-b border-gray-100 mb-2">
-                            <p class="text-[9px] font-black text-gray-400 uppercase italic">Saldo Actual del Usuario</p>
-                            <h2 id="admin-view-saldo" class="text-2xl font-black italic text-gray-900 tracking-tighter">$0.00 MXN</h2>
+                </div>
+                <div class="bg-white p-5 rounded-2xl border border-gray-200 space-y-4 shadow-sm">
+                    <div class="flex flex-col items-center justify-center py-2 border-b border-gray-100 mb-2">
+                        <p class="text-[9px] font-black text-gray-400 uppercase italic">Saldo Actual del Usuario</p>
+                        <h2 id="admin-view-saldo" class="text-2xl font-black italic text-gray-900 tracking-tighter">$0.00 MXN</h2>
+                    </div>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="reg-label">Monto de Operación</label>
+                            <input type="number" id="admin-monto-input" class="reg-input" placeholder="$0.00">
                         </div>
-                        <div class="space-y-3">
-                            <div>
-                                <label class="reg-label">Monto de Operación</label>
-                                <input type="number" id="admin-monto-input" class="reg-input" placeholder="$0.00">
-                            </div>
-                            <div class="grid grid-cols-2 gap-3">
-                                <button onclick="adminModificarSaldo('sumar')" class="bg-green-600 text-white py-3 rounded-xl font-black text-[10px] uppercase italic flex items-center justify-center gap-2"><i data-lucide="plus-circle" class="w-4 h-4"></i> Agregar</button>
-                                <button onclick="adminModificarSaldo('restar')" class="bg-red-600 text-white py-3 rounded-xl font-black text-[10px] uppercase italic flex items-center justify-center gap-2"><i data-lucide="minus-circle" class="w-4 h-4"></i> Descontar</button>
-                            </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <button onclick="adminModificarSaldo('sumar')" class="bg-green-600 text-white py-3 rounded-xl font-black text-[10px] uppercase italic flex items-center justify-center gap-2"><i data-lucide="plus-circle" class="w-4 h-4"></i> Agregar</button>
+                            <button onclick="adminModificarSaldo('restar')" class="bg-red-600 text-white py-3 rounded-xl font-black text-[10px] uppercase italic flex items-center justify-center gap-2"><i data-lucide="minus-circle" class="w-4 h-4"></i> Descontar</button>
                         </div>
                     </div>
                 </div>
-            </main>
-        </div>
+            </div>
+        </main>
     </div>
 
     <div id="passenger-view" class="hidden h-full flex flex-col relative">
@@ -284,78 +282,78 @@
 
 <script>
     lucide.createIcons();
-    let currentStep = 1;
-    let registrationMode = 'driver'; 
+    let currentStep = 1; [cite: 73]
+    let registrationMode = 'driver'; [cite: 73]
 
-    let appState = {
-        selectedPayment: 'efectivo',
-        saldoUsuario: 350.00,
-        precioViaje: 120.00
+    let appState = { [cite: 73]
+        selectedPayment: 'efectivo', [cite: 73]
+        saldoUsuario: 350.00, [cite: 73]
+        precioViaje: 120.00 [cite: 73]
     };
 
-    function startPassengerRegistration() {
-        registrationMode = 'passenger';
-        document.getElementById('login-screen').classList.add('hidden');
-        document.getElementById('driver-registration-view').classList.remove('hidden');
-        document.getElementById('reg-main-title').innerHTML = 'REGISTRO <span class="text-red-600 uppercase">USER</span>';
-        document.getElementById('fields-account').classList.remove('hidden');
-        currentStep = 1;
-        goToStep(1);
-        lucide.createIcons();
+    function startPassengerRegistration() { [cite: 74]
+        registrationMode = 'passenger'; [cite: 74]
+        document.getElementById('login-screen').classList.add('hidden'); [cite: 74]
+        document.getElementById('driver-registration-view').classList.remove('hidden'); [cite: 74]
+        document.getElementById('reg-main-title').innerHTML = 'REGISTRO <span class="text-red-600 uppercase">USER</span>'; [cite: 75]
+        document.getElementById('fields-account').classList.remove('hidden'); [cite: 75]
+        currentStep = 1; [cite: 75]
+        goToStep(1); [cite: 75]
+        lucide.createIcons(); [cite: 75]
     }
 
-    function handleStepNameNext() {
-        if (registrationMode === 'passenger') {
-            goToStep(8);
-        } else {
-            goToStep(3);
+    function handleStepNameNext() { [cite: 76]
+        if (registrationMode === 'passenger') { [cite: 76]
+            goToStep(8); [cite: 76]
+        } else { [cite: 77]
+            goToStep(3); [cite: 77]
         }
     }
 
-    function handleStepPhoneNext() {
-        if (registrationMode === 'passenger') {
-            document.getElementById('finish-title').innerHTML = 'CREANDO<br><span class="text-red-600">CUENTA</span>';
-            document.getElementById('finish-desc').innerHTML = '¡Casi listo! Solo confirma para<br><span class="text-gray-900">empezar a viajar.</span>';
-            document.getElementById('btn-final-save').setAttribute('onclick', 'savePassengerRequest()');
-            goToStep(9);
-        } else {
-            document.getElementById('btn-final-save').setAttribute('onclick', 'saveDriverRequest()');
-            goToStep(9);
+    function handleStepPhoneNext() { [cite: 78]
+        if (registrationMode === 'passenger') { [cite: 78]
+            document.getElementById('finish-title').innerHTML = 'CREANDO<br><span class="text-red-600">CUENTA</span>'; [cite: 78]
+            document.getElementById('finish-desc').innerHTML = '¡Casi listo! Solo confirma para<br><span class="text-gray-900">empezar a viajar.</span>'; [cite: 79]
+            document.getElementById('btn-final-save').setAttribute('onclick', 'savePassengerRequest()'); [cite: 79]
+            goToStep(9); [cite: 79]
+        } else { [cite: 80]
+            document.getElementById('btn-final-save').setAttribute('onclick', 'saveDriverRequest()'); [cite: 80]
+            goToStep(9); [cite: 80]
         }
     }
 
-    function savePassengerRequest() {
-        const newRequest = {
-            id: Date.now(),
-            name: document.getElementById('dr-name').value,
-            usuario: document.getElementById('reg-user').value,
-            pass: document.getElementById('reg-pass').value,
-            correo: document.getElementById('reg-email').value,
-            phone: document.getElementById('dr-phone').value,
-            status: 'activo',
-            date: new Date().toLocaleDateString()
+    function savePassengerRequest() { [cite: 81]
+        const newRequest = { [cite: 81]
+            id: Date.now(), [cite: 81]
+            name: document.getElementById('dr-name').value, [cite: 81]
+            usuario: document.getElementById('reg-user').value, [cite: 81]
+            pass: document.getElementById('reg-pass').value, [cite: 81]
+            correo: document.getElementById('reg-email').value, [cite: 81]
+            phone: document.getElementById('dr-phone').value, [cite: 81]
+            status: 'activo', [cite: 82]
+            date: new Date().toLocaleDateString() [cite: 82]
         };
-        let db_permanente = JSON.parse(localStorage.getItem('db_usuarios_permanente') || '[]');
-        db_permanente.push(newRequest);
-        localStorage.setItem('db_usuarios_permanente', JSON.stringify(db_permanente));
+        let db_permanente = JSON.parse(localStorage.getItem('db_usuarios_permanente') || '[]'); [cite: 83]
+        db_permanente.push(newRequest); [cite: 84]
+        localStorage.setItem('db_usuarios_permanente', JSON.stringify(db_permanente)); [cite: 84]
         
-        alert('Cuenta de pasajero creada con éxito.');
-        location.reload();
+        alert('Cuenta de pasajero creada con éxito.'); [cite: 84]
+        location.reload(); [cite: 84]
     }
 
-    function renderAdminPassengers() {
-        const container = document.getElementById('admin-requests-container');
-        const requests = JSON.parse(localStorage.getItem('db_usuarios_permanente') || '[]');
-        document.getElementById('admin-list-title').innerText = "Pasajeros Registrados";
+    function renderAdminPassengers() { [cite: 85]
+        const container = document.getElementById('admin-requests-container'); [cite: 85]
+        const requests = JSON.parse(localStorage.getItem('db_usuarios_permanente') || '[]'); [cite: 86]
+        document.getElementById('admin-list-title').innerText = "Pasajeros Registrados"; [cite: 87]
         
-        container.innerHTML = '';
+        container.innerHTML = ''; [cite: 87]
         
-        if(requests.length === 0) {
-            container.innerHTML = '<div class="bg-white p-4 rounded-2xl border border-gray-200 text-center py-8"><p class="text-[9px] font-bold text-gray-400 uppercase">Sin pasajeros registrados</p></div>';
-            return;
+        if(requests.length === 0) { [cite: 87]
+            container.innerHTML = '<div class="bg-white p-4 rounded-2xl border border-gray-200 text-center py-8"><p class="text-[9px] font-bold text-gray-400 uppercase">Sin pasajeros registrados</p></div>'; [cite: 87]
+            return; [cite: 88]
         }
         
-        requests.forEach(req => {
+        requests.forEach(req => { [cite: 88]
             container.innerHTML += `
                 <div class="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm flex items-center justify-between">
                     <div class="flex items-center gap-3">
@@ -363,108 +361,108 @@
                         <div><h4 class="text-[11px] font-black uppercase italic">${req.name}</h4><p class="text-[8px] font-bold text-gray-400 uppercase tracking-tighter">Tel: ${req.phone}</p></div>
                     </div>
                     <div class="flex flex-col items-end gap-1"><span class="text-[7px] font-black px-2 py-1 bg-green-100 text-green-600 rounded-full uppercase">Activo</span><p class="text-[7px] font-bold text-gray-400">${req.date}</p></div>
-                </div>`;
+                </div>`; [cite: 88, 89, 90]
         });
     }
 
-    function openAdminWallet() {
-        closeAll();
-        document.getElementById('admin-dashboard').classList.add('hidden');
-        document.getElementById('admin-wallet-section').classList.remove('hidden');
-        document.getElementById('admin-menu-btn').classList.add('hidden');
-        document.getElementById('admin-back-btn').classList.remove('hidden');
-        document.getElementById('admin-title').innerHTML = 'CARTERA <span class="text-red-600 text-lg">ADMIN</span>';
-        updateAdminWalletUI();
-        lucide.createIcons();
+    function openAdminWallet() { [cite: 91]
+        closeAll(); [cite: 91]
+        document.getElementById('admin-dashboard').classList.add('hidden'); [cite: 91]
+        document.getElementById('admin-wallet-section').classList.remove('hidden'); [cite: 91]
+        document.getElementById('admin-menu-btn').classList.add('hidden'); [cite: 91]
+        document.getElementById('admin-back-btn').classList.remove('hidden'); [cite: 91]
+        document.getElementById('admin-title').innerHTML = 'CARTERA <span class="text-red-600 text-lg">ADMIN</span>'; [cite: 92]
+        updateAdminWalletUI(); [cite: 92]
+        lucide.createIcons(); [cite: 92]
     }
 
-    function closeAdminWallet() {
-        document.getElementById('admin-dashboard').classList.remove('hidden');
-        document.getElementById('admin-wallet-section').classList.add('hidden');
-        document.getElementById('admin-menu-btn').classList.remove('hidden');
-        document.getElementById('admin-back-btn').classList.add('hidden');
-        document.getElementById('admin-title').innerHTML = 'PANEL <span class="text-red-600 text-lg">ADMIN</span>';
-        lucide.createIcons();
+    function closeAdminWallet() { [cite: 92]
+        document.getElementById('admin-dashboard').classList.remove('hidden'); [cite: 92]
+        document.getElementById('admin-wallet-section').classList.add('hidden'); [cite: 93]
+        document.getElementById('admin-menu-btn').classList.remove('hidden'); [cite: 93]
+        document.getElementById('admin-back-btn').classList.add('hidden'); [cite: 93]
+        document.getElementById('admin-title').innerHTML = 'PANEL <span class="text-red-600 text-lg">ADMIN</span>'; [cite: 93]
+        lucide.createIcons(); [cite: 93]
     }
 
-    function updateAdminWalletUI() {
-        const saldoVista = document.getElementById('admin-view-saldo');
-        saldoVista.innerText = `$${appState.saldoUsuario.toFixed(2)} MXN`;
-        if(appState.saldoUsuario < 0) { saldoVista.classList.add('text-red-600'); } 
-        else { saldoVista.classList.remove('text-red-600'); }
-        updateWalletDisplay();
+    function updateAdminWalletUI() { [cite: 94]
+        const saldoVista = document.getElementById('admin-view-saldo'); [cite: 94]
+        saldoVista.innerText = `$${appState.saldoUsuario.toFixed(2)} MXN`; [cite: 95]
+        if(appState.saldoUsuario < 0) { saldoVista.classList.add('text-red-600'); } [cite: 95]
+        else { saldoVista.classList.remove('text-red-600'); } [cite: 95]
+        updateWalletDisplay(); [cite: 96]
     }
 
-    function adminModificarSaldo(tipo) {
-        const montoInput = document.getElementById('admin-monto-input');
-        const monto = parseFloat(montoInput.value);
-        if (isNaN(monto) || monto <= 0) { alert("Por favor, ingresa un monto válido."); return; }
-        if (tipo === 'sumar') { appState.saldoUsuario += monto; } 
-        else { appState.saldoUsuario -= monto; }
-        montoInput.value = '';
-        updateAdminWalletUI();
+    function adminModificarSaldo(tipo) { [cite: 96]
+        const montoInput = document.getElementById('admin-monto-input'); [cite: 96]
+        const monto = parseFloat(montoInput.value); [cite: 97]
+        if (isNaN(monto) || monto <= 0) { alert("Por favor, ingresa un monto válido."); return; } [cite: 97]
+        if (tipo === 'sumar') { appState.saldoUsuario += monto; } [cite: 98]
+        else { appState.saldoUsuario -= monto; } [cite: 99, 100]
+        montoInput.value = ''; [cite: 100]
+        updateAdminWalletUI(); [cite: 100]
     }
 
-    function updateWalletDisplay() {
-        const saldoElement = document.getElementById('display-saldo');
-        const btnConfirmar = document.getElementById('btn-confirmar');
-        if(!btnConfirmar) return;
-        if (appState.saldoUsuario < 0) {
-            saldoElement.classList.add('text-red-600');
-            btnConfirmar.disabled = true;
-            btnConfirmar.classList.remove('bg-red-600');
-            btnConfirmar.classList.add('bg-gray-400');
-            btnConfirmar.innerText = "DEBES PAGAR TU DEUDA PARA CONTINUAR";
-        } else {
-            saldoElement.classList.remove('text-red-600');
-            btnConfirmar.disabled = false;
-            btnConfirmar.classList.remove('bg-gray-400');
-            btnConfirmar.classList.add('bg-red-600');
-            btnConfirmar.innerText = "CONFIRMAR SOLICITUD";
+    function updateWalletDisplay() { [cite: 101]
+        const saldoElement = document.getElementById('display-saldo'); [cite: 101]
+        const btnConfirmar = document.getElementById('btn-confirmar'); [cite: 102]
+        if(!btnConfirmar) return; [cite: 102]
+        if (appState.saldoUsuario < 0) { [cite: 102]
+            saldoElement.classList.add('text-red-600'); [cite: 102]
+            btnConfirmar.disabled = true; [cite: 103]
+            btnConfirmar.classList.remove('bg-red-600'); [cite: 103]
+            btnConfirmar.classList.add('bg-gray-400'); [cite: 103]
+            btnConfirmar.innerText = "DEBES PAGAR TU DEUDA PARA CONTINUAR"; [cite: 103]
+        } else { [cite: 104]
+            saldoElement.classList.remove('text-red-600'); [cite: 104]
+            btnConfirmar.disabled = false; [cite: 104]
+            btnConfirmar.classList.remove('bg-gray-400'); [cite: 104]
+            btnConfirmar.classList.add('bg-red-600'); [cite: 104]
+            btnConfirmar.innerText = "CONFIRMAR SOLICITUD"; [cite: 105]
         }
-        saldoElement.innerText = `$${appState.saldoUsuario.toFixed(2)} MXN`;
+        saldoElement.innerText = `$${appState.saldoUsuario.toFixed(2)} MXN`; [cite: 105]
     }
 
-    function handleRequest() {
-        if (appState.saldoUsuario < 0) { alert("Debes pagar tu deuda para continuar"); return; }
-        if (appState.selectedPayment === 'cartera') {
-            if (appState.saldoUsuario >= appState.precioViaje) {
-                appState.saldoUsuario -= appState.precioViaje;
-                updateWalletDisplay();
-                startRadar();
-            } else { alert('Saldo insuficiente en tu Cartera'); }
-        } else { startRadar(); }
+    function handleRequest() { [cite: 106]
+        if (appState.saldoUsuario < 0) { alert("Debes pagar tu deuda para continuar"); return; } [cite: 106]
+        if (appState.selectedPayment === 'cartera') { [cite: 107]
+            if (appState.saldoUsuario >= appState.precioViaje) { [cite: 107]
+                appState.saldoUsuario -= appState.precioViaje; [cite: 107]
+                updateWalletDisplay(); [cite: 108]
+                startRadar(); [cite: 108]
+            } else { alert('Saldo insuficiente en tu Cartera'); } [cite: 108]
+        } else { startRadar(); } [cite: 109, 110]
     }
 
-    function saveDriverRequest() {
-        const newRequest = {
-            id: Date.now(),
-            name: document.getElementById('dr-name').value,
-            vehicle: `${document.getElementById('v-brand').value} ${document.getElementById('v-model').value}`,
-            plate: document.getElementById('v-plate').value,
-            phone: document.getElementById('dr-phone').value,
-            status: 'pendiente',
-            date: new Date().toLocaleDateString()
+    function saveDriverRequest() { [cite: 110]
+        const newRequest = { [cite: 110]
+            id: Date.now(), [cite: 110]
+            name: document.getElementById('dr-name').value, [cite: 110]
+            vehicle: `${document.getElementById('v-brand').value} ${document.getElementById('v-model').value}`, [cite: 110]
+            plate: document.getElementById('v-plate').value, [cite: 110]
+            phone: document.getElementById('dr-phone').value, [cite: 110]
+            status: 'pendiente', [cite: 111]
+            date: new Date().toLocaleDateString() [cite: 111]
         };
-        let requests = JSON.parse(localStorage.getItem('driver_requests') || '[]');
-        requests.push(newRequest);
-        localStorage.setItem('driver_requests', JSON.stringify(requests));
-        alert('Registro completado y enviado a revisión.');
-        location.reload();
+        let requests = JSON.parse(localStorage.getItem('driver_requests') || '[]'); [cite: 112]
+        requests.push(newRequest); [cite: 112]
+        localStorage.setItem('driver_requests', JSON.stringify(requests)); [cite: 112]
+        alert('Registro completado y enviado a revisión.'); [cite: 112]
+        location.reload(); [cite: 112]
     }
 
-    function renderAdminRequests() {
-        const container = document.getElementById('admin-requests-container');
-        const requests = JSON.parse(localStorage.getItem('driver_requests') || '[]');
-        document.getElementById('admin-list-title').innerText = "Solicitudes de Conductor";
+    function renderAdminRequests() { [cite: 113]
+        const container = document.getElementById('admin-requests-container'); [cite: 113]
+        const requests = JSON.parse(localStorage.getItem('driver_requests') || '[]'); [cite: 114]
+        document.getElementById('admin-list-title').innerText = "Solicitudes de Conductor"; [cite: 114]
         
-        container.innerHTML = '';
-        if(requests.length === 0) {
-            container.innerHTML = '<div class="bg-white p-4 rounded-2xl border border-gray-200 text-center py-8"><p class="text-[9px] font-bold text-gray-400 uppercase">Sin solicitudes pendientes</p></div>';
-            return;
+        container.innerHTML = ''; [cite: 114]
+        if(requests.length === 0) { [cite: 115]
+            container.innerHTML = '<div class="bg-white p-4 rounded-2xl border border-gray-200 text-center py-8"><p class="text-[9px] font-bold text-gray-400 uppercase">Sin solicitudes pendientes</p></div>'; [cite: 115]
+            return; [cite: 116]
         }
 
-        requests.forEach(req => {
+        requests.forEach(req => { [cite: 116]
             container.innerHTML += `
                 <div class="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm flex items-center justify-between">
                     <div class="flex items-center gap-3">
@@ -472,130 +470,130 @@
                         <div><h4 class="text-[11px] font-black uppercase italic">${req.name}</h4><p class="text-[8px] font-bold text-gray-400 uppercase tracking-tighter">${req.vehicle} • ${req.plate}</p></div>
                     </div>
                     <div class="flex flex-col items-end gap-1"><span class="text-[7px] font-black px-2 py-1 bg-yellow-100 text-yellow-600 rounded-full uppercase">Pendiente</span><p class="text-[7px] font-bold text-gray-400">${req.phone}</p></div>
-                </div>`;
+                </div>`; [cite: 116, 117, 118]
         });
     }
 
-    setTimeout(() => {
-        document.getElementById('splash').style.opacity = '0';
-        setTimeout(() => { document.getElementById('splash').style.display = 'none'; document.getElementById('login-screen').classList.remove('hidden'); }, 500);
-    }, 1500);
+    setTimeout(() => { [cite: 119]
+        document.getElementById('splash').style.opacity = '0'; [cite: 119]
+        setTimeout(() => { document.getElementById('splash').style.display = 'none'; document.getElementById('login-screen').classList.remove('hidden'); }, 500); [cite: 119]
+    }, 1500); [cite: 119]
 
-    function handleAuth() {
-        const mail = document.getElementById('login-email').value.toLowerCase();
-        const pass = document.getElementById('login-pass').value;
-        if (mail === '' || pass === '') {
-            alert('Por favor, ingresa usuario y contraseña.');
-            return;
+    function handleAuth() { [cite: 120]
+        const mail = document.getElementById('login-email').value.toLowerCase(); [cite: 120]
+        const pass = document.getElementById('login-pass').value; [cite: 120]
+        if (mail === '' || pass === '') { [cite: 121]
+            alert('Por favor, ingresa usuario y contraseña.'); [cite: 121]
+            return; [cite: 122]
         }
-        document.getElementById('login-screen').classList.add('hidden');
-        if(mail.includes('admin')){
-            document.getElementById('admin-view').classList.remove('hidden');
-            document.getElementById('nav-admin').classList.remove('hidden');
-            document.getElementById('side-role').innerText = 'ADMINISTRADOR';
-            renderAdminRequests();
-        } else {
-            document.getElementById('passenger-view').classList.remove('hidden');
-            document.getElementById('nav-passenger').classList.remove('hidden');
-            document.getElementById('side-role').innerText = 'PASAJERO';
+        document.getElementById('login-screen').classList.add('hidden'); [cite: 122]
+        if(mail.includes('admin')){ [cite: 123]
+            document.getElementById('admin-view').classList.remove('hidden'); [cite: 123]
+            document.getElementById('nav-admin').classList.remove('hidden'); [cite: 123]
+            document.getElementById('side-role').innerText = 'ADMINISTRADOR'; [cite: 123]
+            renderAdminRequests(); [cite: 123]
+        } else { [cite: 124]
+            document.getElementById('passenger-view').classList.remove('hidden'); [cite: 124]
+            document.getElementById('nav-passenger').classList.remove('hidden'); [cite: 124]
+            document.getElementById('side-role').innerText = 'PASAJERO'; [cite: 124]
         }
-        lucide.createIcons();
+        lucide.createIcons(); [cite: 125]
     }
 
-    function openMenu() { document.getElementById('sidebar').classList.add('open'); document.getElementById('overlay').classList.add('opacity-100', 'pointer-events-auto'); }
-    function closeAll() { document.getElementById('sidebar').classList.remove('open'); document.getElementById('cost-sheet').classList.remove('active'); document.getElementById('overlay').classList.remove('opacity-100', 'pointer-events-auto'); }
-    function toggleAccordion(id) { document.getElementById(id).classList.toggle('expanded'); }
-    function openCosts() { document.getElementById('cost-sheet').classList.add('active'); document.getElementById('overlay').classList.add('opacity-100', 'pointer-events-auto'); }
-    function setPay(btn, method) { document.querySelectorAll('.payment-opt').forEach(b => b.classList.remove('selected')); btn.classList.add('selected'); appState.selectedPayment = method; }
-    function startRadar() { closeAll(); document.getElementById('radar').classList.remove('hidden'); document.getElementById('search-msg').classList.remove('hidden'); document.getElementById('p-banners').classList.add('hidden-view'); document.getElementById('p-wallet').classList.add('hidden-view'); document.getElementById('p-header').classList.add('hidden-view'); }
+    function openMenu() { document.getElementById('sidebar').classList.add('open'); document.getElementById('overlay').classList.add('opacity-100', 'pointer-events-auto'); } [cite: 125]
+    function closeAll() { document.getElementById('sidebar').classList.remove('open'); document.getElementById('cost-sheet').classList.remove('active'); document.getElementById('overlay').classList.remove('opacity-100', 'pointer-events-auto'); } [cite: 126]
+    function toggleAccordion(id) { document.getElementById(id).classList.toggle('expanded'); } [cite: 126]
+    function openCosts() { document.getElementById('cost-sheet').classList.add('active'); document.getElementById('overlay').classList.add('opacity-100', 'pointer-events-auto'); } [cite: 127]
+    function setPay(btn, method) { document.querySelectorAll('.payment-opt').forEach(b => b.classList.remove('selected')); btn.classList.add('selected'); appState.selectedPayment = method; } [cite: 128]
+    function startRadar() { closeAll(); document.getElementById('radar').classList.remove('hidden'); document.getElementById('search-msg').classList.remove('hidden'); document.getElementById('p-banners').classList.add('hidden-view'); document.getElementById('p-wallet').classList.add('hidden-view'); document.getElementById('p-header').classList.add('hidden-view'); } [cite: 129]
     
-    function applyToBeDriver() { 
-        registrationMode = 'driver';
-        closeAll();
-        document.getElementById('passenger-view').classList.add('hidden');
-        document.getElementById('driver-registration-view').classList.remove('hidden');
-        document.getElementById('reg-main-title').innerHTML = 'REGISTRO <span class="text-red-600 uppercase">DRIVER</span>';
-        document.getElementById('fields-account').classList.add('hidden');
-        currentStep = 1;
-        goToStep(1);
-        lucide.createIcons();
+    function applyToBeDriver() { [cite: 130]
+        registrationMode = 'driver'; [cite: 130]
+        closeAll(); [cite: 131]
+        document.getElementById('passenger-view').classList.add('hidden'); [cite: 131]
+        document.getElementById('driver-registration-view').classList.remove('hidden'); [cite: 131]
+        document.getElementById('reg-main-title').innerHTML = 'REGISTRO <span class="text-red-600 uppercase">DRIVER</span>'; [cite: 131]
+        document.getElementById('fields-account').classList.add('hidden'); [cite: 131]
+        currentStep = 1; [cite: 131]
+        goToStep(1); [cite: 131]
+        lucide.createIcons(); [cite: 131]
     }
     
-    function goToStep(n) {
-        const steps = ['step-photo', 'step-name', 'step-ine-front', 'step-ine-back', 'step-vehicle', 'step-circ', 'step-v-photo', 'step-phone', 'step-finish'];
-        steps.forEach(s => document.getElementById(s).classList.add('hidden'));
-        document.getElementById(steps[n-1]).classList.remove('hidden');
-        currentStep = n;
-        lucide.createIcons();
+    function goToStep(n) { [cite: 132]
+        const steps = ['step-photo', 'step-name', 'step-ine-front', 'step-ine-back', 'step-vehicle', 'step-circ', 'step-v-photo', 'step-phone', 'step-finish']; [cite: 132]
+        steps.forEach(s => document.getElementById(s).classList.add('hidden')); [cite: 133]
+        document.getElementById(steps[n-1]).classList.remove('hidden'); [cite: 133]
+        currentStep = n; [cite: 133]
+        lucide.createIcons(); [cite: 133]
     }
     
-    function handleDriverBack() {
-        if(currentStep > 1) {
-            if (registrationMode === 'passenger' && currentStep === 8) { goToStep(2); } 
-            else { goToStep(currentStep - 1); }
-        } else {
-            document.getElementById('driver-registration-view').classList.add('hidden');
-            document.getElementById('login-screen').classList.remove('hidden');
-            lucide.createIcons();
+    function handleDriverBack() { [cite: 133]
+        if(currentStep > 1) { [cite: 133]
+            if (registrationMode === 'passenger' && currentStep === 8) { goToStep(2); } [cite: 133]
+            else { goToStep(currentStep - 1); } [cite: 134]
+        } else { [cite: 135]
+            document.getElementById('driver-registration-view').classList.add('hidden'); [cite: 135]
+            document.getElementById('login-screen').classList.remove('hidden'); [cite: 136]
+            lucide.createIcons(); [cite: 136]
         }
     }
     
-    function processImage(input) {
-        if (input.files[0]) {
-            document.getElementById('driver-photo-preview').src = URL.createObjectURL(input.files[0]);
-            document.getElementById('driver-photo-preview').classList.remove('hidden');
-            document.getElementById('placeholder-icon').classList.add('hidden');
-            const btn = document.getElementById('btn-photo-next');
-            btn.disabled = false; btn.classList.replace('bg-gray-300', 'bg-red-600');
+    function processImage(input) { [cite: 136]
+        if (input.files[0]) { [cite: 136]
+            document.getElementById('driver-photo-preview').src = URL.createObjectURL(input.files[0]); [cite: 136]
+            document.getElementById('driver-photo-preview').classList.remove('hidden'); [cite: 137]
+            document.getElementById('placeholder-icon').classList.add('hidden'); [cite: 137]
+            const btn = document.getElementById('btn-photo-next'); [cite: 137]
+            btn.disabled = false; btn.classList.replace('bg-gray-300', 'bg-red-600'); [cite: 137]
         }
     }
     
-    function processFile(input, previewId, btnId) {
-        if (input.files[0]) {
-            document.getElementById(previewId).src = URL.createObjectURL(input.files[0]);
-            document.getElementById(previewId).classList.remove('hidden');
-            const btn = document.getElementById(btnId);
-            btn.disabled = false; btn.classList.replace('bg-gray-300', 'bg-red-600');
+    function processFile(input, previewId, btnId) { [cite: 138]
+        if (input.files[0]) { [cite: 138]
+            document.getElementById(previewId).src = URL.createObjectURL(input.files[0]); [cite: 138]
+            document.getElementById(previewId).classList.remove('hidden'); [cite: 139]
+            const btn = document.getElementById(btnId); [cite: 139]
+            btn.disabled = false; btn.classList.replace('bg-gray-300', 'bg-red-600'); [cite: 139]
         }
     }
     
-    function checkName(input) {
-        const n = document.getElementById('dr-name').value;
-        const u = document.getElementById('reg-user').value;
-        const p = document.getElementById('reg-pass').value;
-        const e = document.getElementById('reg-email').value;
-        const btn = document.getElementById('btn-name-next');
-        if (registrationMode === 'passenger') {
-            if (n.length > 3 && u.length > 2 && p.length > 4 && e.includes('@')) {
-                btn.disabled = false;
-                btn.classList.replace('bg-gray-300', 'bg-red-600');
-            } else { btn.disabled = true; btn.classList.replace('bg-red-600', 'bg-gray-300'); }
-        } else {
-            if(input.value.length > 3) { btn.disabled = false;
-            btn.classList.replace('bg-gray-300', 'bg-red-600'); }
-            else { btn.disabled = true;
-            btn.classList.replace('bg-red-600', 'bg-gray-300'); }
+    function checkName(input) { [cite: 140]
+        const n = document.getElementById('dr-name').value; [cite: 140]
+        const u = document.getElementById('reg-user').value; [cite: 141]
+        const p = document.getElementById('reg-pass').value; [cite: 141]
+        const e = document.getElementById('reg-email').value; [cite: 141]
+        const btn = document.getElementById('btn-name-next'); [cite: 141]
+        if (registrationMode === 'passenger') { [cite: 142]
+            if (n.length > 3 && u.length > 2 && p.length > 4 && e.includes('@')) { [cite: 142]
+                btn.disabled = false; [cite: 142]
+                btn.classList.replace('bg-gray-300', 'bg-red-600'); [cite: 143]
+            } else { btn.disabled = true; btn.classList.replace('bg-red-600', 'bg-gray-300'); } [cite: 143]
+        } else { [cite: 144]
+            if(input.value.length > 3) { btn.disabled = false; [cite: 144]
+            btn.classList.replace('bg-gray-300', 'bg-red-600'); } [cite: 145]
+            else { btn.disabled = true; [cite: 145]
+            btn.classList.replace('bg-red-600', 'bg-gray-300'); } [cite: 146]
         }
     }
     
-    function checkVehicle() {
-        const ins = document.querySelectorAll('.v-in');
-        let ok = true;
-        ins.forEach(i => { if(!i.value) ok = false; });
-        if(ok) {
-            const btn = document.getElementById('btn-v-next');
-            btn.disabled = false;
-            btn.classList.replace('bg-gray-300', 'bg-red-600');
+    function checkVehicle() { [cite: 146]
+        const ins = document.querySelectorAll('.v-in'); [cite: 146]
+        let ok = true; [cite: 147]
+        ins.forEach(i => { if(!i.value) ok = false; }); [cite: 147]
+        if(ok) { [cite: 148]
+            const btn = document.getElementById('btn-v-next'); [cite: 148]
+            btn.disabled = false; [cite: 148]
+            btn.classList.replace('bg-gray-300', 'bg-red-600'); [cite: 149]
         }
     }
     
-    function checkPhone(input) {
-        const btn = document.getElementById('btn-phone-next');
-        if(input.value.length >= 10) { btn.disabled = false; btn.classList.replace('bg-gray-300', 'bg-red-600'); } 
-        else { btn.disabled = true;
-        btn.classList.replace('bg-red-600', 'bg-gray-300'); }
+    function checkPhone(input) { [cite: 149]
+        const btn = document.getElementById('btn-phone-next'); [cite: 149]
+        if(input.value.length >= 10) { btn.disabled = false; btn.classList.replace('bg-gray-300', 'bg-red-600'); } [cite: 150]
+        else { btn.disabled = true; [cite: 150]
+        btn.classList.replace('bg-red-600', 'bg-gray-300'); } [cite: 151]
     }
-    updateWalletDisplay();
+    updateWalletDisplay(); [cite: 151]
 </script>
 </body>
 </html>

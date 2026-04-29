@@ -329,6 +329,7 @@
             status: 'activo',
             date: new Date().toLocaleDateString()
         };
+        // Cambiado a clave unificada para que el panel lo encuentre
         let db_permanente = JSON.parse(localStorage.getItem('db_usuarios_permanente') || '[]');
         db_permanente.push(newRequest);
         localStorage.setItem('db_usuarios_permanente', JSON.stringify(db_permanente));
@@ -339,13 +340,17 @@
 
     function renderAdminPassengers() {
         const container = document.getElementById('admin-requests-container');
-        const requests = JSON.parse(localStorage.getItem('passenger_requests') || '[]');
+        // Ahora lee de la misma clave donde se guardan los pasajeros
+        const requests = JSON.parse(localStorage.getItem('db_usuarios_permanente') || '[]');
         document.getElementById('admin-list-title').innerText = "Pasajeros Registrados";
+        
+        container.innerHTML = '';
+        
         if(requests.length === 0) {
             container.innerHTML = '<div class="bg-white p-4 rounded-2xl border border-gray-200 text-center py-8"><p class="text-[9px] font-bold text-gray-400 uppercase">Sin pasajeros registrados</p></div>';
             return;
         }
-        container.innerHTML = '';
+        
         requests.forEach(req => {
             container.innerHTML += `
                 <div class="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm flex items-center justify-between">

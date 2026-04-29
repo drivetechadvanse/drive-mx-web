@@ -329,7 +329,6 @@
             status: 'activo',
             date: new Date().toLocaleDateString()
         };
-        // Almacenado en DB permanente (Invisible para el panel de control)
         let db_permanente = JSON.parse(localStorage.getItem('db_usuarios_permanente') || '[]');
         db_permanente.push(newRequest);
         localStorage.setItem('db_usuarios_permanente', JSON.stringify(db_permanente));
@@ -340,7 +339,6 @@
 
     function renderAdminPassengers() {
         const container = document.getElementById('admin-requests-container');
-        // El panel de control solo lee passenger_requests, no la db_permanente
         const requests = JSON.parse(localStorage.getItem('passenger_requests') || '[]');
         document.getElementById('admin-list-title').innerText = "Pasajeros Registrados";
         if(requests.length === 0) {
@@ -450,8 +448,14 @@
         const container = document.getElementById('admin-requests-container');
         const requests = JSON.parse(localStorage.getItem('driver_requests') || '[]');
         document.getElementById('admin-list-title').innerText = "Solicitudes de Conductor";
-        if(requests.length === 0) return;
+        
         container.innerHTML = '';
+        
+        if(requests.length === 0) {
+            container.innerHTML = '<div class="bg-white p-4 rounded-2xl border border-gray-200 text-center py-8"><p class="text-[9px] font-bold text-gray-400 uppercase">Sin solicitudes pendientes</p></div>';
+            return;
+        }
+
         requests.forEach(req => {
             container.innerHTML += `
                 <div class="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm flex items-center justify-between">
@@ -472,13 +476,10 @@
     function handleAuth() {
         const mail = document.getElementById('login-email').value.toLowerCase();
         const pass = document.getElementById('login-pass').value;
-
-        // Bloqueo de acceso: Campos no pueden estar vacíos
         if (mail === '' || pass === '') {
             alert('Por favor, ingresa usuario y contraseña.');
             return;
         }
-
         document.getElementById('login-screen').classList.add('hidden');
         if(mail.includes('admin')){
             document.getElementById('admin-view').classList.remove('hidden');
@@ -556,14 +557,16 @@
         const p = document.getElementById('reg-pass').value;
         const e = document.getElementById('reg-email').value;
         const btn = document.getElementById('btn-name-next');
-
         if (registrationMode === 'passenger') {
             if (n.length > 3 && u.length > 2 && p.length > 4 && e.includes('@')) {
-                btn.disabled = false; btn.classList.replace('bg-gray-300', 'bg-red-600');
+                btn.disabled = false;
+                btn.classList.replace('bg-gray-300', 'bg-red-600');
             } else { btn.disabled = true; btn.classList.replace('bg-red-600', 'bg-gray-300'); }
         } else {
-            if(input.value.length > 3) { btn.disabled = false; btn.classList.replace('bg-gray-300', 'bg-red-600'); }
-            else { btn.disabled = true; btn.classList.replace('bg-red-600', 'bg-gray-300'); }
+            if(input.value.length > 3) { btn.disabled = false;
+            btn.classList.replace('bg-gray-300', 'bg-red-600'); }
+            else { btn.disabled = true;
+            btn.classList.replace('bg-red-600', 'bg-gray-300'); }
         }
     }
     
@@ -581,7 +584,8 @@
     function checkPhone(input) {
         const btn = document.getElementById('btn-phone-next');
         if(input.value.length >= 10) { btn.disabled = false; btn.classList.replace('bg-gray-300', 'bg-red-600'); } 
-        else { btn.disabled = true; btn.classList.replace('bg-red-600', 'bg-gray-300'); }
+        else { btn.disabled = true;
+        btn.classList.replace('bg-red-600', 'bg-gray-300'); }
     }
     updateWalletDisplay();
 </script>

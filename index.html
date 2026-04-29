@@ -77,7 +77,7 @@
         </div>
         <h2 class="text-3xl font-black italic uppercase mb-12 leading-none tracking-tighter">BIENVENIDO</h2>
         <div class="space-y-4 w-full">
-            <input type="email" id="login-email" placeholder="Usuario (admin para panel)" class="reg-input text-left">
+            <input type="text" id="login-email" placeholder="Usuario o Correo" class="reg-input text-left">
             <input type="password" id="login-pass" placeholder="Contraseña" class="reg-input text-left">
             <button onclick="handleAuth()" class="w-full bg-red-600 text-white py-4 rounded-xl font-black text-[11px] uppercase italic shadow-lg active:scale-95 transition-all">Ingresar</button>
             <button onclick="startPassengerRegistration()" class="mt-4 text-[10px] font-black text-gray-400 uppercase italic hover:text-red-600 transition-colors">Quiero crear una cuenta</button>
@@ -279,7 +279,7 @@
     let registrationMode = 'driver'; 
     let currentAdminView = 'requests'; 
     let selectedIds = [];
-    let currentUser = null; // Guardará el objeto del usuario logueado
+    let currentUser = null; 
     let appState = {
         selectedPayment: 'efectivo',
         precioViaje: 120.00
@@ -341,24 +341,26 @@
 
     function savePassengerRequest() {
         const userId = String(Date.now());
+        const userValue = document.getElementById('reg-user').value.toLowerCase().trim();
+        
         const newRequest = {
             id: userId,
             name: document.getElementById('dr-name').value,
-            usuario: document.getElementById('reg-user').value,
+            usuario: userValue,
             pass: document.getElementById('reg-pass').value,
-            correo: document.getElementById('reg-email').value,
+            correo: document.getElementById('reg-email').value.toLowerCase().trim(),
             phone: document.getElementById('dr-phone').value,
             status: 'activo',
             date: new Date().toLocaleDateString()
         };
+        
         let db_permanente = JSON.parse(localStorage.getItem('db_usuarios_permanente') || '[]');
         db_permanente.push(newRequest);
         localStorage.setItem('db_usuarios_permanente', JSON.stringify(db_permanente));
         
-        // Inicializar cartera vacía para el nuevo usuario
         saveWalletData(userId, { saldo: 0.00, historial: [] });
         
-        alert('Cuenta de pasajero creada con éxito.');
+        alert(`Cuenta creada. Usuario: ${userValue}`);
         location.reload();
     }
 
@@ -432,7 +434,6 @@
         alert("Eliminado con éxito.");
     }
 
-    // --- PANEL ADMIN CARTERA ---
     let userTargetAdmin = null;
 
     function openAdminWallet() {
@@ -458,7 +459,7 @@
     }
 
     function searchPassengerInWallet() {
-        const term = document.getElementById('admin-search-user').value.toLowerCase();
+        const term = document.getElementById('admin-search-user').value.toLowerCase().trim();
         const displaySaldo = document.getElementById('admin-view-saldo');
         const statusLabel = document.getElementById('admin-search-status');
         const histContainer = document.getElementById('admin-movimientos-list');
@@ -475,6 +476,7 @@
         userTargetAdmin = pasajeros.find(u => 
             u.name.toLowerCase().includes(term) || 
             u.correo.toLowerCase().includes(term) || 
+            u.usuario === term ||
             u.phone.includes(term) || 
             u.id === term
         );
@@ -519,10 +521,9 @@
         addMovement(userTargetAdmin.id, tipo, monto, desc);
         
         document.getElementById('admin-monto-input').value = '';
-        searchPassengerInWallet(); // Refrescar vista
+        searchPassengerInWallet(); 
     }
 
-    // --- CARTERA LADO PASAJERO ---
     function updateWalletDisplay() {
         if (!currentUser) return;
         const wallet = getWalletData(currentUser.id);
@@ -535,7 +536,7 @@
             saldoElement.classList.add('text-red-600');
             btnConfirmar.disabled = true;
             btnConfirmar.classList.replace('bg-red-600', 'bg-gray-400');
-            btnConfirmar.innerText = "SALDO NEGATIVO: REALIZA UNA RECARGA";
+            btnConfirmar.innerText = "SALDO NEGATIVO: RECARGA PARA VIAJAR";
         } else {
             saldoElement.classList.remove('text-red-600');
             btnConfirmar.disabled = false;
@@ -554,7 +555,7 @@
                 updateWalletDisplay();
                 startRadar();
             } else { 
-                alert('Saldo insuficiente en Cartera. Selecciona otro método o recarga.'); 
+                alert('Saldo insuficiente en Cartera.'); 
             }
         } else {
             startRadar();
@@ -584,19 +585,19 @@
     }, 1500);
 
     function handleAuth() {
-        const mailInput = document.getElementById('login-email').value.toLowerCase();
-        const passInput = document.getElementById('login-pass').value;
-        if (mailInput === '' || passInput === '') { alert('Ingresa usuario y contraseña.'); return; }
+        const userInput = document.getElementById('login-email').value.toLowerCase().trim();
+        const passInput = document.getElementById('login-pass').value.trim();
         
-        if(mailInput.includes('admin')){
+        if (userInput === '' || passInput === '') { alert('Ingresa usuario y contraseña.'); return; }
+        
+        if(userInput === 'admin'){
             document.getElementById('login-screen').classList.add('hidden');
             document.getElementById('admin-view').classList.remove('hidden');
             document.getElementById('nav-admin').classList.remove('hidden');
             renderAdminRequests();
         } else {
-            // Autenticación de pasajero
             const pasajeros = JSON.parse(localStorage.getItem('db_usuarios_permanente') || '[]');
-            const user = pasajeros.find(u => (u.usuario === mailInput || u.correo === mailInput) && u.pass === passInput);
+            const user = pasajeros.find(u => (u.usuario === userInput || u.correo === userInput) && u.pass === passInput);
             
             if (user) {
                 currentUser = user;

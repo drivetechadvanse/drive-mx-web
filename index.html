@@ -120,7 +120,7 @@
                 </div>
                 <div class="bg-white p-5 rounded-2xl border border-gray-200 space-y-4 shadow-sm">
                     <div class="flex flex-col items-center justify-center py-2 border-b border-gray-100 mb-2">
-                        <p id="admin-search-status" class="text-[9px] font-black text-gray-400 uppercase italic">Saldo Actual del Usuario</p>
+                        <p id="admin-search-status" class="text-[9px] font-black text-gray-400 uppercase italic">Saldo Actual del Pasajero</p>
                         <h2 id="admin-view-saldo" class="text-2xl font-black italic text-gray-900 tracking-tighter">$0.00 MXN</h2>
                     </div>
                     <div class="space-y-3">
@@ -129,10 +129,14 @@
                             <input type="number" id="admin-monto-input" class="reg-input" placeholder="$0.00">
                         </div>
                         <div class="grid grid-cols-2 gap-3">
-                            <button onclick="adminModificarSaldo('sumar')" class="bg-green-600 text-white py-3 rounded-xl font-black text-[10px] uppercase italic flex items-center justify-center gap-2"><i data-lucide="plus-circle" class="w-4 h-4"></i> Agregar</button>
-                            <button onclick="adminModificarSaldo('restar')" class="bg-red-600 text-white py-3 rounded-xl font-black text-[10px] uppercase italic flex items-center justify-center gap-2"><i data-lucide="minus-circle" class="w-4 h-4"></i> Descontar</button>
+                            <button onclick="adminModificarSaldo('sumar')" class="bg-green-600 text-white py-3 rounded-xl font-black text-[10px] uppercase italic flex items-center justify-center gap-2"><i data-lucide="plus-circle" class="w-4 h-4"></i> Recarga</button>
+                            <button onclick="adminModificarSaldo('restar')" class="bg-red-600 text-white py-3 rounded-xl font-black text-[10px] uppercase italic flex items-center justify-center gap-2"><i data-lucide="minus-circle" class="w-4 h-4"></i> Descuento</button>
                         </div>
                     </div>
+                </div>
+                <div id="admin-historial-container" class="space-y-2">
+                    <h3 class="text-[10px] font-black text-gray-400 uppercase italic ml-1">Historial de Movimientos</h3>
+                    <div id="admin-movimientos-list" class="space-y-2"></div>
                 </div>
             </div>
         </main>
@@ -275,18 +279,40 @@
     let registrationMode = 'driver'; 
     let currentAdminView = 'requests'; 
     let selectedIds = [];
+    let currentUser = null; // Guardará el objeto del usuario logueado
     let appState = {
         selectedPayment: 'efectivo',
-        saldoUsuario: 350.00,
         precioViaje: 120.00
     };
 
+    // --- SISTEMA DE CARTERA INDIVIDUAL ---
+    function getWalletData(userId) {
+        return JSON.parse(localStorage.getItem(`wallet_${userId}`)) || { saldo: 0.00, historial: [] };
+    }
+
+    function saveWalletData(userId, data) {
+        localStorage.setItem(`wallet_${userId}`, JSON.stringify(data));
+    }
+
+    function addMovement(userId, tipo, monto, descripcion) {
+        let wallet = getWalletData(userId);
+        if (tipo === 'sumar') wallet.saldo += monto;
+        else wallet.saldo -= monto;
+        
+        wallet.historial.unshift({
+            fecha: new Date().toLocaleString(),
+            tipo: tipo,
+            monto: monto,
+            desc: descripcion
+        });
+        saveWalletData(userId, wallet);
+        return wallet;
+    }
+
     function startPassengerRegistration() {
         registrationMode = 'passenger';
-        // Limpiar estados de pasos para que no herede de conductor
         const stepsToHide = ['step-photo', 'step-ine-front', 'step-ine-back', 'step-vehicle', 'step-circ', 'step-v-photo'];
         stepsToHide.forEach(s => document.getElementById(s).classList.add('hidden'));
-        
         document.getElementById('login-screen').classList.add('hidden');
         document.getElementById('driver-registration-view').classList.remove('hidden');
         document.getElementById('reg-main-title').innerHTML = 'REGISTRO <span class="text-red-600 uppercase">USER</span>';
@@ -314,8 +340,9 @@
     }
 
     function savePassengerRequest() {
+        const userId = String(Date.now());
         const newRequest = {
-            id: String(Date.now()),
+            id: userId,
             name: document.getElementById('dr-name').value,
             usuario: document.getElementById('reg-user').value,
             pass: document.getElementById('reg-pass').value,
@@ -327,6 +354,10 @@
         let db_permanente = JSON.parse(localStorage.getItem('db_usuarios_permanente') || '[]');
         db_permanente.push(newRequest);
         localStorage.setItem('db_usuarios_permanente', JSON.stringify(db_permanente));
+        
+        // Inicializar cartera vacía para el nuevo usuario
+        saveWalletData(userId, { saldo: 0.00, historial: [] });
+        
         alert('Cuenta de pasajero creada con éxito.');
         location.reload();
     }
@@ -347,9 +378,9 @@
                 <div id="card-${req.id}" onclick="toggleCardSelection('${req.id}')" class="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm flex items-center justify-between transition-all cursor-pointer">
                     <div class="flex items-center gap-3">
                         <div class="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600 font-black italic text-xs uppercase">${req.name.charAt(0)}</div>
-                        <div><h4 class="text-[11px] font-black uppercase italic">${req.name}</h4><p class="text-[8px] font-bold text-gray-400 uppercase tracking-tighter">Tel: ${req.phone}</p></div>
+                        <div><h4 class="text-[11px] font-black uppercase italic">${req.name}</h4><p class="text-[8px] font-bold text-gray-400 uppercase tracking-tighter">ID: ${req.id}</p></div>
                     </div>
-                    <div class="flex flex-col items-end gap-1"><span class="text-[7px] font-black px-2 py-1 bg-green-100 text-green-600 rounded-full uppercase">Activo</span><p class="text-[7px] font-bold text-gray-400">${req.date}</p></div>
+                    <div class="flex flex-col items-end gap-1"><span class="text-[7px] font-black px-2 py-1 bg-green-100 text-green-600 rounded-full uppercase">Activo</span></div>
                 </div>`;
         });
     }
@@ -370,9 +401,9 @@
                 <div id="card-${req.id}" onclick="toggleCardSelection('${req.id}')" class="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm flex items-center justify-between transition-all cursor-pointer">
                     <div class="flex items-center gap-3">
                         <div class="w-10 h-10 bg-red-50 rounded-xl flex items-center justify-center text-red-600 font-black italic text-xs uppercase">${req.name.charAt(0)}</div>
-                        <div><h4 class="text-[11px] font-black uppercase italic">${req.name}</h4><p class="text-[8px] font-bold text-gray-400 uppercase tracking-tighter">${req.vehicle} • ${req.plate}</p></div>
+                        <div><h4 class="text-[11px] font-black uppercase italic">${req.name}</h4><p class="text-[8px] font-bold text-gray-400 uppercase tracking-tighter">${req.vehicle}</p></div>
                     </div>
-                    <div class="flex flex-col items-end gap-1"><span class="text-[7px] font-black px-2 py-1 bg-yellow-100 text-yellow-600 rounded-full uppercase">Pendiente</span><p class="text-[7px] font-bold text-gray-400">${req.phone}</p></div>
+                    <div class="flex flex-col items-end gap-1"><span class="text-[7px] font-black px-2 py-1 bg-yellow-100 text-yellow-600 rounded-full uppercase">Pendiente</span></div>
                 </div>`;
         });
     }
@@ -401,6 +432,9 @@
         alert("Eliminado con éxito.");
     }
 
+    // --- PANEL ADMIN CARTERA ---
+    let userTargetAdmin = null;
+
     function openAdminWallet() {
         closeAll();
         document.getElementById('admin-dashboard').classList.add('hidden');
@@ -408,7 +442,8 @@
         document.getElementById('admin-menu-btn').classList.add('hidden');
         document.getElementById('admin-back-btn').classList.remove('hidden');
         document.getElementById('admin-title').innerHTML = 'CARTERA <span class="text-red-600 text-lg">ADMIN</span>';
-        updateAdminWalletUI();
+        document.getElementById('admin-view-saldo').innerText = "$0.00 MXN";
+        document.getElementById('admin-movimientos-list').innerHTML = '';
         lucide.createIcons();
     }
 
@@ -418,6 +453,7 @@
         document.getElementById('admin-menu-btn').classList.remove('hidden');
         document.getElementById('admin-back-btn').classList.add('hidden');
         document.getElementById('admin-title').innerHTML = 'PANEL <span class="text-red-600 text-lg">ADMIN</span>';
+        userTargetAdmin = null;
         lucide.createIcons();
     }
 
@@ -425,71 +461,104 @@
         const term = document.getElementById('admin-search-user').value.toLowerCase();
         const displaySaldo = document.getElementById('admin-view-saldo');
         const statusLabel = document.getElementById('admin-search-status');
+        const histContainer = document.getElementById('admin-movimientos-list');
         
         if (term === '') {
-            displaySaldo.innerText = `$${appState.saldoUsuario.toFixed(2)} MXN`;
-            statusLabel.innerText = "Saldo Actual del Usuario";
+            displaySaldo.innerText = "$0.00 MXN";
+            statusLabel.innerText = "Saldo Actual del Pasajero";
+            histContainer.innerHTML = '';
+            userTargetAdmin = null;
             return;
         }
 
         const pasajeros = JSON.parse(localStorage.getItem('db_usuarios_permanente') || '[]');
-        const p = pasajeros.find(u => 
+        userTargetAdmin = pasajeros.find(u => 
             u.name.toLowerCase().includes(term) || 
             u.correo.toLowerCase().includes(term) || 
             u.phone.includes(term) || 
             u.id === term
         );
 
-        if (p) {
-            displaySaldo.innerText = `$${appState.saldoUsuario.toFixed(2)} MXN`; // Sigue usando el estado global según se pidió no cambiar lógica
-            statusLabel.innerText = `Pasajero: ${p.name}`;
-            displaySaldo.classList.remove('text-gray-400');
+        if (userTargetAdmin) {
+            const wallet = getWalletData(userTargetAdmin.id);
+            displaySaldo.innerText = `$${wallet.saldo.toFixed(2)} MXN`;
+            statusLabel.innerText = `Pasajero: ${userTargetAdmin.name}`;
+            renderHistorial(wallet.historial, histContainer);
         } else {
             displaySaldo.innerText = "No encontrado";
-            statusLabel.innerText = "Búsqueda de Pasajero";
-            displaySaldo.classList.add('text-gray-400');
+            histContainer.innerHTML = '';
         }
     }
 
-    function updateAdminWalletUI() {
-        document.getElementById('admin-view-saldo').innerText = `$${appState.saldoUsuario.toFixed(2)} MXN`;
-        updateWalletDisplay();
+    function renderHistorial(historial, container) {
+        container.innerHTML = '';
+        if (historial.length === 0) {
+            container.innerHTML = '<p class="text-[8px] text-center text-gray-400 uppercase py-4">Sin movimientos</p>';
+            return;
+        }
+        historial.forEach(m => {
+            const color = m.tipo === 'sumar' ? 'text-green-600' : 'text-red-600';
+            const sign = m.tipo === 'sumar' ? '+' : '-';
+            container.innerHTML += `
+                <div class="bg-white p-3 rounded-xl border border-gray-100 flex justify-between items-center">
+                    <div>
+                        <p class="text-[9px] font-black uppercase italic">${m.desc}</p>
+                        <p class="text-[7px] text-gray-400 font-bold">${m.fecha}</p>
+                    </div>
+                    <p class="text-[10px] font-black ${color}">${sign} $${m.monto.toFixed(2)}</p>
+                </div>`;
+        });
     }
 
     function adminModificarSaldo(tipo) {
+        if (!userTargetAdmin) { alert("Busca un pasajero primero."); return; }
         const monto = parseFloat(document.getElementById('admin-monto-input').value);
         if (isNaN(monto) || monto <= 0) return;
-        if (tipo === 'sumar') appState.saldoUsuario += monto; else appState.saldoUsuario -= monto;
+        
+        const desc = tipo === 'sumar' ? 'Recarga Administrativa' : 'Ajuste / Descuento Admin';
+        addMovement(userTargetAdmin.id, tipo, monto, desc);
+        
         document.getElementById('admin-monto-input').value = '';
-        updateAdminWalletUI();
+        searchPassengerInWallet(); // Refrescar vista
     }
 
+    // --- CARTERA LADO PASAJERO ---
     function updateWalletDisplay() {
+        if (!currentUser) return;
+        const wallet = getWalletData(currentUser.id);
         const saldoElement = document.getElementById('display-saldo');
         const btnConfirmar = document.getElementById('btn-confirmar');
-        if(!btnConfirmar) return;
-        if (appState.saldoUsuario < 0) {
+        
+        saldoElement.innerText = `$${wallet.saldo.toFixed(2)} MXN`;
+        
+        if (wallet.saldo < 0) {
             saldoElement.classList.add('text-red-600');
             btnConfirmar.disabled = true;
             btnConfirmar.classList.replace('bg-red-600', 'bg-gray-400');
-            btnConfirmar.innerText = "PAGA TU DEUDA PARA CONTINUAR";
+            btnConfirmar.innerText = "SALDO NEGATIVO: REALIZA UNA RECARGA";
         } else {
             saldoElement.classList.remove('text-red-600');
             btnConfirmar.disabled = false;
             btnConfirmar.classList.replace('bg-gray-400', 'bg-red-600');
             btnConfirmar.innerText = "CONFIRMAR SOLICITUD";
         }
-        saldoElement.innerText = `$${appState.saldoUsuario.toFixed(2)} MXN`;
     }
 
     function handleRequest() {
-        if (appState.saldoUsuario < 0) { alert("Debes pagar tu deuda."); return; }
+        const wallet = getWalletData(currentUser.id);
+        if (wallet.saldo < 0) { alert("Debes liquidar tu saldo negativo."); return; }
+        
         if (appState.selectedPayment === 'cartera') {
-            if (appState.saldoUsuario >= appState.precioViaje) {
-                appState.saldoUsuario -= appState.precioViaje;
-                updateWalletDisplay(); startRadar();
-            } else { alert('Saldo insuficiente.'); }
-        } else { startRadar(); }
+            if (wallet.saldo >= appState.precioViaje) {
+                addMovement(currentUser.id, 'restar', appState.precioViaje, 'Pago de Viaje (Cartera)');
+                updateWalletDisplay();
+                startRadar();
+            } else { 
+                alert('Saldo insuficiente en Cartera. Selecciona otro método o recarga.'); 
+            }
+        } else {
+            startRadar();
+        }
     }
 
     function saveDriverRequest() {
@@ -515,17 +584,29 @@
     }, 1500);
 
     function handleAuth() {
-        const mail = document.getElementById('login-email').value.toLowerCase();
-        const pass = document.getElementById('login-pass').value;
-        if (mail === '' || pass === '') { alert('Ingresa usuario y contraseña.'); return; }
-        document.getElementById('login-screen').classList.add('hidden');
-        if(mail.includes('admin')){
+        const mailInput = document.getElementById('login-email').value.toLowerCase();
+        const passInput = document.getElementById('login-pass').value;
+        if (mailInput === '' || passInput === '') { alert('Ingresa usuario y contraseña.'); return; }
+        
+        if(mailInput.includes('admin')){
+            document.getElementById('login-screen').classList.add('hidden');
             document.getElementById('admin-view').classList.remove('hidden');
             document.getElementById('nav-admin').classList.remove('hidden');
             renderAdminRequests();
         } else {
-            document.getElementById('passenger-view').classList.remove('hidden');
-            document.getElementById('nav-passenger').classList.remove('hidden');
+            // Autenticación de pasajero
+            const pasajeros = JSON.parse(localStorage.getItem('db_usuarios_permanente') || '[]');
+            const user = pasajeros.find(u => (u.usuario === mailInput || u.correo === mailInput) && u.pass === passInput);
+            
+            if (user) {
+                currentUser = user;
+                document.getElementById('login-screen').classList.add('hidden');
+                document.getElementById('passenger-view').classList.remove('hidden');
+                document.getElementById('nav-passenger').classList.remove('hidden');
+                updateWalletDisplay();
+            } else {
+                alert('Credenciales incorrectas o usuario no registrado.');
+            }
         }
         lucide.createIcons();
     }
@@ -554,22 +635,13 @@
     
     function handleDriverBack() {
         if (registrationMode === 'passenger') {
-            // Navegación exclusiva pasajero
-            if (currentStep === 1) {
-                location.reload(); // De vuelta al login
-            } else if (currentStep === 8) {
-                goToStep(2); // De Teléfono a Nombre/Cuenta
-            } else if (currentStep === 9) {
-                goToStep(8); // De Finalizar a Teléfono
-            } else {
-                goToStep(currentStep - 1);
-            }
+            if (currentStep === 1) location.reload();
+            else if (currentStep === 8) goToStep(2);
+            else if (currentStep === 9) goToStep(8);
+            else goToStep(currentStep - 1);
         } else {
-            // Navegación exclusiva conductor
-            if (currentStep > 1) {
-                goToStep(currentStep - 1);
-            } else {
-                // Si está en paso 1 de conductor, vuelve al modo pasajero previo
+            if (currentStep > 1) goToStep(currentStep - 1);
+            else {
                 document.getElementById('driver-registration-view').classList.add('hidden');
                 document.getElementById('passenger-view').classList.remove('hidden');
             }
@@ -616,7 +688,6 @@
         if(input.value.length >= 10) { btn.disabled = false; btn.classList.replace('bg-gray-300', 'bg-red-600'); } 
         else { btn.disabled = true; btn.classList.replace('bg-red-600', 'bg-gray-300'); }
     }
-    updateWalletDisplay();
 </script>
 </body>
 </html>

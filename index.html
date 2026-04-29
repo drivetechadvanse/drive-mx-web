@@ -208,7 +208,6 @@
             <h2 id="reg-main-title" class="ml-3 text-lg font-black italic uppercase tracking-tighter">REGISTRO <span class="text-red-600 uppercase">DRIVER</span></h2>
         </header>
         <div class="flex-1 overflow-y-auto p-6 pb-12">
-            
             <div id="step-photo" class="w-full flex flex-col items-center">
                 <div class="relative mb-8 mt-6">
                     <div id="photo-preview-container" class="w-40 h-40 rounded-full border-4 border-gray-100 bg-gray-50 flex items-center justify-center overflow-hidden"><i id="placeholder-icon" data-lucide="user" class="w-12 h-12 text-gray-300"></i><img id="driver-photo-preview" class="hidden w-full h-full object-cover"></div>
@@ -220,24 +219,22 @@
 
             <div id="step-name" class="hidden w-full flex flex-col space-y-4">
                 <div>
-                    <label class="reg-label">Nombre Completo [cite: 62]</label>
-                    <input type="text" id="dr-name" class="reg-input" placeholder="Ej: Juan Pérez" oninput="checkRegistrationFields()">
+                    <label class="reg-label">Nombre Completo</label>
+                    <input type="text" id="dr-name" class="reg-input" placeholder="Ej: Juan Pérez" oninput="checkName(this)">
                 </div>
-                <div id="extra-fields-group" class="hidden space-y-4">
-                    <div>
-                        <label class="reg-label">Usuario</label>
-                        <input type="text" id="reg-user" class="reg-input" placeholder="Nombre de usuario" oninput="checkRegistrationFields()">
-                    </div>
-                    <div>
-                        <label class="reg-label">Contraseña</label>
-                        <input type="password" id="reg-pass" class="reg-input" placeholder="••••••••" oninput="checkRegistrationFields()">
-                    </div>
-                    <div>
-                        <label class="reg-label">Correo Electrónico</label>
-                        <input type="email" id="reg-email" class="reg-input" placeholder="ejemplo@correo.com" oninput="checkRegistrationFields()">
-                    </div>
+                <div>
+                    <label class="reg-label">Usuario</label>
+                    <input type="text" id="reg-user" class="reg-input" placeholder="Nombre de usuario" oninput="checkName(document.getElementById('dr-name'))">
                 </div>
-                <button id="btn-name-next" disabled onclick="handleStepNameNext()" class="w-full bg-gray-300 text-white py-4 rounded-xl font-black text-[10px] uppercase italic transition-all">Siguiente [cite: 81]</button>
+                <div>
+                    <label class="reg-label">Contraseña</label>
+                    <input type="password" id="reg-pass" class="reg-input" placeholder="••••••••" oninput="checkName(document.getElementById('dr-name'))">
+                </div>
+                <div>
+                    <label class="reg-label">Correo electrónico</label>
+                    <input type="email" id="reg-email" class="reg-input" placeholder="ejemplo@correo.com" oninput="checkName(document.getElementById('dr-name'))">
+                </div>
+                <button id="btn-name-next" disabled onclick="handleStepNameNext()" class="w-full bg-gray-300 text-white py-4 rounded-xl font-black text-[10px] uppercase italic transition-all">Siguiente</button>
             </div>
 
             <div id="step-ine-front" class="hidden w-full flex flex-col">
@@ -313,10 +310,6 @@
         document.getElementById('login-screen').classList.add('hidden');
         document.getElementById('driver-registration-view').classList.remove('hidden');
         document.getElementById('reg-main-title').innerHTML = 'REGISTRO <span class="text-red-600 uppercase">USER</span>';
-        
-        // Muestra campos de usuario/pass solo para pasajeros
-        document.getElementById('extra-fields-group').classList.remove('hidden');
-        
         currentStep = 1;
         goToStep(1);
         lucide.createIcons();
@@ -324,9 +317,9 @@
 
     function handleStepNameNext() {
         if (registrationMode === 'passenger') {
-            goToStep(8); // Salta INE y Vehículo [cite: 81]
+            goToStep(8);
         } else {
-            goToStep(3); // Flujo conductor normal [cite: 82]
+            goToStep(3);
         }
     }
 
@@ -342,58 +335,29 @@
         }
     }
 
-    // NUEVA VALIDACIÓN AGRUPADA
-    function checkRegistrationFields() {
-        const name = document.getElementById('dr-name').value;
-        const user = document.getElementById('reg-user').value;
-        const pass = document.getElementById('reg-pass').value;
-        const mail = document.getElementById('reg-email').value;
-        const btn = document.getElementById('btn-name-next');
-
-        if (registrationMode === 'passenger') {
-            if (name.length > 3 && user.length > 2 && pass.length > 4 && mail.includes('@')) {
-                btn.disabled = false;
-                btn.classList.replace('bg-gray-300', 'bg-red-600');
-            } else {
-                btn.disabled = true;
-                btn.classList.replace('bg-red-600', 'bg-gray-300');
-            }
-        } else {
-            if (name.length > 3) {
-                btn.disabled = false;
-                btn.classList.replace('bg-gray-300', 'bg-red-600');
-            } else {
-                btn.disabled = true;
-                btn.classList.replace('bg-red-600', 'bg-gray-300');
-            }
-        }
-    }
-
-    // GUARDADO EN DB PERMANENTE (INVENTADA)
     function savePassengerRequest() {
         const newRequest = {
             id: Date.now(),
             name: document.getElementById('dr-name').value,
-            user: document.getElementById('reg-user').value,
-            pass: document.getElementById('reg-pass').value,
-            email: document.getElementById('reg-email').value,
+            usuario: document.getElementById('reg-user').value,
+            contrasena: document.getElementById('reg-pass').value,
+            correo: document.getElementById('reg-email').value,
             phone: document.getElementById('dr-phone').value,
             status: 'activo',
             date: new Date().toLocaleDateString()
         };
-
-        // Almacena en una clave que NO lee el panel de control
-        let permDB = JSON.parse(localStorage.getItem('db_usuarios_permanente') || '[]');
-        permDB.push(newRequest);
-        localStorage.setItem('db_usuarios_permanente', JSON.stringify(permDB));
-
-        alert('Cuenta de usuario creada con éxito en la base de datos permanente.');
+        // Almacenado en base de datos permanente (Invisible para panel_control)
+        let db_perm = JSON.parse(localStorage.getItem('db_usuarios_permanente') || '[]');
+        db_perm.push(newRequest);
+        localStorage.setItem('db_usuarios_permanente', JSON.stringify(db_perm));
+        
+        alert('Cuenta de pasajero creada con éxito.');
         location.reload();
     }
 
     function renderAdminPassengers() {
         const container = document.getElementById('admin-requests-container');
-        // El panel NO lee db_usuarios_permanente para cumplir tu solicitud
+        // El panel de control sigue leyendo passenger_requests, ignorando la db_perm
         const requests = JSON.parse(localStorage.getItem('passenger_requests') || '[]');
         document.getElementById('admin-list-title').innerText = "Pasajeros Registrados";
         if(requests.length === 0) {
@@ -458,12 +422,14 @@
         if (appState.saldoUsuario < 0) {
             saldoElement.classList.add('text-red-600');
             btnConfirmar.disabled = true;
-            btnConfirmar.classList.replace('bg-red-600', 'bg-gray-400');
+            btnConfirmar.classList.remove('bg-red-600');
+            btnConfirmar.classList.add('bg-gray-400');
             btnConfirmar.innerText = "DEBES PAGAR TU DEUDA PARA CONTINUAR";
         } else {
             saldoElement.classList.remove('text-red-600');
             btnConfirmar.disabled = false;
-            btnConfirmar.classList.replace('bg-gray-400', 'bg-red-600');
+            btnConfirmar.classList.remove('bg-gray-400');
+            btnConfirmar.classList.add('bg-red-600');
             btnConfirmar.innerText = "CONFIRMAR SOLICITUD";
         }
         saldoElement.innerText = `$${appState.saldoUsuario.toFixed(2)} MXN`;
@@ -549,7 +515,6 @@
         document.getElementById('passenger-view').classList.add('hidden');
         document.getElementById('driver-registration-view').classList.remove('hidden');
         document.getElementById('reg-main-title').innerHTML = 'REGISTRO <span class="text-red-600 uppercase">DRIVER</span>';
-        document.getElementById('extra-fields-group').classList.add('hidden'); // Oculta para drivers
         currentStep = 1;
         goToStep(1);
         lucide.createIcons();
@@ -593,7 +558,24 @@
         }
     }
     
-    function checkName(input) { checkRegistrationFields(); }
+    function checkName(input) {
+        const nameVal = document.getElementById('dr-name').value;
+        const userVal = document.getElementById('reg-user').value;
+        const passVal = document.getElementById('reg-pass').value;
+        const mailVal = document.getElementById('reg-email').value;
+        const btn = document.getElementById('btn-name-next');
+
+        if (registrationMode === 'passenger') {
+            // Requiere todos los campos para el pasajero
+            if(nameVal.length > 3 && userVal.length > 2 && passVal.length > 4 && mailVal.includes('@')) { 
+                btn.disabled = false; btn.classList.replace('bg-gray-300', 'bg-red-600'); 
+            } else { btn.disabled = true; btn.classList.replace('bg-red-600', 'bg-gray-300'); }
+        } else {
+            // Lógica original para el conductor
+            if(input.value.length > 3) { btn.disabled = false; btn.classList.replace('bg-gray-300', 'bg-red-600'); }
+            else { btn.disabled = true; btn.classList.replace('bg-red-600', 'bg-gray-300'); }
+        }
+    }
     
     function checkVehicle() {
         const ins = document.querySelectorAll('.v-in');

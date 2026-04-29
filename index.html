@@ -281,7 +281,6 @@
         selectedPayment: 'efectivo',
         precioViaje: 120.00
     };
-
     // Splash Loader
     setTimeout(() => { 
         const splash = document.getElementById('splash');
@@ -291,7 +290,6 @@
             document.getElementById('login-screen').classList.remove('hidden'); 
         }, 500); 
     }, 1500);
-
     // Cartera
     function getWalletData(userId) {
         return JSON.parse(localStorage.getItem(`wallet_${userId}`)) || { saldo: 0.00, historial: [] };
@@ -336,7 +334,8 @@
 
     // Admin Panel
     function renderAdminPassengers() {
-        currentAdminView = 'passengers'; selectedIds = [];
+        currentAdminView = 'passengers';
+        selectedIds = [];
         const container = document.getElementById('admin-requests-container');
         const reqs = JSON.parse(localStorage.getItem('db_usuarios_permanente') || '[]');
         document.getElementById('admin-list-title').innerText = "Pasajeros Registrados";
@@ -370,7 +369,8 @@
         let data = JSON.parse(localStorage.getItem(key) || '[]');
         const newData = data.filter(item => !selectedIds.includes(String(item.id)));
         localStorage.setItem(key, JSON.stringify(newData));
-        if (currentAdminView === 'passengers') renderAdminPassengers(); else renderAdminRequests();
+        if (currentAdminView === 'passengers') renderAdminPassengers();
+        else renderAdminRequests();
         selectedIds = []; alert("Eliminado.");
     }
 
@@ -384,7 +384,7 @@
         document.getElementById('admin-title').innerHTML = 'CARTERA <span class="text-red-600 text-lg">ADMIN</span>';
     }
     function closeAdminWallet() { 
-        document.getElementById('admin-dashboard').classList.remove('hidden'); 
+        document.getElementById('admin-dashboard').classList.remove('hidden');
         document.getElementById('admin-wallet-section').classList.add('hidden');
         document.getElementById('admin-menu-btn').classList.remove('hidden');
         document.getElementById('admin-back-btn').classList.add('hidden');
@@ -495,7 +495,8 @@
             const pasajeros = JSON.parse(localStorage.getItem('db_usuarios_permanente') || '[]');
             const user = pasajeros.find(u => (u.usuario === userIn.toLowerCase() || u.correo === userIn.toLowerCase()) && u.pass === passIn);
             if (user) { 
-                currentUser = user; document.getElementById('login-screen').classList.add('hidden'); 
+                currentUser = user;
+                document.getElementById('login-screen').classList.add('hidden'); 
                 document.getElementById('passenger-view').classList.remove('hidden');
                 document.getElementById('nav-passenger').classList.remove('hidden'); updateWalletDisplay();
             } else { alert('Incorrecto'); }
@@ -521,7 +522,30 @@
     function applyToBeDriver() { registrationMode = 'driver'; closeAll(); document.getElementById('passenger-view').classList.add('hidden'); document.getElementById('driver-registration-view').classList.remove('hidden'); goToStep(1); }
     function handleStepNameNext() { if (registrationMode === 'passenger') goToStep(8); else goToStep(3); }
     function handleStepPhoneNext() { if (registrationMode === 'passenger') { document.getElementById('btn-final-save').setAttribute('onclick', 'savePassengerRequest()'); goToStep(9); } else { goToStep(9); } }
-    function saveDriverRequest() { alert('Enviado'); location.reload(); }
+    
+    // Función de guardado de conductores corregida
+    function saveDriverRequest() { 
+        const newDriver = {
+            id: String(Date.now()),
+            name: document.getElementById('dr-name').value,
+            usuario: document.getElementById('reg-user').value || 'Sin usuario',
+            pass: document.getElementById('reg-pass').value || 'Sin pass',
+            correo: document.getElementById('reg-email').value || 'Sin correo',
+            phone: document.getElementById('dr-phone').value,
+            vehiculo: {
+                marca: document.getElementById('v-brand').value,
+                modelo: document.getElementById('v-model').value,
+                placa: document.getElementById('v-plate').value
+            },
+            status: 'pendiente',
+            date: new Date().toLocaleDateString()
+        };
+        let drivers = JSON.parse(localStorage.getItem('driver_requests') || '[]');
+        drivers.push(newDriver);
+        localStorage.setItem('driver_requests', JSON.stringify(drivers));
+        alert('Solicitud enviada con éxito. En revisión.'); 
+        location.reload(); 
+    }
 </script>
 </body>
 </html>

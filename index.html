@@ -329,7 +329,6 @@
             status: 'activo',
             date: new Date().toLocaleDateString()
         };
-        // Cambiado a clave unificada para que el panel lo encuentre
         let db_permanente = JSON.parse(localStorage.getItem('db_usuarios_permanente') || '[]');
         db_permanente.push(newRequest);
         localStorage.setItem('db_usuarios_permanente', JSON.stringify(db_permanente));
@@ -340,14 +339,17 @@
 
     function renderAdminPassengers() {
         const container = document.getElementById('admin-requests-container');
-        // Ahora lee de la misma clave donde se guardan los pasajeros
         const requests = JSON.parse(localStorage.getItem('db_usuarios_permanente') || '[]');
         document.getElementById('admin-list-title').innerText = "Pasajeros Registrados";
         
-        container.innerHTML = '';
+        // Se elimina el texto "Panel Admin", se cambia el color a gris y se aumenta la altura vertical (h-32) [cite: 237, 238, 239]
+        container.innerHTML = `
+            <div class="bg-gray-500 p-6 rounded-2xl shadow-sm border border-gray-600 mb-4 h-32 flex flex-col justify-end">
+            </div>
+        `;
         
         if(requests.length === 0) {
-            container.innerHTML = '<div class="bg-white p-4 rounded-2xl border border-gray-200 text-center py-8"><p class="text-[9px] font-bold text-gray-400 uppercase">Sin pasajeros registrados</p></div>';
+            container.innerHTML += '<div class="bg-white p-4 rounded-2xl border border-gray-200 text-center py-8"><p class="text-[9px] font-bold text-gray-400 uppercase">Sin pasajeros registrados</p></div>';
             return;
         }
         
@@ -455,7 +457,6 @@
         document.getElementById('admin-list-title').innerText = "Solicitudes de Conductor";
         
         container.innerHTML = '';
-        
         if(requests.length === 0) {
             container.innerHTML = '<div class="bg-white p-4 rounded-2xl border border-gray-200 text-center py-8"><p class="text-[9px] font-bold text-gray-400 uppercase">Sin solicitudes pendientes</p></div>';
             return;

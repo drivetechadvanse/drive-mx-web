@@ -26,8 +26,6 @@
         .reg-input:focus { border-color: #ef4444; background-color: #fff; }
         .reg-label { font-size: 9px; font-weight: 900; color: #9ca3af; text-transform: uppercase; margin-bottom: 0.4rem; display: block; margin-left: 0.5rem; }
         .payment-opt.selected { border-color: #ef4444; background-color: #fef2f2; color: #ef4444; }
-        
-        /* Estilo para tarjetas seleccionadas */
         .card-selected { border-color: #ef4444 !important; background-color: #fef2f2 !important; ring: 2px; ring-color: #ef4444; }
     </style>
 </head>
@@ -114,15 +112,15 @@
             </div>
             <div id="admin-wallet-section" class="hidden flex flex-col gap-4 pt-2">
                 <div class="space-y-2">
-                    <label class="reg-label">Buscar Usuario</label>
+                    <label class="reg-label">Buscar Pasajero</label>
                     <div class="relative">
-                        <input type="text" id="admin-search-user" class="reg-input pl-12" placeholder="Nombre o ID">
+                        <input type="text" id="admin-search-user" class="reg-input pl-12" placeholder="Nombre, Correo o Teléfono" oninput="searchPassengerInWallet()">
                         <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"></i>
                     </div>
                 </div>
                 <div class="bg-white p-5 rounded-2xl border border-gray-200 space-y-4 shadow-sm">
                     <div class="flex flex-col items-center justify-center py-2 border-b border-gray-100 mb-2">
-                        <p class="text-[9px] font-black text-gray-400 uppercase italic">Saldo Actual del Usuario</p>
+                        <p id="admin-search-status" class="text-[9px] font-black text-gray-400 uppercase italic">Saldo Actual del Usuario</p>
                         <h2 id="admin-view-saldo" class="text-2xl font-black italic text-gray-900 tracking-tighter">$0.00 MXN</h2>
                     </div>
                     <div class="space-y-3">
@@ -277,7 +275,6 @@
     let registrationMode = 'driver'; 
     let currentAdminView = 'requests'; 
     let selectedIds = [];
-
     let appState = {
         selectedPayment: 'efectivo',
         saldoUsuario: 350.00,
@@ -286,6 +283,10 @@
 
     function startPassengerRegistration() {
         registrationMode = 'passenger';
+        // Limpiar estados de pasos para que no herede de conductor
+        const stepsToHide = ['step-photo', 'step-ine-front', 'step-ine-back', 'step-vehicle', 'step-circ', 'step-v-photo'];
+        stepsToHide.forEach(s => document.getElementById(s).classList.add('hidden'));
+        
         document.getElementById('login-screen').classList.add('hidden');
         document.getElementById('driver-registration-view').classList.remove('hidden');
         document.getElementById('reg-main-title').innerHTML = 'REGISTRO <span class="text-red-600 uppercase">USER</span>';
@@ -296,7 +297,8 @@
     }
 
     function handleStepNameNext() {
-        if (registrationMode === 'passenger') { goToStep(8); } else { goToStep(3); }
+        if (registrationMode === 'passenger') { goToStep(8); } 
+        else { goToStep(3); }
     }
 
     function handleStepPhoneNext() {
@@ -390,13 +392,10 @@
     function eliminarSeleccionados() {
         if (selectedIds.length === 0) { alert("Toca primero los registros que desees eliminar."); return; }
         if (!confirm(`¿Deseas eliminar los ${selectedIds.length} registros seleccionados?`)) return;
-
         const storageKey = (currentAdminView === 'passengers') ? 'db_usuarios_permanente' : 'driver_requests';
         let data = JSON.parse(localStorage.getItem(storageKey) || '[]');
-        
         const newData = data.filter(item => !selectedIds.includes(String(item.id)));
         localStorage.setItem(storageKey, JSON.stringify(newData));
-
         if (currentAdminView === 'passengers') renderAdminPassengers(); else renderAdminRequests();
         selectedIds = [];
         alert("Eliminado con éxito.");
@@ -420,6 +419,36 @@
         document.getElementById('admin-back-btn').classList.add('hidden');
         document.getElementById('admin-title').innerHTML = 'PANEL <span class="text-red-600 text-lg">ADMIN</span>';
         lucide.createIcons();
+    }
+
+    function searchPassengerInWallet() {
+        const term = document.getElementById('admin-search-user').value.toLowerCase();
+        const displaySaldo = document.getElementById('admin-view-saldo');
+        const statusLabel = document.getElementById('admin-search-status');
+        
+        if (term === '') {
+            displaySaldo.innerText = `$${appState.saldoUsuario.toFixed(2)} MXN`;
+            statusLabel.innerText = "Saldo Actual del Usuario";
+            return;
+        }
+
+        const pasajeros = JSON.parse(localStorage.getItem('db_usuarios_permanente') || '[]');
+        const p = pasajeros.find(u => 
+            u.name.toLowerCase().includes(term) || 
+            u.correo.toLowerCase().includes(term) || 
+            u.phone.includes(term) || 
+            u.id === term
+        );
+
+        if (p) {
+            displaySaldo.innerText = `$${appState.saldoUsuario.toFixed(2)} MXN`; // Sigue usando el estado global según se pidió no cambiar lógica
+            statusLabel.innerText = `Pasajero: ${p.name}`;
+            displaySaldo.classList.remove('text-gray-400');
+        } else {
+            displaySaldo.innerText = "No encontrado";
+            statusLabel.innerText = "Búsqueda de Pasajero";
+            displaySaldo.classList.add('text-gray-400');
+        }
     }
 
     function updateAdminWalletUI() {
@@ -509,7 +538,8 @@
     function startRadar() { closeAll(); document.getElementById('radar').classList.remove('hidden'); document.getElementById('search-msg').classList.remove('hidden'); document.getElementById('p-banners').classList.add('hidden-view'); document.getElementById('p-wallet').classList.add('hidden-view'); document.getElementById('p-header').classList.add('hidden-view'); }
     
     function applyToBeDriver() {
-        registrationMode = 'driver'; closeAll();
+        registrationMode = 'driver';
+        closeAll();
         document.getElementById('passenger-view').classList.add('hidden');
         document.getElementById('driver-registration-view').classList.remove('hidden');
         goToStep(1);
@@ -523,7 +553,27 @@
     }
     
     function handleDriverBack() {
-        if(currentStep > 1) goToStep(currentStep - 1); else location.reload();
+        if (registrationMode === 'passenger') {
+            // Navegación exclusiva pasajero
+            if (currentStep === 1) {
+                location.reload(); // De vuelta al login
+            } else if (currentStep === 8) {
+                goToStep(2); // De Teléfono a Nombre/Cuenta
+            } else if (currentStep === 9) {
+                goToStep(8); // De Finalizar a Teléfono
+            } else {
+                goToStep(currentStep - 1);
+            }
+        } else {
+            // Navegación exclusiva conductor
+            if (currentStep > 1) {
+                goToStep(currentStep - 1);
+            } else {
+                // Si está en paso 1 de conductor, vuelve al modo pasajero previo
+                document.getElementById('driver-registration-view').classList.add('hidden');
+                document.getElementById('passenger-view').classList.remove('hidden');
+            }
+        }
     }
     
     function processImage(input) {

@@ -285,7 +285,6 @@
         precioViaje: 120.00
     };
 
-    // --- SISTEMA DE CARTERA INDIVIDUAL ---
     function getWalletData(userId) {
         return JSON.parse(localStorage.getItem(`wallet_${userId}`)) || { saldo: 0.00, historial: [] };
     }
@@ -298,13 +297,7 @@
         let wallet = getWalletData(userId);
         if (tipo === 'sumar') wallet.saldo += monto;
         else wallet.saldo -= monto;
-        
-        wallet.historial.unshift({
-            fecha: new Date().toLocaleString(),
-            tipo: tipo,
-            monto: monto,
-            desc: descripcion
-        });
+        wallet.historial.unshift({ fecha: new Date().toLocaleString(), tipo: tipo, monto: monto, desc: descripcion });
         saveWalletData(userId, wallet);
         return wallet;
     }
@@ -342,7 +335,6 @@
     function savePassengerRequest() {
         const userId = String(Date.now());
         const userValue = document.getElementById('reg-user').value.toLowerCase().trim();
-        
         const newRequest = {
             id: userId,
             name: document.getElementById('dr-name').value,
@@ -353,13 +345,10 @@
             status: 'activo',
             date: new Date().toLocaleDateString()
         };
-        
         let db_permanente = JSON.parse(localStorage.getItem('db_usuarios_permanente') || '[]');
         db_permanente.push(newRequest);
         localStorage.setItem('db_usuarios_permanente', JSON.stringify(db_permanente));
-        
         saveWalletData(userId, { saldo: 0.00, historial: [] });
-        
         alert(`Cuenta creada. Usuario: ${userValue}`);
         location.reload();
     }
@@ -376,14 +365,7 @@
             return;
         }
         requests.forEach(req => {
-            container.innerHTML += `
-                <div id="card-${req.id}" onclick="toggleCardSelection('${req.id}')" class="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm flex items-center justify-between transition-all cursor-pointer">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600 font-black italic text-xs uppercase">${req.name.charAt(0)}</div>
-                        <div><h4 class="text-[11px] font-black uppercase italic">${req.name}</h4><p class="text-[8px] font-bold text-gray-400 uppercase tracking-tighter">ID: ${req.id}</p></div>
-                    </div>
-                    <div class="flex flex-col items-end gap-1"><span class="text-[7px] font-black px-2 py-1 bg-green-100 text-green-600 rounded-full uppercase">Activo</span></div>
-                </div>`;
+            container.innerHTML += `<div id="card-${req.id}" onclick="toggleCardSelection('${req.id}')" class="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm flex items-center justify-between transition-all cursor-pointer"><div class="flex items-center gap-3"><div class="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600 font-black italic text-xs uppercase">${req.name.charAt(0)}</div><div><h4 class="text-[11px] font-black uppercase italic">${req.name}</h4><p class="text-[8px] font-bold text-gray-400 uppercase tracking-tighter">ID: ${req.id}</p></div></div><div class="flex flex-col items-end gap-1"><span class="text-[7px] font-black px-2 py-1 bg-green-100 text-green-600 rounded-full uppercase">Activo</span></div></div>`;
         });
     }
 
@@ -399,27 +381,15 @@
             return;
         }
         requests.forEach(req => {
-            container.innerHTML += `
-                <div id="card-${req.id}" onclick="toggleCardSelection('${req.id}')" class="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm flex items-center justify-between transition-all cursor-pointer">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 bg-red-50 rounded-xl flex items-center justify-center text-red-600 font-black italic text-xs uppercase">${req.name.charAt(0)}</div>
-                        <div><h4 class="text-[11px] font-black uppercase italic">${req.name}</h4><p class="text-[8px] font-bold text-gray-400 uppercase tracking-tighter">${req.vehicle}</p></div>
-                    </div>
-                    <div class="flex flex-col items-end gap-1"><span class="text-[7px] font-black px-2 py-1 bg-yellow-100 text-yellow-600 rounded-full uppercase">Pendiente</span></div>
-                </div>`;
+            container.innerHTML += `<div id="card-${req.id}" onclick="toggleCardSelection('${req.id}')" class="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm flex items-center justify-between transition-all cursor-pointer"><div class="flex items-center gap-3"><div class="w-10 h-10 bg-red-50 rounded-xl flex items-center justify-center text-red-600 font-black italic text-xs uppercase">${req.name.charAt(0)}</div><div><h4 class="text-[11px] font-black uppercase italic">${req.name}</h4><p class="text-[8px] font-bold text-gray-400 uppercase tracking-tighter">${req.vehicle}</p></div></div><div class="flex flex-col items-end gap-1"><span class="text-[7px] font-black px-2 py-1 bg-yellow-100 text-yellow-600 rounded-full uppercase">Pendiente</span></div></div>`;
         });
     }
 
     function toggleCardSelection(id) {
         const card = document.getElementById(`card-${id}`);
         const index = selectedIds.indexOf(String(id));
-        if (index > -1) {
-            selectedIds.splice(index, 1);
-            card.classList.remove('card-selected');
-        } else {
-            selectedIds.push(String(id));
-            card.classList.add('card-selected');
-        }
+        if (index > -1) { selectedIds.splice(index, 1); card.classList.remove('card-selected'); } 
+        else { selectedIds.push(String(id)); card.classList.add('card-selected'); }
     }
 
     function eliminarSeleccionados() {
@@ -463,52 +433,24 @@
         const displaySaldo = document.getElementById('admin-view-saldo');
         const statusLabel = document.getElementById('admin-search-status');
         const histContainer = document.getElementById('admin-movimientos-list');
-        
-        if (term === '') {
-            displaySaldo.innerText = "$0.00 MXN";
-            statusLabel.innerText = "Saldo Actual del Pasajero";
-            histContainer.innerHTML = '';
-            userTargetAdmin = null;
-            return;
-        }
-
+        if (term === '') { displaySaldo.innerText = "$0.00 MXN"; statusLabel.innerText = "Saldo Actual del Pasajero"; histContainer.innerHTML = ''; userTargetAdmin = null; return; }
         const pasajeros = JSON.parse(localStorage.getItem('db_usuarios_permanente') || '[]');
-        userTargetAdmin = pasajeros.find(u => 
-            u.name.toLowerCase().includes(term) || 
-            u.correo.toLowerCase().includes(term) || 
-            u.usuario === term ||
-            u.phone.includes(term) || 
-            u.id === term
-        );
-
+        userTargetAdmin = pasajeros.find(u => u.name.toLowerCase().includes(term) || u.correo.toLowerCase().includes(term) || u.usuario === term || u.phone.includes(term) || u.id === term);
         if (userTargetAdmin) {
             const wallet = getWalletData(userTargetAdmin.id);
             displaySaldo.innerText = `$${wallet.saldo.toFixed(2)} MXN`;
             statusLabel.innerText = `Pasajero: ${userTargetAdmin.name}`;
             renderHistorial(wallet.historial, histContainer);
-        } else {
-            displaySaldo.innerText = "No encontrado";
-            histContainer.innerHTML = '';
-        }
+        } else { displaySaldo.innerText = "No encontrado"; histContainer.innerHTML = ''; }
     }
 
     function renderHistorial(historial, container) {
         container.innerHTML = '';
-        if (historial.length === 0) {
-            container.innerHTML = '<p class="text-[8px] text-center text-gray-400 uppercase py-4">Sin movimientos</p>';
-            return;
-        }
+        if (historial.length === 0) { container.innerHTML = '<p class="text-[8px] text-center text-gray-400 uppercase py-4">Sin movimientos</p>'; return; }
         historial.forEach(m => {
             const color = m.tipo === 'sumar' ? 'text-green-600' : 'text-red-600';
             const sign = m.tipo === 'sumar' ? '+' : '-';
-            container.innerHTML += `
-                <div class="bg-white p-3 rounded-xl border border-gray-100 flex justify-between items-center">
-                    <div>
-                        <p class="text-[9px] font-black uppercase italic">${m.desc}</p>
-                        <p class="text-[7px] text-gray-400 font-bold">${m.fecha}</p>
-                    </div>
-                    <p class="text-[10px] font-black ${color}">${sign} $${m.monto.toFixed(2)}</p>
-                </div>`;
+            container.innerHTML += `<div class="bg-white p-3 rounded-xl border border-gray-100 flex justify-between items-center"><div><p class="text-[9px] font-black uppercase italic">${m.desc}</p><p class="text-[7px] text-gray-400 font-bold">${m.fecha}</p></div><p class="text-[10px] font-black ${color}">${sign} $${m.monto.toFixed(2)}</p></div>`;
         });
     }
 
@@ -516,10 +458,8 @@
         if (!userTargetAdmin) { alert("Busca un pasajero primero."); return; }
         const monto = parseFloat(document.getElementById('admin-monto-input').value);
         if (isNaN(monto) || monto <= 0) return;
-        
         const desc = tipo === 'sumar' ? 'Recarga Administrativa' : 'Ajuste / Descuento Admin';
         addMovement(userTargetAdmin.id, tipo, monto, desc);
-        
         document.getElementById('admin-monto-input').value = '';
         searchPassengerInWallet(); 
     }
@@ -529,85 +469,45 @@
         const wallet = getWalletData(currentUser.id);
         const saldoElement = document.getElementById('display-saldo');
         const btnConfirmar = document.getElementById('btn-confirmar');
-        
         saldoElement.innerText = `$${wallet.saldo.toFixed(2)} MXN`;
-        
-        if (wallet.saldo < 0) {
-            saldoElement.classList.add('text-red-600');
-            btnConfirmar.disabled = true;
-            btnConfirmar.classList.replace('bg-red-600', 'bg-gray-400');
-            btnConfirmar.innerText = "SALDO NEGATIVO: RECARGA PARA VIAJAR";
-        } else {
-            saldoElement.classList.remove('text-red-600');
-            btnConfirmar.disabled = false;
-            btnConfirmar.classList.replace('bg-gray-400', 'bg-red-600');
-            btnConfirmar.innerText = "CONFIRMAR SOLICITUD";
-        }
+        if (wallet.saldo < 0) { saldoElement.classList.add('text-red-600'); btnConfirmar.disabled = true; btnConfirmar.classList.replace('bg-red-600', 'bg-gray-400'); btnConfirmar.innerText = "SALDO NEGATIVO: RECARGA PARA VIAJAR"; } 
+        else { saldoElement.classList.remove('text-red-600'); btnConfirmar.disabled = false; btnConfirmar.classList.replace('bg-gray-400', 'bg-red-600'); btnConfirmar.innerText = "CONFIRMAR SOLICITUD"; }
     }
 
     function handleRequest() {
         const wallet = getWalletData(currentUser.id);
         if (wallet.saldo < 0) { alert("Debes liquidar tu saldo negativo."); return; }
-        
         if (appState.selectedPayment === 'cartera') {
-            if (wallet.saldo >= appState.precioViaje) {
-                addMovement(currentUser.id, 'restar', appState.precioViaje, 'Pago de Viaje (Cartera)');
-                updateWalletDisplay();
-                startRadar();
-            } else { 
-                alert('Saldo insuficiente en Cartera.'); 
-            }
-        } else {
-            startRadar();
-        }
+            if (wallet.saldo >= appState.precioViaje) { addMovement(currentUser.id, 'restar', appState.precioViaje, 'Pago de Viaje (Cartera)'); updateWalletDisplay(); startRadar(); } 
+            else { alert('Saldo insuficiente en Cartera.'); }
+        } else { startRadar(); }
     }
 
     function saveDriverRequest() {
-        const newRequest = {
-            id: String(Date.now()),
-            name: document.getElementById('dr-name').value,
-            vehicle: `${document.getElementById('v-brand').value} ${document.getElementById('v-model').value}`,
-            plate: document.getElementById('v-plate').value,
-            phone: document.getElementById('dr-phone').value,
-            status: 'pendiente',
-            date: new Date().toLocaleDateString()
-        };
+        const newRequest = { id: String(Date.now()), name: document.getElementById('dr-name').value, vehicle: `${document.getElementById('v-brand').value} ${document.getElementById('v-model').value}`, plate: document.getElementById('v-plate').value, phone: document.getElementById('dr-phone').value, status: 'pendiente', date: new Date().toLocaleDateString() };
         let requests = JSON.parse(localStorage.getItem('driver_requests') || '[]');
-        requests.push(newRequest);
-        localStorage.setItem('driver_requests', JSON.stringify(requests));
-        alert('Enviado a revisión.');
-        location.reload();
+        requests.push(newRequest); localStorage.setItem('driver_requests', JSON.stringify(requests));
+        alert('Enviado a revisión.'); location.reload();
     }
 
-    setTimeout(() => {
-        document.getElementById('splash').style.opacity = '0';
-        setTimeout(() => { document.getElementById('splash').style.display = 'none'; document.getElementById('login-screen').classList.remove('hidden'); }, 500);
-    }, 1500);
+    setTimeout(() => { document.getElementById('splash').style.opacity = '0'; setTimeout(() => { document.getElementById('splash').style.display = 'none'; document.getElementById('login-screen').classList.remove('hidden'); }, 500); }, 1500);
 
     function handleAuth() {
-        const userInput = document.getElementById('login-email').value.toLowerCase().trim();
+        const userInput = document.getElementById('login-email').value.trim();
         const passInput = document.getElementById('login-pass').value.trim();
-        
         if (userInput === '' || passInput === '') { alert('Ingresa usuario y contraseña.'); return; }
         
-        if(userInput === 'admin'){
+        // ACCESO ADMINISTRADOR ACTUALIZADO
+        if(userInput === 'admincentral' && passInput === '9271@'){
             document.getElementById('login-screen').classList.add('hidden');
             document.getElementById('admin-view').classList.remove('hidden');
             document.getElementById('nav-admin').classList.remove('hidden');
             renderAdminRequests();
         } else {
             const pasajeros = JSON.parse(localStorage.getItem('db_usuarios_permanente') || '[]');
-            const user = pasajeros.find(u => (u.usuario === userInput || u.correo === userInput) && u.pass === passInput);
-            
-            if (user) {
-                currentUser = user;
-                document.getElementById('login-screen').classList.add('hidden');
-                document.getElementById('passenger-view').classList.remove('hidden');
-                document.getElementById('nav-passenger').classList.remove('hidden');
-                updateWalletDisplay();
-            } else {
-                alert('Credenciales incorrectas o usuario no registrado.');
-            }
+            const user = pasajeros.find(u => (u.usuario === userInput.toLowerCase() || u.correo === userInput.toLowerCase()) && u.pass === passInput);
+            if (user) { currentUser = user; document.getElementById('login-screen').classList.add('hidden'); document.getElementById('passenger-view').classList.remove('hidden'); document.getElementById('nav-passenger').classList.remove('hidden'); updateWalletDisplay(); } 
+            else { alert('Credenciales incorrectas o usuario no registrado.'); }
         }
         lucide.createIcons();
     }
@@ -618,21 +518,8 @@
     function openCosts() { document.getElementById('cost-sheet').classList.add('active'); document.getElementById('overlay').classList.add('opacity-100', 'pointer-events-auto'); }
     function setPay(btn, method) { document.querySelectorAll('.payment-opt').forEach(b => b.classList.remove('selected')); btn.classList.add('selected'); appState.selectedPayment = method; }
     function startRadar() { closeAll(); document.getElementById('radar').classList.remove('hidden'); document.getElementById('search-msg').classList.remove('hidden'); document.getElementById('p-banners').classList.add('hidden-view'); document.getElementById('p-wallet').classList.add('hidden-view'); document.getElementById('p-header').classList.add('hidden-view'); }
-    
-    function applyToBeDriver() {
-        registrationMode = 'driver';
-        closeAll();
-        document.getElementById('passenger-view').classList.add('hidden');
-        document.getElementById('driver-registration-view').classList.remove('hidden');
-        goToStep(1);
-    }
-    
-    function goToStep(n) {
-        const steps = ['step-photo', 'step-name', 'step-ine-front', 'step-ine-back', 'step-vehicle', 'step-circ', 'step-v-photo', 'step-phone', 'step-finish'];
-        steps.forEach(s => document.getElementById(s).classList.add('hidden'));
-        document.getElementById(steps[n-1]).classList.remove('hidden');
-        currentStep = n; lucide.createIcons();
-    }
+    function applyToBeDriver() { registrationMode = 'driver'; closeAll(); document.getElementById('passenger-view').classList.add('hidden'); document.getElementById('driver-registration-view').classList.remove('hidden'); goToStep(1); }
+    function goToStep(n) { const steps = ['step-photo', 'step-name', 'step-ine-front', 'step-ine-back', 'step-vehicle', 'step-circ', 'step-v-photo', 'step-phone', 'step-finish']; steps.forEach(s => document.getElementById(s).classList.add('hidden')); document.getElementById(steps[n-1]).classList.remove('hidden'); currentStep = n; lucide.createIcons(); }
     
     function handleDriverBack() {
         if (registrationMode === 'passenger') {
@@ -642,53 +529,15 @@
             else goToStep(currentStep - 1);
         } else {
             if (currentStep > 1) goToStep(currentStep - 1);
-            else {
-                document.getElementById('driver-registration-view').classList.add('hidden');
-                document.getElementById('passenger-view').classList.remove('hidden');
-            }
+            else { document.getElementById('driver-registration-view').classList.add('hidden'); document.getElementById('passenger-view').classList.remove('hidden'); }
         }
     }
     
-    function processImage(input) {
-        if (input.files[0]) {
-            document.getElementById('driver-photo-preview').src = URL.createObjectURL(input.files[0]);
-            document.getElementById('driver-photo-preview').classList.remove('hidden');
-            document.getElementById('placeholder-icon').classList.add('hidden');
-            document.getElementById('btn-photo-next').disabled = false;
-            document.getElementById('btn-photo-next').classList.replace('bg-gray-300', 'bg-red-600');
-        }
-    }
-    
-    function processFile(input, previewId, btnId) {
-        if (input.files[0]) {
-            document.getElementById(previewId).src = URL.createObjectURL(input.files[0]);
-            document.getElementById(previewId).classList.remove('hidden');
-            document.getElementById(btnId).disabled = false;
-            document.getElementById(btnId).classList.replace('bg-gray-300', 'bg-red-600');
-        }
-    }
-    
-    function checkName(input) {
-        const n = document.getElementById('dr-name').value;
-        const btn = document.getElementById('btn-name-next');
-        if(n.length > 3) { btn.disabled = false; btn.classList.replace('bg-gray-300', 'bg-red-600'); }
-        else { btn.disabled = true; btn.classList.replace('bg-red-600', 'bg-gray-300'); }
-    }
-    
-    function checkVehicle() {
-        const ins = document.querySelectorAll('.v-in');
-        let ok = true; ins.forEach(i => { if(!i.value) ok = false; });
-        if(ok) {
-            document.getElementById('btn-v-next').disabled = false;
-            document.getElementById('btn-v-next').classList.replace('bg-gray-300', 'bg-red-600');
-        }
-    }
-    
-    function checkPhone(input) {
-        const btn = document.getElementById('btn-phone-next');
-        if(input.value.length >= 10) { btn.disabled = false; btn.classList.replace('bg-gray-300', 'bg-red-600'); } 
-        else { btn.disabled = true; btn.classList.replace('bg-red-600', 'bg-gray-300'); }
-    }
+    function processImage(input) { if (input.files[0]) { document.getElementById('driver-photo-preview').src = URL.createObjectURL(input.files[0]); document.getElementById('driver-photo-preview').classList.remove('hidden'); document.getElementById('placeholder-icon').classList.add('hidden'); document.getElementById('btn-photo-next').disabled = false; document.getElementById('btn-photo-next').classList.replace('bg-gray-300', 'bg-red-600'); } }
+    function processFile(input, previewId, btnId) { if (input.files[0]) { document.getElementById(previewId).src = URL.createObjectURL(input.files[0]); document.getElementById(previewId).classList.remove('hidden'); document.getElementById(btnId).disabled = false; document.getElementById(btnId).classList.replace('bg-gray-300', 'bg-red-600'); } }
+    function checkName(input) { const n = document.getElementById('dr-name').value; const btn = document.getElementById('btn-name-next'); if(n.length > 3) { btn.disabled = false; btn.classList.replace('bg-gray-300', 'bg-red-600'); } else { btn.disabled = true; btn.classList.replace('bg-red-600', 'bg-gray-300'); } }
+    function checkVehicle() { const ins = document.querySelectorAll('.v-in'); let ok = true; ins.forEach(i => { if(!i.value) ok = false; }); if(ok) { document.getElementById('btn-v-next').disabled = false; document.getElementById('btn-v-next').classList.replace('bg-gray-300', 'bg-red-600'); } }
+    function checkPhone(input) { const btn = document.getElementById('btn-phone-next'); if(input.value.length >= 10) { btn.disabled = false; btn.classList.replace('bg-gray-300', 'bg-red-600'); } else { btn.disabled = true; btn.classList.replace('bg-red-600', 'bg-gray-300'); } }
 </script>
 </body>
 </html>

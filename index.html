@@ -209,7 +209,7 @@
             <div id="step-name" class="hidden w-full flex flex-col space-y-4">
                 <div><label class="reg-label">Nombre Completo</label><input type="text" id="dr-name" class="reg-input" placeholder="Ej: Juan Pérez" oninput="checkName(this)"></div>
                 <div id="fields-account" class="hidden space-y-4">
-                    <div><label class="reg-label">Usuario</label><input type="text" id="reg-user" class="reg-input" placeholder="Nombre de usuario" oninput="checkName(document.getElementById('dr-name'))"></div>
+                    <div><label class="reg-label">Usuario</label><input type="text" id="reg-user" class="reg-input" placeholder="Crea tu usuario" oninput="checkName(document.getElementById('dr-name'))"></div>
                     <div><label class="reg-label">Contraseña</label><input type="password" id="reg-pass" class="reg-input" placeholder="••••••••" oninput="checkName(document.getElementById('dr-name'))"></div>
                     <div><label class="reg-label">Correo Electrónico</label><input type="email" id="reg-email" class="reg-input" placeholder="ejemplo@correo.com" oninput="checkName(document.getElementById('dr-name'))"></div>
                 </div>
@@ -222,14 +222,12 @@
                 <input type="file" id="ine-f-input" accept="image/*" class="hidden" onchange="processFile(this, 'ine-f-preview', 'btn-ine-f-next')">
                 <button id="btn-ine-f-next" disabled onclick="goToStep(4)" class="w-full bg-gray-300 text-white py-4 rounded-xl font-black text-[10px] uppercase italic transition-all">Siguiente</button>
             </div>
-
             <div id="step-ine-back" class="hidden w-full flex flex-col">
                 <h3 class="text-center font-black text-[10px] text-gray-400 uppercase mb-4 italic">INE Trasera</h3>
                 <div class="w-full aspect-video bg-gray-50 rounded-2xl border-4 border-dashed border-gray-200 flex items-center justify-center mb-6 overflow-hidden" onclick="document.getElementById('ine-b-input').click()"><img id="ine-b-preview" class="hidden w-full h-full object-cover"><i data-lucide="image" class="text-gray-300 w-10 h-10"></i></div>
                 <input type="file" id="ine-b-input" accept="image/*" class="hidden" onchange="processFile(this, 'ine-b-preview', 'btn-ine-b-next')">
                 <button id="btn-ine-b-next" disabled onclick="goToStep(5)" class="w-full bg-gray-300 text-white py-4 rounded-xl font-black text-[10px] uppercase italic transition-all">Siguiente</button>
             </div>
-
             <div id="step-vehicle" class="hidden w-full flex flex-col space-y-3">
                 <h3 class="text-center font-black text-[10px] text-gray-400 uppercase mb-4 italic">Datos del Vehículo</h3>
                 <input type="number" id="v-year" placeholder="Año" class="reg-input v-in">
@@ -239,14 +237,12 @@
                 <input type="text" id="v-plate" placeholder="Placa" class="reg-input v-in uppercase" oninput="checkVehicle()">
                 <button id="btn-v-next" disabled onclick="goToStep(6)" class="w-full mt-4 bg-gray-300 text-white py-4 rounded-xl font-black text-[10px] uppercase italic">Siguiente</button>
             </div>
-
             <div id="step-circ" class="hidden w-full flex flex-col">
                 <h3 class="text-center font-black text-[10px] text-gray-400 uppercase mb-4 italic">Tarjeta de Circulación</h3>
                 <div class="w-full aspect-video bg-gray-50 rounded-2xl border-4 border-dashed border-gray-200 flex items-center justify-center mb-6 overflow-hidden" onclick="document.getElementById('circ-input').click()"><img id="circ-preview" class="hidden w-full h-full object-cover"><i data-lucide="file-text" class="text-gray-300 w-10 h-10"></i></div>
                 <input type="file" id="circ-input" accept="image/*" class="hidden" onchange="processFile(this, 'circ-preview', 'btn-circ-next')">
                 <button id="btn-circ-next" disabled onclick="goToStep(7)" class="w-full bg-gray-300 text-white py-4 rounded-xl font-black text-[10px] uppercase italic transition-all">Siguiente</button>
             </div>
-
             <div id="step-v-photo" class="hidden w-full flex flex-col">
                 <h3 class="text-center font-black text-[10px] text-gray-400 uppercase mb-4 italic">Foto del Vehículo</h3>
                 <div class="w-full aspect-video bg-gray-50 rounded-2xl border-4 border-dashed border-gray-200 flex items-center justify-center mb-6 overflow-hidden" onclick="document.getElementById('v-photo-input').click()"><img id="v-photo-preview" class="hidden w-full h-full object-cover"><i data-lucide="car" class="text-gray-300 w-12 h-12"></i></div>
@@ -285,14 +281,13 @@
         precioViaje: 120.00
     };
 
+    // --- CARTERA INDIVIDUAL LOGIC ---
     function getWalletData(userId) {
         return JSON.parse(localStorage.getItem(`wallet_${userId}`)) || { saldo: 0.00, historial: [] };
     }
-
     function saveWalletData(userId, data) {
         localStorage.setItem(`wallet_${userId}`, JSON.stringify(data));
     }
-
     function addMovement(userId, tipo, monto, descripcion) {
         let wallet = getWalletData(userId);
         if (tipo === 'sumar') wallet.saldo += monto;
@@ -302,6 +297,7 @@
         return wallet;
     }
 
+    // --- REGISTRATION LOGIC ---
     function startPassengerRegistration() {
         registrationMode = 'passenger';
         const stepsToHide = ['step-photo', 'step-ine-front', 'step-ine-back', 'step-vehicle', 'step-circ', 'step-v-photo'];
@@ -314,12 +310,10 @@
         goToStep(1);
         lucide.createIcons();
     }
-
     function handleStepNameNext() {
-        if (registrationMode === 'passenger') { goToStep(8); } 
-        else { goToStep(3); }
+        if (registrationMode === 'passenger') goToStep(8); 
+        else goToStep(3);
     }
-
     function handleStepPhoneNext() {
         if (registrationMode === 'passenger') {
             document.getElementById('finish-title').innerHTML = 'CREANDO<br><span class="text-red-600">CUENTA</span>';
@@ -331,7 +325,6 @@
             goToStep(9);
         }
     }
-
     function savePassengerRequest() {
         const userId = String(Date.now());
         const userValue = document.getElementById('reg-user').value.toLowerCase().trim();
@@ -353,6 +346,7 @@
         location.reload();
     }
 
+    // --- ADMIN PANEL FUNCTIONS ---
     function renderAdminPassengers() {
         currentAdminView = 'passengers';
         selectedIds = [];
@@ -368,7 +362,6 @@
             container.innerHTML += `<div id="card-${req.id}" onclick="toggleCardSelection('${req.id}')" class="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm flex items-center justify-between transition-all cursor-pointer"><div class="flex items-center gap-3"><div class="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600 font-black italic text-xs uppercase">${req.name.charAt(0)}</div><div><h4 class="text-[11px] font-black uppercase italic">${req.name}</h4><p class="text-[8px] font-bold text-gray-400 uppercase tracking-tighter">ID: ${req.id}</p></div></div><div class="flex flex-col items-end gap-1"><span class="text-[7px] font-black px-2 py-1 bg-green-100 text-green-600 rounded-full uppercase">Activo</span></div></div>`;
         });
     }
-
     function renderAdminRequests() {
         currentAdminView = 'requests';
         selectedIds = [];
@@ -384,14 +377,12 @@
             container.innerHTML += `<div id="card-${req.id}" onclick="toggleCardSelection('${req.id}')" class="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm flex items-center justify-between transition-all cursor-pointer"><div class="flex items-center gap-3"><div class="w-10 h-10 bg-red-50 rounded-xl flex items-center justify-center text-red-600 font-black italic text-xs uppercase">${req.name.charAt(0)}</div><div><h4 class="text-[11px] font-black uppercase italic">${req.name}</h4><p class="text-[8px] font-bold text-gray-400 uppercase tracking-tighter">${req.vehicle}</p></div></div><div class="flex flex-col items-end gap-1"><span class="text-[7px] font-black px-2 py-1 bg-yellow-100 text-yellow-600 rounded-full uppercase">Pendiente</span></div></div>`;
         });
     }
-
     function toggleCardSelection(id) {
         const card = document.getElementById(`card-${id}`);
         const index = selectedIds.indexOf(String(id));
         if (index > -1) { selectedIds.splice(index, 1); card.classList.remove('card-selected'); } 
         else { selectedIds.push(String(id)); card.classList.add('card-selected'); }
     }
-
     function eliminarSeleccionados() {
         if (selectedIds.length === 0) { alert("Toca primero los registros que desees eliminar."); return; }
         if (!confirm(`¿Deseas eliminar los ${selectedIds.length} registros seleccionados?`)) return;
@@ -404,8 +395,8 @@
         alert("Eliminado con éxito.");
     }
 
+    // --- ADMIN WALLET PANEL ---
     let userTargetAdmin = null;
-
     function openAdminWallet() {
         closeAll();
         document.getElementById('admin-dashboard').classList.add('hidden');
@@ -417,7 +408,6 @@
         document.getElementById('admin-movimientos-list').innerHTML = '';
         lucide.createIcons();
     }
-
     function closeAdminWallet() {
         document.getElementById('admin-dashboard').classList.remove('hidden');
         document.getElementById('admin-wallet-section').classList.add('hidden');
@@ -427,7 +417,6 @@
         userTargetAdmin = null;
         lucide.createIcons();
     }
-
     function searchPassengerInWallet() {
         const term = document.getElementById('admin-search-user').value.toLowerCase().trim();
         const displaySaldo = document.getElementById('admin-view-saldo');
@@ -443,7 +432,6 @@
             renderHistorial(wallet.historial, histContainer);
         } else { displaySaldo.innerText = "No encontrado"; histContainer.innerHTML = ''; }
     }
-
     function renderHistorial(historial, container) {
         container.innerHTML = '';
         if (historial.length === 0) { container.innerHTML = '<p class="text-[8px] text-center text-gray-400 uppercase py-4">Sin movimientos</p>'; return; }
@@ -453,7 +441,6 @@
             container.innerHTML += `<div class="bg-white p-3 rounded-xl border border-gray-100 flex justify-between items-center"><div><p class="text-[9px] font-black uppercase italic">${m.desc}</p><p class="text-[7px] text-gray-400 font-bold">${m.fecha}</p></div><p class="text-[10px] font-black ${color}">${sign} $${m.monto.toFixed(2)}</p></div>`;
         });
     }
-
     function adminModificarSaldo(tipo) {
         if (!userTargetAdmin) { alert("Busca un pasajero primero."); return; }
         const monto = parseFloat(document.getElementById('admin-monto-input').value);
@@ -464,6 +451,7 @@
         searchPassengerInWallet(); 
     }
 
+    // --- PASSENGER UI WALLET ---
     function updateWalletDisplay() {
         if (!currentUser) return;
         const wallet = getWalletData(currentUser.id);
@@ -473,7 +461,6 @@
         if (wallet.saldo < 0) { saldoElement.classList.add('text-red-600'); btnConfirmar.disabled = true; btnConfirmar.classList.replace('bg-red-600', 'bg-gray-400'); btnConfirmar.innerText = "SALDO NEGATIVO: RECARGA PARA VIAJAR"; } 
         else { saldoElement.classList.remove('text-red-600'); btnConfirmar.disabled = false; btnConfirmar.classList.replace('bg-gray-400', 'bg-red-600'); btnConfirmar.innerText = "CONFIRMAR SOLICITUD"; }
     }
-
     function handleRequest() {
         const wallet = getWalletData(currentUser.id);
         if (wallet.saldo < 0) { alert("Debes liquidar tu saldo negativo."); return; }
@@ -483,13 +470,13 @@
         } else { startRadar(); }
     }
 
+    // --- SHARED & AUTH FUNCTIONS ---
     function saveDriverRequest() {
         const newRequest = { id: String(Date.now()), name: document.getElementById('dr-name').value, vehicle: `${document.getElementById('v-brand').value} ${document.getElementById('v-model').value}`, plate: document.getElementById('v-plate').value, phone: document.getElementById('dr-phone').value, status: 'pendiente', date: new Date().toLocaleDateString() };
         let requests = JSON.parse(localStorage.getItem('driver_requests') || '[]');
         requests.push(newRequest); localStorage.setItem('driver_requests', JSON.stringify(requests));
         alert('Enviado a revisión.'); location.reload();
     }
-
     setTimeout(() => { document.getElementById('splash').style.opacity = '0'; setTimeout(() => { document.getElementById('splash').style.display = 'none'; document.getElementById('login-screen').classList.remove('hidden'); }, 500); }, 1500);
 
     function handleAuth() {
@@ -497,7 +484,7 @@
         const passInput = document.getElementById('login-pass').value.trim();
         if (userInput === '' || passInput === '') { alert('Ingresa usuario y contraseña.'); return; }
         
-        // ACCESO ADMINISTRADOR ACTUALIZADO
+        // ADMIN AUTH WITH NEW KEYS
         if(userInput === 'admincentral' && passInput === '9271@'){
             document.getElementById('login-screen').classList.add('hidden');
             document.getElementById('admin-view').classList.remove('hidden');
@@ -506,7 +493,13 @@
         } else {
             const pasajeros = JSON.parse(localStorage.getItem('db_usuarios_permanente') || '[]');
             const user = pasajeros.find(u => (u.usuario === userInput.toLowerCase() || u.correo === userInput.toLowerCase()) && u.pass === passInput);
-            if (user) { currentUser = user; document.getElementById('login-screen').classList.add('hidden'); document.getElementById('passenger-view').classList.remove('hidden'); document.getElementById('nav-passenger').classList.remove('hidden'); updateWalletDisplay(); } 
+            if (user) { 
+                currentUser = user; 
+                document.getElementById('login-screen').classList.add('hidden'); 
+                document.getElementById('passenger-view').classList.remove('hidden'); 
+                document.getElementById('nav-passenger').classList.remove('hidden'); 
+                updateWalletDisplay(); 
+            } 
             else { alert('Credenciales incorrectas o usuario no registrado.'); }
         }
         lucide.createIcons();
@@ -532,7 +525,6 @@
             else { document.getElementById('driver-registration-view').classList.add('hidden'); document.getElementById('passenger-view').classList.remove('hidden'); }
         }
     }
-    
     function processImage(input) { if (input.files[0]) { document.getElementById('driver-photo-preview').src = URL.createObjectURL(input.files[0]); document.getElementById('driver-photo-preview').classList.remove('hidden'); document.getElementById('placeholder-icon').classList.add('hidden'); document.getElementById('btn-photo-next').disabled = false; document.getElementById('btn-photo-next').classList.replace('bg-gray-300', 'bg-red-600'); } }
     function processFile(input, previewId, btnId) { if (input.files[0]) { document.getElementById(previewId).src = URL.createObjectURL(input.files[0]); document.getElementById(previewId).classList.remove('hidden'); document.getElementById(btnId).disabled = false; document.getElementById(btnId).classList.replace('bg-gray-300', 'bg-red-600'); } }
     function checkName(input) { const n = document.getElementById('dr-name').value; const btn = document.getElementById('btn-name-next'); if(n.length > 3) { btn.disabled = false; btn.classList.replace('bg-gray-300', 'bg-red-600'); } else { btn.disabled = true; btn.classList.replace('bg-red-600', 'bg-gray-300'); } }

@@ -341,8 +341,35 @@
         document.getElementById('admin-list-title').innerText = "Pasajeros Registrados";
         container.innerHTML = reqs.length === 0 ? '<p class="text-center text-[9px] uppercase">Sin pasajeros</p>' : '';
         reqs.forEach(req => {
-            container.innerHTML += `<div id="card-${req.id}" onclick="toggleCardSelection('${req.id}')" class="bg-white p-4 rounded-2xl border border-gray-200 flex justify-between cursor-pointer"><h4 class="text-[11px] font-black uppercase italic">${req.name}</h4><span class="text-[7px] font-black px-2 py-1 bg-green-100 text-green-600 rounded-full uppercase">Activo</span></div>`;
+            container.innerHTML += `
+                <div id="card-${req.id}" onclick="toggleCardSelection('${req.id}')" class="bg-white p-5 rounded-[2rem] shadow-sm border border-gray-100 flex flex-col gap-4 cursor-pointer relative transition-all duration-300">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="w-12 h-12 bg-gray-900 rounded-2xl flex items-center justify-center text-white font-black italic shadow-lg shadow-gray-200">
+                                ${req.name.charAt(0).toUpperCase()}
+                            </div>
+                            <div>
+                                <h4 class="text-[12px] font-black uppercase italic text-gray-900 leading-none">${req.name}</h4>
+                                <p class="text-[8px] font-bold text-gray-400 mt-1">ID: ${req.id}</p>
+                            </div>
+                        </div>
+                        <span class="text-[8px] font-black px-3 py-1 bg-green-100 text-green-600 rounded-full uppercase italic border border-green-200 shadow-sm">Activo</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3 pt-2 border-t border-gray-50">
+                        <div class="flex flex-col gap-1">
+                            <p class="text-[7px] font-black text-gray-300 uppercase italic">Contacto</p>
+                            <p class="text-[9px] font-black text-gray-600 truncate">${req.correo}</p>
+                            <p class="text-[9px] font-black text-gray-600">${req.phone || 'No registrado'}</p>
+                        </div>
+                        <div class="flex flex-col gap-1 text-right">
+                            <p class="text-[7px] font-black text-gray-300 uppercase italic">Registrado</p>
+                            <p class="text-[9px] font-black text-gray-600">${req.date || 'Sin fecha'}</p>
+                            <p class="text-[9px] font-black text-red-600 uppercase italic">@${req.usuario}</p>
+                        </div>
+                    </div>
+                </div>`;
         });
+        lucide.createIcons();
     }
 
     function renderAdminRequests() {
@@ -352,8 +379,35 @@
         document.getElementById('admin-list-title').innerText = "Solicitudes Conductor";
         container.innerHTML = reqs.length === 0 ? '<p class="text-center text-[9px] uppercase">Sin solicitudes</p>' : '';
         reqs.forEach(req => {
-            container.innerHTML += `<div id="card-${req.id}" onclick="toggleCardSelection('${req.id}')" class="bg-white p-4 rounded-2xl border border-gray-200 flex justify-between cursor-pointer"><h4 class="text-[11px] font-black uppercase italic">${req.name}</h4><span class="text-[7px] font-black px-2 py-1 bg-yellow-100 text-yellow-600 rounded-full uppercase">Pendiente</span></div>`;
+            container.innerHTML += `
+                <div id="card-${req.id}" onclick="toggleCardSelection('${req.id}')" class="bg-white p-5 rounded-[2rem] shadow-sm border border-gray-100 flex flex-col gap-4 cursor-pointer relative transition-all duration-300">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="w-12 h-12 bg-red-600 rounded-2xl flex items-center justify-center text-white font-black italic shadow-lg shadow-red-200">
+                                <i data-lucide="car" class="w-6 h-6"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-[12px] font-black uppercase italic text-gray-900 leading-none">${req.name}</h4>
+                                <p class="text-[8px] font-bold text-gray-400 mt-1">${req.vehiculo?.marca} ${req.vehiculo?.modelo}</p>
+                            </div>
+                        </div>
+                        <span class="text-[8px] font-black px-3 py-1 bg-yellow-100 text-yellow-600 rounded-full uppercase italic border border-yellow-200 shadow-sm">Pendiente</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3 pt-2 border-t border-gray-50">
+                        <div class="flex flex-col gap-1">
+                            <p class="text-[7px] font-black text-gray-300 uppercase italic">Placas</p>
+                            <p class="text-[9px] font-black text-gray-900 uppercase italic tracking-widest">${req.vehiculo?.placa || '---'}</p>
+                            <p class="text-[9px] font-black text-gray-600">${req.phone}</p>
+                        </div>
+                        <div class="flex flex-col gap-1 text-right">
+                            <p class="text-[7px] font-black text-gray-300 uppercase italic">Solicitud</p>
+                            <p class="text-[9px] font-black text-gray-600">${req.date || 'Reciente'}</p>
+                            <p class="text-[9px] font-black text-red-600 uppercase italic">@${req.usuario}</p>
+                        </div>
+                    </div>
+                </div>`;
         });
+        lucide.createIcons();
     }
 
     function toggleCardSelection(id) {
@@ -523,7 +577,6 @@
     function handleStepNameNext() { if (registrationMode === 'passenger') goToStep(8); else goToStep(3); }
     function handleStepPhoneNext() { if (registrationMode === 'passenger') { document.getElementById('btn-final-save').setAttribute('onclick', 'savePassengerRequest()'); goToStep(9); } else { goToStep(9); } }
     
-    // Función de guardado de conductores corregida
     function saveDriverRequest() { 
         const newDriver = {
             id: String(Date.now()),

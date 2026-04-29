@@ -54,11 +54,7 @@
         .reg-input:focus { border-color: #ef4444; background-color: #fff; }
         .reg-label { font-size: 9px; font-weight: 900; color: #9ca3af; text-transform: uppercase; margin-bottom: 0.4rem; display: block; margin-left: 0.5rem; }
         
-        .payment-opt.selected {
-            border-color: #ef4444;
-            background-color: #fef2f2;
-            color: #ef4444;
-        }
+        .payment-opt.selected { border-color: #ef4444; background-color: #fef2f2; color: #ef4444; }
     </style>
 </head>
 <body>
@@ -113,6 +109,7 @@
             <input type="email" id="login-email" placeholder="Usuario (admin para panel)" class="reg-input text-left">
             <input type="password" id="login-pass" placeholder="Contraseña" class="reg-input text-left">
             <button onclick="handleAuth()" class="w-full bg-red-600 text-white py-4 rounded-xl font-black text-[11px] uppercase italic shadow-lg active:scale-95 transition-all">Ingresar</button>
+            <p class="mt-4 text-[10px] font-black text-gray-400 uppercase italic">¿No tienes cuenta? <span onclick="startNewRegistration()" class="text-red-600 cursor-pointer hover:underline ml-1">Quiero crear una cuenta</span></p>
         </div>
     </div>
 
@@ -154,7 +151,6 @@
                         <p class="text-[9px] font-black text-gray-400 uppercase italic">Saldo Actual del Usuario</p>
                         <h2 id="admin-view-saldo" class="text-2xl font-black italic text-gray-900 tracking-tighter">$0.00 MXN</h2>
                     </div>
-                    
                     <div class="space-y-3">
                         <div>
                             <label class="reg-label">Monto de Operación</label>
@@ -245,7 +241,7 @@
             <div id="step-photo" class="w-full flex flex-col items-center">
                 <div class="relative mb-8 mt-6">
                     <div id="photo-preview-container" class="w-40 h-40 rounded-full border-4 border-gray-100 bg-gray-50 flex items-center justify-center overflow-hidden">
-                        <i id="placeholder-icon" data-lucide="user" class="w-12 h-12 text-gray-300"></i>
+                        <i id="placeholder-icon" data-lucide="camera" class="w-12 h-12 text-gray-300"></i>
                         <img id="driver-photo-preview" class="hidden w-full h-full object-cover">
                     </div>
                     <button onclick="document.getElementById('photo-input').click()" class="absolute bottom-1 right-1 bg-red-600 p-3 rounded-full text-white border-4 border-white shadow-lg"><i data-lucide="camera" class="w-5 h-5"></i></button>
@@ -253,11 +249,13 @@
                 </div>
                 <button id="btn-photo-next" disabled onclick="goToStep(2)" class="w-full bg-gray-300 text-white py-4 rounded-xl font-black text-[10px] uppercase italic transition-all">Siguiente</button>
             </div>
+
             <div id="step-name" class="hidden w-full flex flex-col">
                 <label class="reg-label">Nombre Completo</label>
                 <input type="text" id="dr-name" class="reg-input mb-8" placeholder="Ej: Juan Pérez" oninput="checkName(this)">
                 <button id="btn-name-next" disabled onclick="goToStep(3)" class="w-full bg-gray-300 text-white py-4 rounded-xl font-black text-[10px] uppercase italic transition-all">Siguiente</button>
             </div>
+
             <div id="step-ine-front" class="hidden w-full flex flex-col">
                 <h3 class="text-center font-black text-[10px] text-gray-400 uppercase mb-4 italic">INE Frontal</h3>
                 <div class="w-full aspect-video bg-gray-50 rounded-2xl border-4 border-dashed border-gray-200 flex items-center justify-center mb-6 overflow-hidden" onclick="document.getElementById('ine-f-input').click()">
@@ -267,6 +265,7 @@
                 <input type="file" id="ine-f-input" accept="image/*" class="hidden" onchange="processFile(this, 'ine-f-preview', 'btn-ine-f-next')">
                 <button id="btn-ine-f-next" disabled onclick="goToStep(4)" class="w-full bg-gray-300 text-white py-4 rounded-xl font-black text-[10px] uppercase italic transition-all">Siguiente</button>
             </div>
+
             <div id="step-ine-back" class="hidden w-full flex flex-col">
                 <h3 class="text-center font-black text-[10px] text-gray-400 uppercase mb-4 italic">INE Trasera</h3>
                 <div class="w-full aspect-video bg-gray-50 rounded-2xl border-4 border-dashed border-gray-200 flex items-center justify-center mb-6 overflow-hidden" onclick="document.getElementById('ine-b-input').click()">
@@ -276,6 +275,7 @@
                 <input type="file" id="ine-b-input" accept="image/*" class="hidden" onchange="processFile(this, 'ine-b-preview', 'btn-ine-b-next')">
                 <button id="btn-ine-b-next" disabled onclick="goToStep(5)" class="w-full bg-gray-300 text-white py-4 rounded-xl font-black text-[10px] uppercase italic transition-all">Siguiente</button>
             </div>
+
             <div id="step-vehicle" class="hidden w-full flex flex-col space-y-3">
                 <h3 class="text-center font-black text-[10px] text-gray-400 uppercase mb-4 italic">Datos del Vehículo</h3>
                 <input type="number" id="v-year" placeholder="Año" class="reg-input v-in">
@@ -285,6 +285,7 @@
                 <input type="text" id="v-plate" placeholder="Placa" class="reg-input v-in uppercase" oninput="checkVehicle()">
                 <button id="btn-v-next" disabled onclick="goToStep(6)" class="w-full mt-4 bg-gray-300 text-white py-4 rounded-xl font-black text-[10px] uppercase italic">Siguiente</button>
             </div>
+            
             <div id="step-circ" class="hidden w-full flex flex-col">
                 <h3 class="text-center font-black text-[10px] text-gray-400 uppercase mb-4 italic">Tarjeta de Circulación</h3>
                 <div class="w-full aspect-video bg-gray-50 rounded-2xl border-4 border-dashed border-gray-200 flex items-center justify-center mb-6 overflow-hidden" onclick="document.getElementById('circ-input').click()">
@@ -294,6 +295,7 @@
                 <input type="file" id="circ-input" accept="image/*" class="hidden" onchange="processFile(this, 'circ-preview', 'btn-circ-next')">
                 <button id="btn-circ-next" disabled onclick="goToStep(7)" class="w-full bg-gray-300 text-white py-4 rounded-xl font-black text-[10px] uppercase italic transition-all">Siguiente</button>
             </div>
+            
             <div id="step-v-photo" class="hidden w-full flex flex-col">
                 <h3 class="text-center font-black text-[10px] text-gray-400 uppercase mb-4 italic">Foto del Vehículo</h3>
                 <div class="w-full aspect-video bg-gray-50 rounded-2xl border-4 border-dashed border-gray-200 flex items-center justify-center mb-6 overflow-hidden" onclick="document.getElementById('v-photo-input').click()">
@@ -303,6 +305,7 @@
                 <input type="file" id="v-photo-input" accept="image/*" class="hidden" onchange="processFile(this, 'v-photo-preview', 'btn-v-photo-next')">
                 <button id="btn-v-photo-next" disabled onclick="goToStep(8)" class="w-full bg-gray-300 text-white py-4 rounded-xl font-black text-[10px] uppercase italic transition-all">Siguiente</button>
             </div>
+            
             <div id="step-phone" class="hidden w-full flex flex-col">
                 <h3 class="text-center font-black text-[10px] text-gray-400 uppercase mb-4 italic">Número Telefónico</h3>
                 <div class="relative mb-8 mt-4">
@@ -359,32 +362,27 @@
     function updateAdminWalletUI() {
         const saldoVista = document.getElementById('admin-view-saldo');
         saldoVista.innerText = `$${appState.saldoUsuario.toFixed(2)} MXN`;
-        // Colores para saldos negativos/positivos
         if(appState.saldoUsuario < 0) {
             saldoVista.classList.add('text-red-600');
         } else {
             saldoVista.classList.remove('text-red-600');
         }
-        // Sincronizar con la vista del pasajero automáticamente
         updateWalletDisplay();
     }
 
     function adminModificarSaldo(tipo) {
         const montoInput = document.getElementById('admin-monto-input');
         const monto = parseFloat(montoInput.value);
-        
         if (isNaN(monto) || monto <= 0) {
             alert("Por favor, ingresa un monto válido.");
             return;
         }
-
         if (tipo === 'sumar') {
             appState.saldoUsuario += monto;
         } else {
             appState.saldoUsuario -= monto;
         }
-
-        montoInput.value = ''; // Limpiar input
+        montoInput.value = '';
         updateAdminWalletUI();
     }
 
@@ -392,7 +390,6 @@
     function updateWalletDisplay() {
         const saldoElement = document.getElementById('display-saldo');
         const btnConfirmar = document.getElementById('btn-confirmar');
-        
         if (appState.saldoUsuario < 0) {
             saldoElement.classList.add('text-red-600');
             btnConfirmar.disabled = true;
@@ -495,14 +492,24 @@
         lucide.createIcons();
     }
 
+    function startNewRegistration() {
+        document.getElementById('login-screen').classList.add('hidden');
+        document.getElementById('driver-registration-view').classList.remove('hidden');
+        currentStep = 1;
+        goToStep(1);
+        document.getElementById('driver-photo-preview').classList.add('hidden');
+        document.getElementById('placeholder-icon').classList.remove('hidden');
+        lucide.createIcons();
+    }
+
     function openMenu() { 
-        document.getElementById('sidebar').classList.add('open'); 
+        document.getElementById('sidebar').classList.add('open');
         document.getElementById('overlay').classList.add('opacity-100', 'pointer-events-auto'); 
     }
 
     function closeAll() { 
         document.getElementById('sidebar').classList.remove('open'); 
-        document.getElementById('cost-sheet').classList.remove('active'); 
+        document.getElementById('cost-sheet').classList.remove('active');
         document.getElementById('overlay').classList.remove('opacity-100', 'pointer-events-auto');
     }
 
@@ -510,7 +517,7 @@
     function openCosts() { document.getElementById('cost-sheet').classList.add('active'); document.getElementById('overlay').classList.add('opacity-100', 'pointer-events-auto'); }
     
     function setPay(btn, method) { 
-        document.querySelectorAll('.payment-opt').forEach(b => b.classList.remove('selected')); 
+        document.querySelectorAll('.payment-opt').forEach(b => b.classList.remove('selected'));
         btn.classList.add('selected'); 
         appState.selectedPayment = method;
     }
@@ -525,7 +532,7 @@
     }
     
     function applyToBeDriver() { 
-        closeAll(); 
+        closeAll();
         document.getElementById('passenger-view').classList.add('hidden');
         document.getElementById('driver-registration-view').classList.remove('hidden');
         currentStep = 1;
@@ -552,12 +559,15 @@
     }
     
     function processImage(input) {
-        if (input.files[0]) {
-            document.getElementById('driver-photo-preview').src = URL.createObjectURL(input.files[0]);
-            document.getElementById('driver-photo-preview').classList.remove('hidden');
-            document.getElementById('placeholder-icon').classList.add('hidden');
+        if (input.files && input.files[0]) {
+            const preview = document.getElementById('driver-photo-preview');
+            const placeholder = document.getElementById('placeholder-icon');
             const btn = document.getElementById('btn-photo-next');
-            btn.disabled = false; btn.classList.replace('bg-gray-300', 'bg-red-600');
+            preview.src = URL.createObjectURL(input.files[0]);
+            preview.classList.remove('hidden');
+            placeholder.classList.add('hidden');
+            btn.disabled = false; 
+            btn.classList.replace('bg-gray-300', 'bg-red-600');
         }
     }
     
@@ -581,7 +591,8 @@
         ins.forEach(i => { if(!i.value) ok = false; });
         if(ok) {
             const btn = document.getElementById('btn-v-next');
-            btn.disabled = false; btn.classList.replace('bg-gray-300', 'bg-red-600');
+            btn.disabled = false;
+            btn.classList.replace('bg-gray-300', 'bg-red-600');
         }
     }
     

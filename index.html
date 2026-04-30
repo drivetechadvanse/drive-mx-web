@@ -481,15 +481,17 @@
 
     function handleRequest() {
         const wallet = getWalletData(currentUser.id);
-        // CORRECCIÓN: Bloqueo por saldo negativo
+        // Lógica de bloqueo de seguridad corregida: Detiene el flujo si hay saldo negativo
         if (wallet.saldo < 0) { 
-            alert("No puedes pedir viajes con saldo negativo en tu cartera. Recarga para continuar."); 
-            return; 
+            alert("No puedes pedir viajes con saldo negativo. Por favor contacta a soporte para recargar."); 
+            return; // Bloqueo de flujo
         }
+        // Validación de fondos suficientes si elige pagar con Cartera
         if (appState.selectedPayment === 'cartera' && wallet.saldo < appState.precioViaje) { 
             alert('Saldo insuficiente en tu cartera para este viaje.'); 
-            return; 
+            return; // Bloqueo de flujo
         }
+        // Ejecución de cobro si es por cartera
         if (appState.selectedPayment === 'cartera') { 
             addMovement(currentUser.id, 'restar', appState.precioViaje, 'Pago Viaje'); 
             updateWalletDisplay(); 
@@ -578,30 +580,8 @@
     function goToStep(n) { const steps = ['step-photo', 'step-name', 'step-ine-front', 'step-ine-back', 'step-vehicle', 'step-circ', 'step-v-photo', 'step-phone', 'step-finish']; steps.forEach(s => document.getElementById(s).classList.add('hidden')); document.getElementById(steps[n-1]).classList.remove('hidden'); currentStep = n; lucide.createIcons(); }
     
     // Auxiliares Registro
-    // CORRECCIÓN: Limpieza de imagen para evitar duplicidad visual
-    function processImage(i) { 
-        if (i.files[0]) { 
-            const preview = document.getElementById('driver-photo-preview');
-            const placeholder = document.getElementById('placeholder-icon');
-            // Liberar memoria del objeto anterior si existe
-            if(preview.src) URL.revokeObjectURL(preview.src);
-            preview.src = URL.createObjectURL(i.files[0]); 
-            preview.classList.remove('hidden'); 
-            placeholder.classList.add('hidden'); 
-            document.getElementById('btn-photo-next').disabled = false; 
-            document.getElementById('btn-photo-next').classList.replace('bg-gray-300', 'bg-red-600'); 
-        } 
-    }
-    function processFile(i, p, b) { 
-        if (i.files[0]) { 
-            const prev = document.getElementById(p);
-            if(prev.src) URL.revokeObjectURL(prev.src);
-            prev.src = URL.createObjectURL(i.files[0]); 
-            prev.classList.remove('hidden'); 
-            document.getElementById(b).disabled = false; 
-            document.getElementById(b).classList.replace('bg-gray-300', 'bg-red-600'); 
-        } 
-    }
+    function processImage(i) { if (i.files[0]) { document.getElementById('driver-photo-preview').src = URL.createObjectURL(i.files[0]); document.getElementById('driver-photo-preview').classList.remove('hidden'); document.getElementById('placeholder-icon').classList.add('hidden'); document.getElementById('btn-photo-next').disabled = false; document.getElementById('btn-photo-next').classList.replace('bg-gray-300', 'bg-red-600'); } }
+    function processFile(i, p, b) { if (i.files[0]) { document.getElementById(p).src = URL.createObjectURL(i.files[0]); document.getElementById(p).classList.remove('hidden'); document.getElementById(b).disabled = false; document.getElementById(b).classList.replace('bg-gray-300', 'bg-red-600'); } }
     function checkName(i) { const b = document.getElementById('btn-name-next'); if(i.value.length > 3) { b.disabled = false; b.classList.replace('bg-gray-300', 'bg-red-600'); } }
     function checkVehicle() { document.getElementById('btn-v-next').disabled = false; document.getElementById('btn-v-next').classList.replace('bg-gray-300', 'bg-red-600'); }
     function checkPhone(i) { const b = document.getElementById('btn-phone-next'); if(i.value.length >= 10) { b.disabled = false; b.classList.replace('bg-gray-300', 'bg-red-600'); } }
@@ -634,4 +614,3 @@
 </script>
 </body>
 </html>
-```[cite: 1]

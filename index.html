@@ -260,13 +260,48 @@
                 </div>
                 <button id="btn-phone-next" disabled onclick="handleStepPhoneNext()" class="w-full bg-gray-300 text-white py-4 rounded-xl font-black text-[11px] uppercase italic transition-all shadow-xl shadow-red-600/30">Siguiente</button>
             </div>
-            <div id="step-finish" class="hidden w-full flex flex-col items-center justify-center text-center py-10">
-                <div class="w-24 h-24 bg-gray-900 rounded-3xl flex items-center justify-center mb-8 shadow-2xl shadow-gray-200"><i data-lucide="hourglass" class="w-12 h-12 text-red-600 animate-[spin_3s_linear_infinite]"></i></div>
-                <h2 id="finish-title" class="text-xl font-black italic uppercase leading-none mb-4">REVISIÓN EN<br><span class="text-red-600">PROGRESO</span></h2>
-                <p id="finish-desc" class="text-[11px] font-bold text-gray-500 uppercase tracking-tight italic mb-10 px-4">Si todo sale bien, te activaremos en<br><span class="text-gray-900">menos de 24 hrs.</span></p>
-                <button id="btn-final-save" onclick="saveDriverRequest()" class="w-full bg-red-600 text-white py-4 rounded-xl font-black text-[12px] uppercase italic transition-all shadow-xl shadow-red-600/30 active:scale-95">CONFIRMAR</button>
-            </div>
-        </div>
+            
+<!-- FINAL DRIVER -->
+<div id="step-finish-driver" class="hidden w-full flex flex-col items-center justify-center text-center py-10">
+    <div class="w-24 h-24 bg-gray-900 rounded-3xl flex items-center justify-center mb-8 shadow-2xl shadow-gray-200">
+        <i data-lucide="hourglass" class="w-12 h-12 text-red-600 animate-[spin_3s_linear_infinite]"></i>
+    </div>
+
+    <h2 class="text-xl font-black italic uppercase leading-none mb-4">
+        REVISIÓN EN<br>
+        <span class="text-red-600">PROGRESO</span>
+    </h2>
+
+    <p class="text-[11px] font-bold text-gray-500 uppercase tracking-tight italic mb-10 px-4">
+        Si todo sale bien, te activaremos en<br>
+        <span class="text-gray-900">menos de 24 hrs.</span>
+    </p>
+
+    <button onclick="saveDriverRequest()" class="w-full bg-red-600 text-white py-4 rounded-xl font-black text-[12px] uppercase italic transition-all shadow-xl shadow-red-600/30 active:scale-95">
+        CONFIRMAR
+    </button>
+</div>
+
+<!-- FINAL PASSENGER -->
+<div id="step-finish-passenger" class="hidden w-full flex flex-col items-center justify-center text-center py-10">
+    <div class="w-24 h-24 bg-green-600 rounded-3xl flex items-center justify-center mb-8 shadow-2xl shadow-green-200">
+        <i data-lucide="check" class="w-12 h-12 text-white"></i>
+    </div>
+
+    <h2 class="text-2xl font-black italic uppercase leading-none mb-4 text-gray-900">
+        CUENTA CREADA<br>
+        <span class="text-green-600">CORRECTAMENTE</span>
+    </h2>
+
+    <p class="text-[11px] font-bold text-gray-500 uppercase tracking-tight italic mb-10 px-4">
+        Ya puedes iniciar sesión y comenzar a usar Drive MX.
+    </p>
+
+    <button onclick="savePassengerRequest()" class="w-full bg-green-600 text-white py-4 rounded-xl font-black text-[12px] uppercase italic transition-all shadow-xl shadow-green-600/30 active:scale-95">
+        CONTINUAR
+    </button>
+</div>
+
     </div>
 </div>
 
@@ -315,7 +350,9 @@
         document.getElementById('driver-registration-view').classList.remove('hidden');
         document.getElementById('reg-main-title').innerHTML = 'REGISTRO <span class="text-red-600 uppercase">USER</span>';
         document.getElementById('fields-account').classList.remove('hidden');
-        currentStep = 1; goToStep(1); lucide.createIcons();
+        currentStep = 1;
+        goToStep(2);
+        lucide.createIcons();
     }
 
     function savePassengerRequest() {
@@ -577,7 +614,43 @@
     function openCosts() { document.getElementById('cost-sheet').classList.add('active'); document.getElementById('overlay').classList.add('opacity-100', 'pointer-events-auto'); }
     function setPay(btn, method) { document.querySelectorAll('.payment-opt').forEach(b => b.classList.remove('selected')); btn.classList.add('selected'); appState.selectedPayment = method; }
     function handleDriverBack() { document.getElementById('driver-registration-view').classList.add('hidden'); document.getElementById('login-screen').classList.remove('hidden'); }
-    function goToStep(n) { const steps = ['step-photo', 'step-name', 'step-ine-front', 'step-ine-back', 'step-vehicle', 'step-circ', 'step-v-photo', 'step-phone', 'step-finish']; steps.forEach(s => document.getElementById(s).classList.add('hidden')); document.getElementById(steps[n-1]).classList.remove('hidden'); currentStep = n; lucide.createIcons(); }
+    function goToStep(n) {
+        const steps = [
+            'step-photo',
+            'step-name',
+            'step-ine-front',
+            'step-ine-back',
+            'step-vehicle',
+            'step-circ',
+            'step-v-photo',
+            'step-phone',
+            'step-finish-driver',
+            'step-finish-passenger'
+        ];
+
+        steps.forEach(s => {
+            const el = document.getElementById(s);
+            if (el) el.classList.add('hidden');
+        });
+
+        const normalSteps = [
+            'step-photo',
+            'step-name',
+            'step-ine-front',
+            'step-ine-back',
+            'step-vehicle',
+            'step-circ',
+            'step-v-photo',
+            'step-phone'
+        ];
+
+        if (normalSteps[n - 1]) {
+            document.getElementById(normalSteps[n - 1]).classList.remove('hidden');
+        }
+
+        currentStep = n;
+        lucide.createIcons();
+    }
     
     // Auxiliares Registro
     function processImage(i) { if (i.files[0]) { document.getElementById('driver-photo-preview').src = URL.createObjectURL(i.files[0]); document.getElementById('driver-photo-preview').classList.remove('hidden'); document.getElementById('placeholder-icon').classList.add('hidden'); document.getElementById('btn-photo-next').disabled = false; document.getElementById('btn-photo-next').classList.replace('bg-gray-300', 'bg-red-600'); } }
@@ -585,9 +658,52 @@
     function checkName(i) { const b = document.getElementById('btn-name-next'); if(i.value.length > 3) { b.disabled = false; b.classList.replace('bg-gray-300', 'bg-red-600'); } }
     function checkVehicle() { document.getElementById('btn-v-next').disabled = false; document.getElementById('btn-v-next').classList.replace('bg-gray-300', 'bg-red-600'); }
     function checkPhone(i) { const b = document.getElementById('btn-phone-next'); if(i.value.length >= 10) { b.disabled = false; b.classList.replace('bg-gray-300', 'bg-red-600'); } }
-    function applyToBeDriver() { registrationMode = 'driver'; closeAll(); document.getElementById('passenger-view').classList.add('hidden'); document.getElementById('driver-registration-view').classList.remove('hidden'); goToStep(1); }
+    function applyToBeDriver() {
+        registrationMode = 'driver';
+
+        closeAll();
+
+        document.getElementById('passenger-view').classList.add('hidden');
+        document.getElementById('driver-registration-view').classList.remove('hidden');
+
+        document.getElementById('reg-main-title').innerHTML =
+            'REGISTRO <span class="text-red-600 uppercase">DRIVER</span>';
+
+        document.getElementById('fields-account').classList.add('hidden');
+
+        goToStep(1);
+    }
     function handleStepNameNext() { if (registrationMode === 'passenger') goToStep(8); else goToStep(3); }
-    function handleStepPhoneNext() { if (registrationMode === 'passenger') { document.getElementById('btn-final-save').setAttribute('onclick', 'savePassengerRequest()'); goToStep(9); } else { goToStep(9); } }
+    function handleStepPhoneNext() {
+
+        const steps = [
+            'step-photo',
+            'step-name',
+            'step-ine-front',
+            'step-ine-back',
+            'step-vehicle',
+            'step-circ',
+            'step-v-photo',
+            'step-phone'
+        ];
+
+        steps.forEach(s => {
+            const el = document.getElementById(s);
+            if (el) el.classList.add('hidden');
+        });
+
+        if (registrationMode === 'passenger') {
+
+            document.getElementById('step-finish-passenger').classList.remove('hidden');
+
+        } else {
+
+            document.getElementById('step-finish-driver').classList.remove('hidden');
+
+        }
+
+        lucide.createIcons();
+    }
     
     function saveDriverRequest() { 
         const newDriver = {

@@ -43,6 +43,7 @@
 
     <!-- Menú Lateral -->
     <div id="sidebar" class="absolute inset-y-0 left-0 w-64 bg-white z-[110] shadow-2xl flex flex-col">
+        <!-- Cabecera Usuario (Visible para Pasajero y Conductor) -->
         <div id="user-profile-header" class="hidden p-6 bg-gray-900 text-white flex flex-col items-center text-center">
             <div class="relative mb-3">
                 <img id="side-user-photo" src="" class="w-20 h-20 rounded-full object-cover border-4 border-red-600 shadow-xl bg-gray-800">
@@ -62,6 +63,7 @@
             </div>
         </div>
 
+        <!-- Cabecera Admin -->
         <div id="side-header-admin" class="hidden p-6 bg-gray-900 text-white">
             <div class="w-10 h-10 bg-red-600 rounded-xl flex items-center justify-center mb-3"><i data-lucide="cpu" class="w-6 h-6"></i></div>
             <h2 class="text-lg font-black italic uppercase">DRIVE <span class="text-red-600 text-lg">MX</span></h2>
@@ -69,6 +71,7 @@
         </div>
 
         <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
+            <!-- Navegación Admin -->
             <div id="nav-admin" class="hidden">
                 <button onclick="toggleAccordion('admin-acc')" class="w-full flex items-center justify-between p-3 text-gray-700 font-black hover:bg-gray-50 rounded-xl uppercase text-[10px] italic">
                     <div class="flex items-center gap-3"><i data-lucide="users" class="text-red-600 w-4 h-4"></i><span>Gestión de Usuarios</span></div>
@@ -78,30 +81,28 @@
                     <button onclick="renderAdminRequests(); closeAll()" class="w-full text-left p-3 pl-10 text-[9px] font-bold text-gray-500 uppercase border-b border-white">Conductores</button>
                     <button onclick="renderAdminPassengers(); closeAll()" class="w-full text-left p-3 pl-10 text-[9px] font-bold text-gray-500 uppercase border-b border-white">Pasajeros</button>
                 </div>
-                <button onclick="openAdminWallet()" class="w-full flex items-center gap-3 p-3 text-gray-700 font-black hover:bg-gray-50 rounded-xl uppercase text-[10px] italic mt-1">
+                <button onclick="openAdminWallet(); closeAll()" class="w-full flex items-center gap-3 p-3 text-gray-700 font-black hover:bg-gray-50 rounded-xl uppercase text-[10px] italic mt-1">
                     <i data-lucide="wallet" class="text-red-600 w-4 h-4"></i><span>Cartera Admin</span>
                 </button>
             </div>
             
+            <!-- Navegación Pasajero -->
             <div id="nav-passenger" class="hidden">
                 <button onclick="applyToBeDriver()" class="w-full flex items-center gap-3 p-3 text-red-600 font-black hover:bg-red-50 rounded-xl uppercase text-[10px] italic">
                     <i data-lucide="car" class="w-4 h-4"></i><span>Quiero ser Conductor</span>
                 </button>
                 <button class="w-full flex items-center gap-3 p-3 text-gray-700 font-black hover:bg-gray-50 rounded-xl uppercase text-[10px] italic">
-                    <i data-lucide="history" class="w-4 h-4"></i><span>Mis Viajes</span>
+                    <i data-lucide="history" class="text-red-600 w-4 h-4"></i><span>Mis Viajes</span>
                 </button>
             </div>
 
-            <!-- Navegación específica para Conductor -->
+            <!-- Navegación Conductor -->
             <div id="nav-driver" class="hidden">
                 <button class="w-full flex items-center gap-3 p-3 text-gray-700 font-black hover:bg-gray-50 rounded-xl uppercase text-[10px] italic">
-                    <i data-lucide="layout-dashboard" class="text-red-600 w-4 h-4"></i><span>Resumen Diario</span>
+                    <i data-lucide="layout-dashboard" class="text-red-600 w-4 h-4"></i><span>Resumen Driver</span>
                 </button>
                 <button class="w-full flex items-center gap-3 p-3 text-gray-700 font-black hover:bg-gray-50 rounded-xl uppercase text-[10px] italic">
                     <i data-lucide="wallet" class="text-red-600 w-4 h-4"></i><span>Mi Billetera</span>
-                </button>
-                <button class="w-full flex items-center gap-3 p-3 text-gray-700 font-black hover:bg-gray-50 rounded-xl uppercase text-[10px] italic">
-                    <i data-lucide="settings" class="text-red-600 w-4 h-4"></i><span>Configuración</span>
                 </button>
             </div>
         </nav>
@@ -183,7 +184,7 @@
     <!-- Vista Pasajero -->
     <div id="passenger-view" class="hidden h-full flex flex-col relative">
         <header id="p-header" class="px-4 py-3 flex items-center justify-between border-b bg-white z-10 transition-all shrink-0">
-            <button onclick="openMenu()" class="p-1.5 bg-gray-100 rounded-lg"><i data-lucide="menu" class="w-5 h-5"></i></button>
+            <button onclick="openMenu()" class="p-1.5 bg-gray-100 rounded-lg active:scale-90"><i data-lucide="menu" class="w-5 h-5"></i></button>
             <h2 class="text-xl font-black italic uppercase">DRIVE <span class="text-red-600">MX</span></h2>
             <div class="w-8 h-8 rounded-lg bg-gray-900 flex items-center justify-center overflow-hidden">
                 <img id="top-user-photo" src="" class="w-full h-full object-cover hidden">
@@ -217,6 +218,7 @@
                 </div>
             </div>
         </main>
+        <!-- Bottom Sheet Pagos -->
         <div id="cost-sheet" class="absolute bottom-0 left-0 right-0 bg-white z-[120] rounded-t-[2.5rem] shadow-[0_-10px_40px_rgba(0,0,0,0.15)] p-8 pt-6 space-y-5">
             <div class="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-2"></div>
             <h3 class="text-lg font-black italic uppercase text-center tracking-tighter">FORMA DE <span class="text-red-600">PAGO</span></h3>
@@ -236,7 +238,6 @@
     <div id="driver-view-active" class="hidden h-full flex flex-col bg-gray-50">
         <header class="px-4 py-3 flex items-center justify-between border-b bg-gray-900 text-white z-10 shrink-0">
             <div class="flex items-center gap-3">
-                <!-- BOTÓN HAMBURGUESA AÑADIDO PARA CONDUCTOR -->
                 <button onclick="openMenu()" class="p-1.5 bg-white/10 rounded-lg active:scale-90 transition-transform">
                     <i data-lucide="menu" class="w-5 h-5 text-red-600"></i>
                 </button>
@@ -290,6 +291,7 @@
             <h2 id="reg-main-title" class="ml-3 text-lg font-black italic uppercase tracking-tighter">REGISTRO <span class="text-red-600 uppercase">DRIVER</span></h2>
         </header>
         <div class="flex-1 overflow-y-auto p-6 pb-12">
+            <!-- Pasos del registro (sin cambios) -->
             <div id="step-photo" class="w-full flex flex-col items-center">
                 <h3 class="text-center font-black text-[10px] text-gray-400 uppercase mb-4 italic">Fotografía de Perfil</h3>
                 <div class="relative mb-8 mt-2">
@@ -359,6 +361,7 @@
                 </div>
                 <h2 class="text-xl font-black italic uppercase leading-none mb-4">REVISIÓN EN<br><span class="text-red-600">PROGRESO</span></h2>
                 <p class="text-[11px] font-bold text-gray-500 uppercase tracking-tight italic mb-10 px-4">Si todo sale bien, te activaremos en<br><span class="text-gray-900">menos de 24 hrs.</span></p>
+                <!-- Botón de confirmar driver modificado -->
                 <button onclick="saveDriverRequest()" class="w-full bg-red-600 text-white py-4 rounded-xl font-black text-[12px] uppercase italic transition-all shadow-xl shadow-red-600/30 active:scale-95">CONFIRMAR</button>
             </div>
 
@@ -381,7 +384,7 @@
     let currentAdminView = 'requests'; 
     let selectedIds = [];
     let currentUser = null;
-    let isAvailable = false; 
+    let isAvailable = false; // Estado del conductor
     let appState = {
         selectedPayment: 'efectivo',
         precioViaje: 120.00
@@ -462,6 +465,7 @@
         location.reload();
     }
 
+    // Registro y Acceso Directo a Panel Driver
     function saveDriverRequest() { 
         const driverId = "DRV_" + Date.now();
         const newDriver = {
@@ -494,11 +498,12 @@
             document.getElementById('active-driver-photo').src = tempBase64Photo;
         }
         
-        updateProfileUI();
-        alert('¡Bienvenido Driver! Tu cuenta ha sido activada.');
+        updateProfileUI(); // Activamos el sidebar con los datos del driver
+        alert('¡Bienvenido Driver! Tu cuenta ha sido activada automáticamente.');
         lucide.createIcons();
     }
 
+    // Funciones del Panel Conductor
     function toggleDriverAvailability() {
         const btn = document.getElementById('toggle-driver-status');
         const badge = document.getElementById('status-badge');
@@ -570,6 +575,7 @@
         lucide.createIcons();
     }
 
+    // FUNCIÓN CLAVE: Actualiza qué se ve en el sidebar según el usuario logueado
     function updateProfileUI() {
         if (!currentUser) return;
         const sidePhoto = document.getElementById('side-user-photo');
@@ -578,29 +584,36 @@
         const topPhoto = document.getElementById('top-user-photo');
         const topIcon = document.getElementById('top-user-icon');
 
+        // Llenar datos de texto
         sideName.innerText = currentUser.name;
         if (currentUser.foto) {
             sidePhoto.src = currentUser.foto;
-            topPhoto.src = currentUser.foto;
-            topPhoto.classList.remove('hidden');
-            topIcon.classList.add('hidden');
-        }
-
-        // Lógica de menús según rol
-        document.getElementById('nav-admin').classList.add('hidden');
-        document.getElementById('nav-passenger').classList.add('hidden');
-        document.getElementById('nav-driver').classList.add('hidden');
-
-        if(currentUser.role === 'conductor') {
-            document.getElementById('nav-driver').classList.remove('hidden');
-            document.getElementById('user-profile-header').classList.remove('hidden');
-        } else if(currentUser.role === 'pasajero') {
-            document.getElementById('nav-passenger').classList.remove('hidden');
-            document.getElementById('user-profile-header').classList.remove('hidden');
+            if(topPhoto) {
+                topPhoto.src = currentUser.foto;
+                topPhoto.classList.remove('hidden');
+            }
+            if(topIcon) topIcon.classList.add('hidden');
         }
 
         const wallet = getWalletData(currentUser.id);
         sideTrips.innerText = wallet.trips || 0;
+
+        // Limpiar vistas de navegación
+        document.getElementById('nav-admin').classList.add('hidden');
+        document.getElementById('nav-passenger').classList.add('hidden');
+        document.getElementById('nav-driver').classList.add('hidden');
+        document.getElementById('user-profile-header').classList.add('hidden');
+        document.getElementById('side-header-admin').classList.add('hidden');
+
+        // Mostrar según rol
+        if (currentUser.role === 'conductor') {
+            document.getElementById('user-profile-header').classList.remove('hidden');
+            document.getElementById('nav-driver').classList.remove('hidden');
+        } else {
+            document.getElementById('user-profile-header').classList.remove('hidden');
+            document.getElementById('nav-passenger').classList.remove('hidden');
+        }
+        
         updateWalletDisplay();
     }
 
@@ -613,8 +626,7 @@
             document.getElementById('admin-view').classList.remove('hidden');
             document.getElementById('nav-admin').classList.remove('hidden');
             document.getElementById('side-header-admin').classList.remove('hidden');
-            document.getElementById('nav-passenger').classList.add('hidden');
-            document.getElementById('nav-driver').classList.add('hidden');
+            document.getElementById('user-profile-header').classList.add('hidden');
             renderAdminRequests();
         } else {
             const db = JSON.parse(localStorage.getItem('db_usuarios_permanente') || '[]');
@@ -627,11 +639,10 @@
                 if (user.role === 'conductor') {
                     document.getElementById('driver-view-active').classList.remove('hidden');
                     if(user.foto) document.getElementById('active-driver-photo').src = user.foto;
-                    updateProfileUI();
                 } else {
                     document.getElementById('passenger-view').classList.remove('hidden');
-                    updateProfileUI();
                 }
+                updateProfileUI(); // Asegura que el sidebar se configure
             } else { alert('Usuario o contraseña incorrectos'); }
         }
         lucide.createIcons();
@@ -707,7 +718,7 @@
 
     let userTargetAdmin = null;
     function openAdminWallet() { 
-        closeAll(); document.getElementById('admin-dashboard').classList.add('hidden'); 
+        document.getElementById('admin-dashboard').classList.add('hidden'); 
         document.getElementById('admin-wallet-section').classList.remove('hidden');
         document.getElementById('admin-menu-btn').classList.add('hidden');
         document.getElementById('admin-back-btn').classList.remove('hidden');

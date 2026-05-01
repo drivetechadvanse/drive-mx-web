@@ -40,15 +40,24 @@
 
     <div id="overlay" onclick="closeAll()" class="absolute inset-0 bg-black/60 z-[100] opacity-0 pointer-events-none transition-opacity"></div>
 
-    <!-- Menú Lateral (Aislado por Usuario) -->
+    <!-- Menú Lateral Corregido -->
     <div id="sidebar" class="absolute inset-y-0 left-0 w-64 bg-white z-[110] shadow-2xl flex flex-col">
-        <div id="sidebar-user-header" class="p-6 bg-gray-900 text-white border-b border-gray-800">
+        
+        <!-- Header para ADMIN (Mantiene tu diseño original) -->
+        <div id="header-admin-sidebar" class="p-6 bg-gray-900 text-white hidden">
+            <div class="w-10 h-10 bg-red-600 rounded-xl flex items-center justify-center mb-3"><i data-lucide="cpu" class="w-6 h-6"></i></div>
+            <h2 class="text-lg font-black italic uppercase">DRIVE <span class="text-red-600 text-lg">MX</span></h2>
+            <p class="text-[8px] text-gray-400 font-bold uppercase tracking-widest italic">Sesión activa</p>
+        </div>
+
+        <!-- Header para PASAJERO (Nuevo Perfil Aislado) -->
+        <div id="header-user-sidebar" class="p-6 bg-gray-900 text-white border-b border-gray-800 hidden">
             <div class="flex flex-col items-center text-center mb-4">
                 <div class="relative mb-3">
-                    <img id="user-profile-photo" src="" class="w-20 h-20 rounded-full border-2 border-red-600 object-cover bg-gray-800 shadow-xl shadow-black/20">
+                    <img id="user-profile-photo" src="" class="w-20 h-20 rounded-full border-2 border-red-600 object-cover bg-gray-800">
                     <div class="absolute -bottom-1 -right-1 bg-green-500 w-4 h-4 rounded-full border-2 border-gray-900"></div>
                 </div>
-                <h3 id="user-profile-name" class="text-sm font-black italic uppercase tracking-tighter truncate w-full">Cargando...</h3>
+                <h3 id="user-profile-name" class="text-sm font-black italic uppercase tracking-tighter truncate w-full">Usuario</h3>
                 <div class="flex items-center gap-4 mt-2">
                     <div class="flex flex-col items-center">
                         <span id="user-profile-rating" class="text-red-600 text-[10px] font-black">★ 5.0</span>
@@ -62,10 +71,11 @@
                 </div>
             </div>
             <div class="flex items-center justify-between pt-2 border-t border-gray-800">
-                <h2 class="text-[10px] font-black italic uppercase">DRIVE <span class="text-red-600 text-[10px]">MX</span></h2>
-                <p id="side-role" class="text-[7px] text-gray-400 font-bold uppercase italic">ID: 0000</p>
+                <h2 class="text-[10px] font-black italic uppercase">DRIVE <span class="text-red-600">MX</span></h2>
+                <p id="side-user-id" class="text-[7px] text-gray-400 font-bold uppercase italic"></p>
             </div>
         </div>
+
         <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
             <div id="nav-admin" class="hidden">
                 <button onclick="toggleAccordion('admin-acc')" class="w-full flex items-center justify-between p-3 text-gray-700 font-black hover:bg-gray-50 rounded-xl uppercase text-[10px] italic">
@@ -334,7 +344,7 @@
         }, 500); 
     }, 1500);
 
-    // Cartera Logic (Segmentada por ID de Usuario)[cite: 1]
+    // Cartera Logic (Aislada por ID)[cite: 1]
     function getWalletData(userId) {
         return JSON.parse(localStorage.getItem(`wallet_${userId}`)) || { saldo: 0.00, historial: [] };
     }
@@ -350,32 +360,38 @@
         return wallet;
     }
 
-    // --- FUNCIONES DE PERFIL INDIVIDUALIZADO ---
+    // --- CORRECCIÓN LÓGICA DE PERFIL (SOLO PASAJERO) ---
     function updateSidebarProfile() {
         if (!currentUser) return;
         
-        // Cargar Nombre y ID Único[cite: 1]
-        document.getElementById('user-profile-name').innerText = currentUser.name;
-        document.getElementById('side-role').innerText = `ID: ${currentUser.id.slice(-4)}`;
-        
-        // Fotografía Circular (Storage local exclusivo del usuario)
-        const profileImg = document.getElementById('user-profile-photo');
-        const miniPhoto = document.getElementById('p-mini-photo');
-        
-        const photoSrc = currentUser.foto || "https://ui-avatars.com/api/?name=" + encodeURIComponent(currentUser.name) + "&background=ef4444&color=fff";
-        
-        profileImg.src = photoSrc;
-        miniPhoto.innerHTML = `<img src="${photoSrc}" class="w-full h-full object-cover">`;
+        // Determinar qué header mostrar en el sidebar
+        const adminHeader = document.getElementById('header-admin-sidebar');
+        const userHeader = document.getElementById('header-user-sidebar');
 
-        // Datos en Tiempo Real (Desde wallet única)[cite: 1]
-        const wallet = getWalletData(currentUser.id);
-        const totalViajes = wallet.historial.filter(m => m.desc === 'Pago Viaje').length;
-        
-        document.getElementById('user-profile-trips').innerText = totalViajes;
-        document.getElementById('user-profile-rating').innerText = "★ " + (currentUser.rating || "5.0");
+        // Si es el admin de sistema (ID fijo o rol admin)
+        if (currentUser.id === 'ADMIN_SYSTEM') {
+            adminHeader.classList.remove('hidden');
+            userHeader.classList.add('hidden');
+        } else {
+            // Es un Pasajero: Cargar datos reales[cite: 1]
+            adminHeader.classList.add('hidden');
+            userHeader.classList.remove('hidden');
+
+            document.getElementById('user-profile-name').innerText = currentUser.name;
+            document.getElementById('side-user-id').innerText = `ID: ${currentUser.id.slice(-4)}`;
+            
+            const photoSrc = currentUser.foto || "https://ui-avatars.com/api/?name=" + encodeURIComponent(currentUser.name);
+            document.getElementById('user-profile-photo').src = photoSrc;
+            document.getElementById('p-mini-photo').innerHTML = `<img src="${photoSrc}" class="w-full h-full object-cover">`;
+
+            const wallet = getWalletData(currentUser.id);
+            const totalViajes = wallet.historial.filter(m => m.desc === 'Pago Viaje').length;
+            document.getElementById('user-profile-trips').innerText = totalViajes;
+            document.getElementById('user-profile-rating').innerText = "★ " + (currentUser.rating || "5.0");
+        }
     }
 
-    // Registro Pasajeros (Filtro de Seguridad)[cite: 1]
+    // Registro Pasajeros[cite: 1]
     function startPassengerRegistration() {
         registrationMode = 'passenger';
         const stepsToHide = ['step-ine-front', 'step-ine-back', 'step-vehicle', 'step-circ', 'step-v-photo'];
@@ -384,140 +400,128 @@
         document.getElementById('driver-registration-view').classList.remove('hidden');
         document.getElementById('reg-main-title').innerHTML = 'REGISTRO <span class="text-red-600 uppercase">USER</span>';
         document.getElementById('fields-account').classList.remove('hidden');
-        currentStep = 1;
-        goToStep(1); 
-        lucide.createIcons();
+        currentStep = 1; goToStep(1); lucide.createIcons();
     }
 
     function savePassengerRequest() {
-        const userId = "UX-" + Date.now(); // ID ÚNICO PARA CADA PASAJERO[cite: 1]
+        const userId = "UX-" + Date.now();
         const photoData = document.getElementById('driver-photo-preview').src;
         const newRequest = {
-            id: userId, 
-            name: document.getElementById('dr-name').value, 
+            id: userId, name: document.getElementById('dr-name').value, 
             usuario: document.getElementById('reg-user').value.toLowerCase().trim(),
             pass: document.getElementById('reg-pass').value, 
             correo: document.getElementById('reg-email').value.toLowerCase().trim(),
             phone: document.getElementById('dr-phone').value, 
-            foto: photoData, 
-            rating: "5.0",
-            status: 'activo', 
-            date: new Date().toLocaleDateString()
+            foto: photoData, rating: "5.0", status: 'activo', date: new Date().toLocaleDateString()
         };
-        
-        // Base de datos de pasajeros (SISTEMA SEPARADO DE CONDUCTORES)[cite: 1]
         let db = JSON.parse(localStorage.getItem('db_usuarios_permanente') || '[]');
-        db.push(newRequest); 
-        localStorage.setItem('db_usuarios_permanente', JSON.stringify(db));
-        
+        db.push(newRequest); localStorage.setItem('db_usuarios_permanente', JSON.stringify(db));
         saveWalletData(userId, { saldo: 0.00, historial: [] });
-        alert(`Cuenta creada.`); 
-        location.reload();
+        alert(`Cuenta creada.`); location.reload();
     }
 
-    // Auth System
+    // Auth System[cite: 1]
     function handleAuth() {
         const userIn = document.getElementById('login-email').value.trim();
         const passIn = document.getElementById('login-pass').value.trim();
         
-        // Acceso Admin
         if (userIn === 'admincentral' && passIn === '9271@') {
+            currentUser = { id: 'ADMIN_SYSTEM', name: 'Administrador' };
             document.getElementById('login-screen').classList.add('hidden');
             document.getElementById('admin-view').classList.remove('hidden');
             document.getElementById('nav-admin').classList.remove('hidden');
-            renderAdminRequests();
-            return;
-        }
-
-        // Búsqueda exclusiva en base de pasajeros[cite: 1]
-        const pasajeros = JSON.parse(localStorage.getItem('db_usuarios_permanente') || '[]');
-        const user = pasajeros.find(u => (u.usuario === userIn.toLowerCase() || u.correo === userIn.toLowerCase()) && u.pass === passIn);
-        
-        if (user) { 
-            currentUser = user; // Usuario autenticado de forma única
-            document.getElementById('login-screen').classList.add('hidden'); 
-            document.getElementById('passenger-view').classList.remove('hidden');
-            document.getElementById('nav-passenger').classList.remove('hidden'); 
-            updateWalletDisplay();
             updateSidebarProfile();
-        } else { 
-            alert('Usuario o contraseña no coinciden en nuestro sistema de pasajeros.'); 
+            renderAdminRequests();
+        } else {
+            const pasajeros = JSON.parse(localStorage.getItem('db_usuarios_permanente') || '[]');
+            const user = pasajeros.find(u => (u.usuario === userIn.toLowerCase() || u.correo === userIn.toLowerCase()) && u.pass === passIn);
+            if (user) { 
+                currentUser = user;
+                document.getElementById('login-screen').classList.add('hidden'); 
+                document.getElementById('passenger-view').classList.remove('hidden');
+                document.getElementById('nav-passenger').classList.remove('hidden'); 
+                updateWalletDisplay();
+                updateSidebarProfile();
+            } else { alert('Credenciales incorrectas'); }
         }
         lucide.createIcons();
     }
 
-    // Lógica de Viajes (Seguridad y Tiempo Real)[cite: 1]
-    function updateWalletDisplay() {
-        if (!currentUser) return;
-        const wallet = getWalletData(currentUser.id);
-        document.getElementById('display-saldo').innerText = `$${wallet.saldo.toFixed(2)} MXN`;
-    }
+    // Funciones Pasajero
+    function updateWalletDisplay() { if (!currentUser) return; const wallet = getWalletData(currentUser.id); document.getElementById('display-saldo').innerText = `$${wallet.saldo.toFixed(2)} MXN`; }
 
     function handleRequest() {
         const wallet = getWalletData(currentUser.id);
-        if (wallet.saldo < 0) { 
-            alert("No puedes pedir viajes con saldo negativo. Recarga tu cartera."); 
-            return; 
-        }
-        if (appState.selectedPayment === 'cartera' && wallet.saldo < appState.precioViaje) { 
-            alert('Saldo insuficiente en tu cartera para realizar este viaje.'); 
-            return; 
-        }
+        if (wallet.saldo < 0) { alert("Saldo negativo. Recarga."); return; }
+        if (appState.selectedPayment === 'cartera' && wallet.saldo < appState.precioViaje) { alert('Saldo insuficiente.'); return; }
         if (appState.selectedPayment === 'cartera') { 
             addMovement(currentUser.id, 'restar', appState.precioViaje, 'Pago Viaje'); 
-            updateWalletDisplay(); 
-            updateSidebarProfile(); // Actualización de contador de viajes en perfil
+            updateWalletDisplay(); updateSidebarProfile(); 
         }
         startRadar();
     }
 
-    // UI Helpers y Navegación
-    function openMenu() { 
-        updateSidebarProfile(); 
-        document.getElementById('sidebar').classList.add('open'); 
-        document.getElementById('overlay').classList.add('opacity-100', 'pointer-events-auto'); 
+    // Radar y Simulación
+    function startRadar() {
+        closeAll(); document.getElementById('radar').classList.remove('hidden'); document.getElementById('search-msg').classList.remove('hidden');
+        document.getElementById('p-banners').classList.add('hidden-view'); document.getElementById('p-wallet').classList.add('hidden-view');
+        document.getElementById('p-header').classList.add('hidden-view');
+        setTimeout(() => { showDriverSelection(); }, 3000);
     }
+    function showDriverSelection() {
+        document.getElementById('radar').classList.add('hidden'); document.getElementById('search-msg').classList.add('hidden');
+        document.getElementById('passenger-view').classList.add('hidden'); document.getElementById('driver-selection-view').classList.remove('hidden');
+        renderAvailableDrivers();
+    }
+    function renderAvailableDrivers() {
+        const container = document.getElementById('driver-cards-container'); container.innerHTML = '';
+        const drivers = [{ id: 'd1', name: "Luis Jiménez", rating: "4.9", vehicle: "Nissan Versa", plate: "ABC-123-D", time: "3 min" }];
+        drivers.forEach(dr => {
+            container.innerHTML += `
+                <div class="bg-white p-5 rounded-[2rem] shadow-lg border flex flex-col space-y-4">
+                    <div class="flex items-center gap-4">
+                        <div class="w-14 h-14 bg-red-600 rounded-full flex items-center justify-center text-white font-black">${dr.name.charAt(0)}</div>
+                        <div class="flex-1"><h4 class="font-black italic uppercase text-xs">${dr.name}</h4><p class="text-[9px] font-bold text-gray-400 uppercase">${dr.vehicle}</p></div>
+                    </div>
+                    <button onclick="alert('Confirmado'); location.reload()" class="w-full bg-red-600 text-white py-3 rounded-2xl text-[10px] font-black">ACEPTAR</button>
+                </div>`;
+        });
+    }
+
+    // UI Helpers
+    function openMenu() { updateSidebarProfile(); document.getElementById('sidebar').classList.add('open'); document.getElementById('overlay').classList.add('opacity-100', 'pointer-events-auto'); }
     function closeAll() { document.getElementById('sidebar').classList.remove('open'); document.getElementById('cost-sheet').classList.remove('active'); document.getElementById('overlay').classList.remove('opacity-100', 'pointer-events-auto'); }
     function toggleAccordion(id) { document.getElementById(id).classList.toggle('expanded'); }
     function openCosts() { document.getElementById('cost-sheet').classList.add('active'); document.getElementById('overlay').classList.add('opacity-100', 'pointer-events-auto'); }
     function setPay(btn, method) { document.querySelectorAll('.payment-opt').forEach(b => b.classList.remove('selected')); btn.classList.add('selected'); appState.selectedPayment = method; }
     function handleDriverBack() { document.getElementById('driver-registration-view').classList.add('hidden'); document.getElementById('login-screen').classList.remove('hidden'); }
 
+    // Registro Steps
     function goToStep(n) {
         const normalSteps = ['step-photo', 'step-name', 'step-ine-front', 'step-ine-back', 'step-vehicle', 'step-circ', 'step-v-photo', 'step-phone'];
         normalSteps.forEach(s => document.getElementById(s).classList.add('hidden'));
-        document.getElementById('step-finish-driver').classList.add('hidden');
-        document.getElementById('step-finish-passenger').classList.add('hidden');
-        
+        document.getElementById('step-finish-driver').classList.add('hidden'); document.getElementById('step-finish-passenger').classList.add('hidden');
         if (normalSteps[n - 1]) document.getElementById(normalSteps[n - 1]).classList.remove('hidden');
-        currentStep = n;
-        lucide.createIcons();
+        currentStep = n; lucide.createIcons();
     }
     
     function processImage(i) { 
         if (i.files[0]) { 
-            const reader = new FileReader();
-            reader.onload = (e) => {
+            const reader = new FileReader(); reader.onload = (e) => {
                 document.getElementById('driver-photo-preview').src = e.target.result;
                 document.getElementById('driver-photo-preview').classList.remove('hidden'); 
                 document.getElementById('placeholder-icon').classList.add('hidden'); 
-                document.getElementById('btn-photo-next').disabled = false; 
-                document.getElementById('btn-photo-next').classList.replace('bg-gray-300', 'bg-red-600'); 
-            }
-            reader.readAsDataURL(i.files[0]);
+                document.getElementById('btn-photo-next').disabled = false; document.getElementById('btn-photo-next').classList.replace('bg-gray-300', 'bg-red-600'); 
+            }; reader.readAsDataURL(i.files[0]);
         } 
     }
 
     function processFile(i, p, b) { 
         if (i.files[0]) { 
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                document.getElementById(p).src = e.target.result; 
-                document.getElementById(p).classList.remove('hidden'); 
-                document.getElementById(b).disabled = false; 
-                document.getElementById(b).classList.replace('bg-gray-300', 'bg-red-600'); 
-            };
-            reader.readAsDataURL(i.files[0]);
+            const reader = new FileReader(); reader.onload = (e) => {
+                document.getElementById(p).src = e.target.result; document.getElementById(p).classList.remove('hidden'); 
+                document.getElementById(b).disabled = false; document.getElementById(b).classList.replace('bg-gray-300', 'bg-red-600'); 
+            }; reader.readAsDataURL(i.files[0]);
         } 
     }
 
@@ -525,161 +529,42 @@
     function checkVehicle() { document.getElementById('btn-v-next').disabled = false; document.getElementById('btn-v-next').classList.replace('bg-gray-300', 'bg-red-600'); }
     function checkPhone(i) { const b = document.getElementById('btn-phone-next'); if(i.value.length >= 10) { b.disabled = false; b.classList.replace('bg-gray-300', 'bg-red-600'); } }
     function handleStepNameNext() { if (registrationMode === 'passenger') goToStep(8); else goToStep(3); }
-    function handleStepPhoneNext() {
-        const steps = ['step-photo', 'step-name', 'step-ine-front', 'step-ine-back', 'step-vehicle', 'step-circ', 'step-v-photo', 'step-phone'];
-        steps.forEach(s => document.getElementById(s).classList.add('hidden'));
-        if (registrationMode === 'passenger') document.getElementById('step-finish-passenger').classList.remove('hidden');
-        else document.getElementById('step-finish-driver').classList.remove('hidden');
-    }
+    function handleStepPhoneNext() { if (registrationMode === 'passenger') { document.getElementById('step-phone').classList.add('hidden'); document.getElementById('step-finish-passenger').classList.remove('hidden'); } else { document.getElementById('step-phone').classList.add('hidden'); document.getElementById('step-finish-driver').classList.remove('hidden'); } }
 
-    // Simulación Radar
-    function startRadar() {
-        closeAll();
-        document.getElementById('radar').classList.remove('hidden');
-        document.getElementById('search-msg').classList.remove('hidden');
-        document.getElementById('p-banners').classList.add('hidden-view');
-        document.getElementById('p-wallet').classList.add('hidden-view');
-        document.getElementById('p-header').classList.add('hidden-view');
-        setTimeout(() => { showDriverSelection(); }, 3000);
-    }
-
-    function showDriverSelection() {
-        document.getElementById('radar').classList.add('hidden');
-        document.getElementById('search-msg').classList.add('hidden');
-        document.getElementById('passenger-view').classList.add('hidden');
-        document.getElementById('driver-selection-view').classList.remove('hidden');
-        renderAvailableDrivers();
-    }
-
-    function renderAvailableDrivers() {
-        const container = document.getElementById('driver-cards-container');
-        container.innerHTML = '';
-        const drivers = [
-            { id: 'd1', name: "Luis Jiménez", rating: "4.9", vehicle: "Nissan Versa", plate: "ABC-123-D", time: "3 min" },
-            { id: 'd2', name: "Sofía Martínez", rating: "4.7", vehicle: "Chevrolet Aveo", plate: "XYZ-789-M", time: "5 min" }
-        ];
-        drivers.forEach(dr => {
-            container.innerHTML += `
-                <div id="dr-card-${dr.id}" class="bg-white p-5 rounded-[2rem] shadow-lg border flex flex-col space-y-4">
-                    <div class="flex items-center gap-4">
-                        <div class="w-14 h-14 bg-red-600 rounded-full flex items-center justify-center text-white font-black italic border-2 border-white">${dr.name.charAt(0)}</div>
-                        <div class="flex-1">
-                            <h4 class="font-black italic uppercase text-xs">${dr.name}</h4>
-                            <p class="text-[9px] font-bold text-gray-400 uppercase">${dr.vehicle} • ${dr.plate}</p>
-                        </div>
-                        <span class="text-[10px] font-black italic text-yellow-500">★ ${dr.rating}</span>
-                    </div>
-                    <div class="flex justify-between py-2 border-y border-gray-50 italic font-black text-[10px]">
-                        <span>${dr.time}</span><span>$${appState.precioViaje.toFixed(2)} MXN</span>
-                    </div>
-                    <div class="grid grid-cols-2 gap-3">
-                        <button onclick="document.getElementById('dr-card-${dr.id}').remove()" class="bg-gray-100 py-3 rounded-2xl text-[10px] font-black uppercase italic">Rechazar</button>
-                        <button onclick="alert('Viaje confirmado con éxito.'); location.reload()" class="bg-red-600 text-white py-3 rounded-2xl text-[10px] font-black uppercase italic">Aceptar</button>
-                    </div>
-                </div>`;
-        });
-        lucide.createIcons();
-    }
-
-    // Admin Panel (Acceso a Bases de Datos Segregadas)[cite: 1]
+    // Admin DB[cite: 1]
     function renderAdminPassengers() {
-        currentAdminView = 'passengers';
-        const container = document.getElementById('admin-requests-container');
+        currentAdminView = 'passengers'; const container = document.getElementById('admin-requests-container');
         const reqs = JSON.parse(localStorage.getItem('db_usuarios_permanente') || '[]');
         document.getElementById('admin-list-title').innerText = "Pasajeros Registrados";
-        container.innerHTML = reqs.length === 0 ? '<p class="text-center text-[9px] uppercase py-10">Sin pasajeros</p>' : '';
+        container.innerHTML = reqs.length === 0 ? '<p class="text-center py-10">Sin pasajeros</p>' : '';
         reqs.forEach(req => {
-            container.innerHTML += `
-                <div id="card-${req.id}" onclick="toggleCardSelection('${req.id}')" class="bg-white p-5 rounded-[2rem] shadow-sm border border-gray-100 mb-3 flex items-center justify-between">
-                    <div class="flex items-center gap-3">
-                        <img src="${req.foto}" class="w-10 h-10 rounded-xl object-cover">
-                        <div>
-                            <p class="text-[10px] font-black italic uppercase leading-none">${req.name}</p>
-                            <p class="text-[7px] font-bold text-gray-400 mt-1 italic">ID: ${req.id}</p>
-                        </div>
-                    </div>
-                    <span class="text-[8px] font-black px-2 py-1 bg-green-50 text-green-600 rounded-full border border-green-100 uppercase">Pasajero</span>
-                </div>`;
+            container.innerHTML += `<div id="card-${req.id}" onclick="toggleCardSelection('${req.id}')" class="bg-white p-5 rounded-[2rem] shadow-sm border border-gray-100 mb-3 flex items-center justify-between"><div><p class="text-[10px] font-black uppercase">${req.name}</p><p class="text-[7px] italic">ID: ${req.id}</p></div></div>`;
         });
     }
-
     function renderAdminRequests() {
-        currentAdminView = 'requests';
-        const container = document.getElementById('admin-requests-container');
+        currentAdminView = 'requests'; const container = document.getElementById('admin-requests-container');
         const reqs = JSON.parse(localStorage.getItem('driver_requests') || '[]');
         document.getElementById('admin-list-title').innerText = "Solicitudes Conductor";
-        container.innerHTML = reqs.length === 0 ? '<p class="text-center text-[9px] uppercase py-10">Sin solicitudes</p>' : '';
+        container.innerHTML = reqs.length === 0 ? '<p class="text-center py-10">Sin solicitudes</p>' : '';
         reqs.forEach(req => {
-            container.innerHTML += `
-                <div id="card-${req.id}" onclick="toggleCardSelection('${req.id}')" class="bg-white p-5 rounded-[2rem] shadow-sm border border-gray-100 mb-3 flex items-center justify-between">
-                    <div>
-                        <p class="text-[10px] font-black italic uppercase leading-none">${req.name}</p>
-                        <p class="text-[7px] font-bold text-gray-400 mt-1 italic">@${req.usuario}</p>
-                    </div>
-                    <span class="text-[8px] font-black px-2 py-1 bg-yellow-50 text-yellow-600 rounded-full border border-yellow-100 uppercase">Conductor</span>
-                </div>`;
+            container.innerHTML += `<div id="card-${req.id}" onclick="toggleCardSelection('${req.id}')" class="bg-white p-5 rounded-[2rem] shadow-sm border border-gray-100 mb-3"><p class="text-[10px] font-black">${req.name}</p></div>`;
         });
     }
-
-    function toggleCardSelection(id) {
-        const card = document.getElementById(`card-${id}`);
-        const idx = selectedIds.indexOf(String(id));
-        if (idx > -1) { selectedIds.splice(idx, 1); card.classList.remove('card-selected'); }
-        else { selectedIds.push(String(id)); card.classList.add('card-selected'); }
-    }
-
-    function eliminarSeleccionados() {
-        const key = (currentAdminView === 'passengers') ? 'db_usuarios_permanente' : 'driver_requests';
-        let data = JSON.parse(localStorage.getItem(key) || '[]');
-        localStorage.setItem(key, JSON.stringify(data.filter(item => !selectedIds.includes(String(item.id)))));
-        if (currentAdminView === 'passengers') renderAdminPassengers(); else renderAdminRequests();
-        selectedIds = [];
-    }
-
+    function toggleCardSelection(id) { const card = document.getElementById(`card-${id}`); const idx = selectedIds.indexOf(String(id)); if (idx > -1) { selectedIds.splice(idx, 1); card.classList.remove('card-selected'); } else { selectedIds.push(String(id)); card.classList.add('card-selected'); } }
+    function eliminarSeleccionados() { const key = (currentAdminView === 'passengers') ? 'db_usuarios_permanente' : 'driver_requests'; let data = JSON.parse(localStorage.getItem(key) || '[]'); localStorage.setItem(key, JSON.stringify(data.filter(item => !selectedIds.includes(String(item.id))))); if (currentAdminView === 'passengers') renderAdminPassengers(); else renderAdminRequests(); selectedIds = []; }
     function openAdminWallet() { closeAll(); document.getElementById('admin-dashboard').classList.add('hidden'); document.getElementById('admin-wallet-section').classList.remove('hidden'); document.getElementById('admin-menu-btn').classList.add('hidden'); document.getElementById('admin-back-btn').classList.remove('hidden'); }
     function closeAdminWallet() { document.getElementById('admin-dashboard').classList.remove('hidden'); document.getElementById('admin-wallet-section').classList.add('hidden'); document.getElementById('admin-menu-btn').classList.remove('hidden'); document.getElementById('admin-back-btn').classList.add('hidden'); }
-
     function searchPassengerInWallet() {
-        const term = document.getElementById('admin-search-user').value.toLowerCase().trim();
-        const pasajeros = JSON.parse(localStorage.getItem('db_usuarios_permanente') || '[]');
+        const term = document.getElementById('admin-search-user').value.toLowerCase().trim(); const pasajeros = JSON.parse(localStorage.getItem('db_usuarios_permanente') || '[]');
         let user = pasajeros.find(u => u.name.toLowerCase().includes(term) || u.usuario === term);
-        const disp = document.getElementById('admin-view-saldo');
-        if (user) {
-            const wallet = getWalletData(user.id);
-            disp.innerText = `$${wallet.saldo.toFixed(2)} MXN`;
-            window.userTargetAdmin = user;
-        } else { disp.innerText = "No encontrado"; }
+        if (user) { const wallet = getWalletData(user.id); document.getElementById('admin-view-saldo').innerText = `$${wallet.saldo.toFixed(2)} MXN`; window.userTargetAdmin = user; }
     }
-
-    function adminModificarSaldo(tipo) {
-        if (!window.userTargetAdmin) return;
-        const monto = parseFloat(document.getElementById('admin-monto-input').value);
-        if (isNaN(monto)) return;
-        addMovement(window.userTargetAdmin.id, tipo, monto, 'Ajuste Admin');
-        searchPassengerInWallet();
-    }
-
-    function applyToBeDriver() {
-        registrationMode = 'driver'; closeAll();
-        document.getElementById('passenger-view').classList.add('hidden');
-        document.getElementById('driver-registration-view').classList.remove('hidden');
-        document.getElementById('reg-main-title').innerHTML = 'REGISTRO <span class="text-red-600 uppercase">DRIVER</span>';
-        document.getElementById('fields-account').classList.add('hidden');
-        goToStep(1);
-    }
-
+    function adminModificarSaldo(tipo) { if (!window.userTargetAdmin) return; const monto = parseFloat(document.getElementById('admin-monto-input').value); if (isNaN(monto)) return; addMovement(window.userTargetAdmin.id, tipo, monto, 'Ajuste Admin'); searchPassengerInWallet(); }
+    function applyToBeDriver() { registrationMode = 'driver'; closeAll(); document.getElementById('passenger-view').classList.add('hidden'); document.getElementById('driver-registration-view').classList.remove('hidden'); goToStep(1); }
     function saveDriverRequest() { 
-        const newDriver = {
-            id: "DR-" + Date.now(),
-            name: document.getElementById('dr-name').value,
-            usuario: document.getElementById('reg-user').value || 'Sin usuario',
-            status: 'pendiente',
-            date: new Date().toLocaleDateString()
-        };
-        let drivers = JSON.parse(localStorage.getItem('driver_requests') || '[]');
-        drivers.push(newDriver);
-        localStorage.setItem('driver_requests', JSON.stringify(drivers));
-        alert('Solicitud enviada a revisión.'); location.reload(); 
+        const newDriver = { id: "DR-" + Date.now(), name: document.getElementById('dr-name').value, usuario: document.getElementById('reg-user').value || 'S/N', status: 'pendiente', date: new Date().toLocaleDateString() };
+        let drivers = JSON.parse(localStorage.getItem('driver_requests') || '[]'); drivers.push(newDriver); localStorage.setItem('driver_requests', JSON.stringify(drivers));
+        alert('Solicitud enviada.'); location.reload(); 
     }
 </script>
 </body>

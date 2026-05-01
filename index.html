@@ -27,8 +27,6 @@
         .reg-label { font-size: 9px; font-weight: 900; color: #9ca3af; text-transform: uppercase; margin-bottom: 0.4rem; display: block; margin-left: 0.5rem; }
         .payment-opt.selected { border-color: #ef4444; background-color: #fef2f2; color: #ef4444; }
         .card-selected { border-color: #ef4444 !important; background-color: #fef2f2 !important; ring: 2px; ring-color: #ef4444; }
-        /* Estilo para el perfil en el menú[cite: 1] */
-        .profile-section { border-bottom: 1px solid #f3f4f6; margin-bottom: 1rem; padding-bottom: 1rem; }
     </style>
 </head>
 <body>
@@ -64,24 +62,6 @@
                 </button>
             </div>
             <div id="nav-passenger" class="hidden">
-                <!-- SECCIÓN DE PERFIL VISUAL AÑADIDA AL MENÚ SUPERIOR DE PASAJEROS[cite: 1] -->
-                <div class="profile-section flex flex-col items-center text-center p-2">
-                    <div class="w-20 h-20 rounded-full border-4 border-red-50 bg-gray-100 overflow-hidden mb-3 shadow-sm">
-                        <img id="side-p-photo" src="" class="w-full h-full object-cover">
-                    </div>
-                    <h4 id="side-p-name" class="text-[12px] font-black uppercase italic text-gray-900 leading-none">Pasajero</h4>
-                    <div class="flex items-center gap-4 mt-3">
-                        <div class="flex flex-col">
-                            <span class="text-[8px] font-black text-gray-400 uppercase italic">Calificación</span>
-                            <span class="text-[10px] font-black text-yellow-500 italic">★ 5.0</span>
-                        </div>
-                        <div class="w-px h-6 bg-gray-100"></div>
-                        <div class="flex flex-col">
-                            <span class="text-[8px] font-black text-gray-400 uppercase italic">Viajes</span>
-                            <span class="text-[10px] font-black text-gray-900 italic">0</span>
-                        </div>
-                    </div>
-                </div>
                 <button onclick="applyToBeDriver()" class="w-full flex items-center gap-3 p-3 text-red-600 font-black hover:bg-red-50 rounded-xl uppercase text-[10px] italic">
                     <i data-lucide="car" class="w-4 h-4"></i><span>Quiero ser Conductor</span>
                 </button>
@@ -92,7 +72,7 @@
         </div>
     </div>
 
-    <!-- Login Screen[cite: 1] -->
+    <!-- Login Screen -->
     <div id="login-screen" class="hidden absolute inset-0 z-[150] bg-white p-8 flex flex-col items-center justify-center text-center">
         <div class="w-12 h-12 bg-red-600 rounded-xl mb-6 animate-bounce-custom shadow-lg shadow-red-600/20 flex items-center justify-center">
             <i data-lucide="navigation" class="text-white w-6 h-6"></i>
@@ -106,7 +86,7 @@
         </div>
     </div>
 
-    <!-- Panel Administrador[cite: 1] -->
+    <!-- Panel Administrador -->
     <div id="admin-view" class="hidden h-full flex flex-col bg-gray-100">
         <header id="admin-header" class="px-4 py-3 flex items-center justify-between bg-gray-900 text-white z-10 shrink-0">
             <button id="admin-menu-btn" onclick="openMenu()" class="p-1.5 bg-white/10 rounded-lg"><i data-lucide="menu" class="w-5 h-5 text-red-600"></i></button>
@@ -162,7 +142,7 @@
         </main>
     </div>
 
-    <!-- Vista Pasajero[cite: 1] -->
+    <!-- Vista Pasajero -->
     <div id="passenger-view" class="hidden h-full flex flex-col relative">
         <header id="p-header" class="px-4 py-3 flex items-center justify-between border-b bg-white z-10 transition-all shrink-0">
             <button onclick="openMenu()" class="p-1.5 bg-gray-100 rounded-lg"><i data-lucide="menu" class="w-5 h-5"></i></button>
@@ -196,7 +176,7 @@
                 </div>
             </div>
         </main>
-        <!-- Bottom Sheet Pagos[cite: 1] -->
+        <!-- Bottom Sheet Pagos -->
         <div id="cost-sheet" class="absolute bottom-0 left-0 right-0 bg-white z-[120] rounded-t-[2.5rem] shadow-[0_-10px_40px_rgba(0,0,0,0.15)] p-8 pt-6 space-y-5">
             <div class="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-2"></div>
             <h3 class="text-lg font-black italic uppercase text-center tracking-tighter">FORMA DE <span class="text-red-600">PAGO</span></h3>
@@ -212,7 +192,7 @@
         </div>
     </div>
 
-    <!-- Selección Conductor[cite: 1] -->
+    <!-- Selección Conductor -->
     <div id="driver-selection-view" class="hidden absolute inset-0 z-[160] bg-gray-50 flex flex-col">
         <header class="px-4 py-4 bg-white border-b flex items-center justify-center shrink-0">
             <h2 class="text-sm font-black italic uppercase text-gray-800">Elige un <span class="text-red-600">Conductor</span></h2>
@@ -221,14 +201,14 @@
         </main>
     </div>
 
-    <!-- Registro Unificado (Pasajero/Conductor)[cite: 1] -->
+    <!-- Registro Unificado (Pasajero/Conductor) -->
     <div id="driver-registration-view" class="hidden absolute inset-0 z-[200] bg-white flex flex-col">
         <header class="px-4 py-4 flex items-center border-b bg-white sticky top-0 z-10 shrink-0">
             <button onclick="handleDriverBack()" class="p-2 hover:bg-gray-100 rounded-full transition-all"><i data-lucide="arrow-left" class="w-6 h-6 text-gray-700"></i></button>
             <h2 id="reg-main-title" class="ml-3 text-lg font-black italic uppercase tracking-tighter">REGISTRO <span class="text-red-600 uppercase">DRIVER</span></h2>
         </header>
         <div class="flex-1 overflow-y-auto p-6 pb-12">
-            <!-- Paso 1: Foto[cite: 1] -->
+            <!-- Paso 1: Foto (Filtro de Seguridad)[cite: 1] -->
             <div id="step-photo" class="w-full flex flex-col items-center">
                 <h3 class="text-center font-black text-[10px] text-gray-400 uppercase mb-4 italic">Fotografía de Perfil</h3>
                 <div class="relative mb-8 mt-2">
@@ -241,7 +221,7 @@
                 </div>
                 <button id="btn-photo-next" disabled onclick="goToStep(2)" class="w-full bg-gray-300 text-white py-4 rounded-xl font-black text-[10px] uppercase italic transition-all">Siguiente</button>
             </div>
-            <!-- Paso 2: Datos y Cuenta[cite: 1] -->
+            <!-- Paso 2: Datos y Cuenta -->
             <div id="step-name" class="hidden w-full flex flex-col space-y-4">
                 <div><label class="reg-label">Nombre Completo</label><input type="text" id="dr-name" class="reg-input" placeholder="Ej: Juan Pérez" oninput="checkName(this)"></div>
                 <div id="fields-account" class="hidden space-y-4">
@@ -251,7 +231,7 @@
                 </div>
                 <button id="btn-name-next" disabled onclick="handleStepNameNext()" class="w-full bg-gray-300 text-white py-4 rounded-xl font-black text-[10px] uppercase italic transition-all">Siguiente</button>
             </div>
-            <!-- Pasos exclusivos Conductor[cite: 1] -->
+            <!-- Pasos exclusivos Conductor -->
             <div id="step-ine-front" class="hidden w-full flex flex-col">
                 <h3 class="text-center font-black text-[10px] text-gray-400 uppercase mb-4 italic">INE Frontal</h3>
                 <div class="w-full aspect-video bg-gray-50 rounded-2xl border-4 border-dashed border-gray-200 flex items-center justify-center mb-6 overflow-hidden" onclick="document.getElementById('ine-f-input').click()"><img id="ine-f-preview" class="hidden w-full h-full object-cover"><i data-lucide="image" class="text-gray-300 w-10 h-10"></i></div>
@@ -285,7 +265,7 @@
                 <input type="file" id="v-photo-input" accept="image/*" class="hidden" onchange="processFile(this, 'v-photo-preview', 'btn-v-photo-next')">
                 <button id="btn-v-photo-next" disabled onclick="goToStep(8)" class="w-full bg-gray-300 text-white py-4 rounded-xl font-black text-[10px] uppercase italic transition-all">Siguiente</button>
             </div>
-            <!-- Paso Teléfono (Común)[cite: 1] -->
+            <!-- Paso Teléfono (Común) -->
             <div id="step-phone" class="hidden w-full flex flex-col">
                 <h3 class="text-center font-black text-[10px] text-gray-400 uppercase mb-4 italic">Número Telefónico</h3>
                 <div class="relative mb-8 mt-4">
@@ -295,7 +275,7 @@
                 <button id="btn-phone-next" disabled onclick="handleStepPhoneNext()" class="w-full bg-gray-300 text-white py-4 rounded-xl font-black text-[11px] uppercase italic transition-all shadow-xl shadow-red-600/30">Siguiente</button>
             </div>
             
-            <!-- Final Driver[cite: 1] -->
+            <!-- Final Driver -->
             <div id="step-finish-driver" class="hidden w-full flex flex-col items-center justify-center text-center py-10">
                 <div class="w-24 h-24 bg-gray-900 rounded-3xl flex items-center justify-center mb-8 shadow-2xl shadow-gray-200">
                     <i data-lucide="hourglass" class="w-12 h-12 text-red-600 animate-[spin_3s_linear_infinite]"></i>
@@ -305,7 +285,7 @@
                 <button onclick="saveDriverRequest()" class="w-full bg-red-600 text-white py-4 rounded-xl font-black text-[12px] uppercase italic transition-all shadow-xl shadow-red-600/30 active:scale-95">CONFIRMAR</button>
             </div>
 
-            <!-- Final Passenger[cite: 1] -->
+            <!-- Final Passenger -->
             <div id="step-finish-passenger" class="hidden w-full flex flex-col items-center justify-center text-center py-10">
                 <div class="w-24 h-24 bg-green-600 rounded-3xl flex items-center justify-center mb-8 shadow-2xl shadow-green-200">
                     <i data-lucide="check" class="w-12 h-12 text-white"></i>
@@ -330,7 +310,7 @@
         precioViaje: 120.00
     };
 
-    // Splash Loader[cite: 1]
+    // Splash Loader
     setTimeout(() => { 
         const splash = document.getElementById('splash');
         splash.style.opacity = '0'; 
@@ -340,7 +320,7 @@
         }, 500); 
     }, 1500);
 
-    // Cartera Logic[cite: 1]
+    // Cartera Logic
     function getWalletData(userId) {
         return JSON.parse(localStorage.getItem(`wallet_${userId}`)) || { saldo: 0.00, historial: [] };
     }
@@ -356,9 +336,10 @@
         return wallet;
     }
 
-    // Registro Pasajeros[cite: 1]
+    // Registro Pasajeros (Filtro de Seguridad incluido)[cite: 1]
     function startPassengerRegistration() {
         registrationMode = 'passenger';
+        // Ocultamos pasos de conductor, pero mantenemos step-photo para seguridad[cite: 1]
         const stepsToHide = ['step-ine-front', 'step-ine-back', 'step-vehicle', 'step-circ', 'step-v-photo'];
         stepsToHide.forEach(s => document.getElementById(s).classList.add('hidden'));
         
@@ -368,13 +349,14 @@
         document.getElementById('fields-account').classList.remove('hidden');
         
         currentStep = 1;
-        goToStep(1); 
+        goToStep(1); // Iniciamos en el filtro de fotografía[cite: 1]
         lucide.createIcons();
     }
 
     function savePassengerRequest() {
         const userId = String(Date.now());
         const userValue = document.getElementById('reg-user').value.toLowerCase().trim();
+        // Capturamos la foto del preview para el perfil del pasajero[cite: 1]
         const photoData = document.getElementById('driver-photo-preview').src;
 
         const newRequest = {
@@ -396,7 +378,7 @@
         location.reload();
     }
 
-    // Admin Panel Actions[cite: 1]
+    // Admin Panel Actions
     function renderAdminPassengers() {
         currentAdminView = 'passengers';
         selectedIds = [];
@@ -416,6 +398,18 @@
                             </div>
                         </div>
                         <span class="text-[8px] font-black px-3 py-1 bg-green-100 text-green-600 rounded-full uppercase italic border border-green-200 shadow-sm">Activo</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3 pt-2 border-t border-gray-50">
+                        <div class="flex flex-col gap-1">
+                            <p class="text-[7px] font-black text-gray-300 uppercase italic">Contacto</p>
+                            <p class="text-[9px] font-black text-gray-600 truncate">${req.correo}</p>
+                            <p class="text-[9px] font-black text-gray-600">${req.phone || '---'}</p>
+                        </div>
+                        <div class="flex flex-col gap-1 text-right">
+                            <p class="text-[7px] font-black text-gray-300 uppercase italic">Registrado</p>
+                            <p class="text-[9px] font-black text-gray-600">${req.date || 'Sin fecha'}</p>
+                            <p class="text-[9px] font-black text-red-600 uppercase italic">@${req.usuario}</p>
+                        </div>
                     </div>
                 </div>`;
         });
@@ -438,10 +432,22 @@
                             </div>
                             <div>
                                 <h4 class="text-[12px] font-black uppercase italic text-gray-900 leading-none">${req.name}</h4>
-                                <p class="text-[8px] font-bold text-gray-400 mt-1">${req.vehiculo?.marca}</p>
+                                <p class="text-[8px] font-bold text-gray-400 mt-1">${req.vehiculo?.marca} ${req.vehiculo?.modelo}</p>
                             </div>
                         </div>
                         <span class="text-[8px] font-black px-3 py-1 bg-yellow-100 text-yellow-600 rounded-full uppercase italic border border-yellow-200 shadow-sm">Pendiente</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3 pt-2 border-t border-gray-50">
+                        <div class="flex flex-col gap-1">
+                            <p class="text-[7px] font-black text-gray-300 uppercase italic">Placas</p>
+                            <p class="text-[9px] font-black text-gray-900 uppercase italic tracking-widest">${req.vehiculo?.placa || '---'}</p>
+                            <p class="text-[9px] font-black text-gray-600">${req.phone}</p>
+                        </div>
+                        <div class="flex flex-col gap-1 text-right">
+                            <p class="text-[7px] font-black text-gray-300 uppercase italic">Solicitud</p>
+                            <p class="text-[9px] font-black text-gray-600">${req.date || 'Reciente'}</p>
+                            <p class="text-[9px] font-black text-red-600 uppercase italic">@${req.usuario}</p>
+                        </div>
                     </div>
                 </div>`;
         });
@@ -466,7 +472,7 @@
         selectedIds = []; alert("Eliminado.");
     }
 
-    // Cartera Admin Features[cite: 1]
+    // Cartera Admin Features
     let userTargetAdmin = null;
     function openAdminWallet() { 
         closeAll(); document.getElementById('admin-dashboard').classList.add('hidden'); 
@@ -509,7 +515,7 @@
         document.getElementById('admin-monto-input').value = ''; searchPassengerInWallet();
     }
 
-    // Pasajero UI/Logic[cite: 1]
+    // Pasajero UI/Logic
     function updateWalletDisplay() {
         if (!currentUser) return;
         const wallet = getWalletData(currentUser.id);
@@ -518,9 +524,19 @@
 
     function handleRequest() {
         const wallet = getWalletData(currentUser.id);
-        if (wallet.saldo < 0) { alert("Saldo negativo."); return; }
-        if (appState.selectedPayment === 'cartera' && wallet.saldo < appState.precioViaje) { alert('Saldo insuficiente.'); return; }
-        if (appState.selectedPayment === 'cartera') { addMovement(currentUser.id, 'restar', appState.precioViaje, 'Pago Viaje'); updateWalletDisplay(); }
+        // Lógica de bloqueo de seguridad corregida: Detiene el flujo si hay saldo negativo[cite: 1]
+        if (wallet.saldo < 0) { 
+            alert("No puedes pedir viajes con saldo negativo. Por favor contacta a soporte para recargar."); 
+            return; 
+        }
+        if (appState.selectedPayment === 'cartera' && wallet.saldo < appState.precioViaje) { 
+            alert('Saldo insuficiente en tu cartera.'); 
+            return; 
+        }
+        if (appState.selectedPayment === 'cartera') { 
+            addMovement(currentUser.id, 'restar', appState.precioViaje, 'Pago Viaje'); 
+            updateWalletDisplay(); 
+        }
         startRadar();
     }
 
@@ -528,6 +544,9 @@
         closeAll();
         document.getElementById('radar').classList.remove('hidden');
         document.getElementById('search-msg').classList.remove('hidden');
+        document.getElementById('p-banners').classList.add('hidden-view');
+        document.getElementById('p-wallet').classList.add('hidden-view');
+        document.getElementById('p-header').classList.add('hidden-view');
         setTimeout(() => { showDriverSelection(); }, 3000);
     }
 
@@ -541,11 +560,35 @@
 
     function renderAvailableDrivers() {
         const container = document.getElementById('driver-cards-container');
-        container.innerHTML = `<div class="bg-white p-5 rounded-[2rem] shadow-lg border flex flex-col space-y-4"><button onclick="location.reload()" class="bg-red-600 text-white py-3 rounded-2xl text-[10px] font-black uppercase italic">Aceptar</button></div>`;
+        container.innerHTML = '';
+        const drivers = [
+            { id: 'd1', name: "Luis Jiménez", rating: "4.9", vehicle: "Nissan Versa", plate: "ABC-123-D", time: "3 min" },
+            { id: 'd2', name: "Sofía Martínez", rating: "4.7", vehicle: "Chevrolet Aveo", plate: "XYZ-789-M", time: "5 min" }
+        ];
+        drivers.forEach(dr => {
+            container.innerHTML += `
+                <div id="dr-card-${dr.id}" class="bg-white p-5 rounded-[2rem] shadow-lg border flex flex-col space-y-4">
+                    <div class="flex items-center gap-4">
+                        <div class="w-14 h-14 bg-red-600 rounded-full flex items-center justify-center text-white font-black italic border-2 border-white">${dr.name.charAt(0)}</div>
+                        <div class="flex-1">
+                            <h4 class="font-black italic uppercase text-xs">${dr.name}</h4>
+                            <p class="text-[9px] font-bold text-gray-400 uppercase">${dr.vehicle} • ${dr.plate}</p>
+                        </div>
+                        <span class="text-[10px] font-black italic text-yellow-500">★ ${dr.rating}</span>
+                    </div>
+                    <div class="flex justify-between py-2 border-y border-gray-50 italic font-black text-[10px]">
+                        <span>${dr.time}</span><span>$${appState.precioViaje.toFixed(2)} MXN</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <button onclick="document.getElementById('dr-card-${dr.id}').remove()" class="bg-gray-100 py-3 rounded-2xl text-[10px] font-black uppercase italic">Rechazar</button>
+                        <button onclick="alert('Confirmado'); location.reload()" class="bg-red-600 text-white py-3 rounded-2xl text-[10px] font-black uppercase italic">Aceptar</button>
+                    </div>
+                </div>`;
+        });
         lucide.createIcons();
     }
 
-    // Auth System (ACTUALIZADO PARA CARGAR PERFIL VISUAL)[cite: 1]
+    // Auth System
     function handleAuth() {
         const userIn = document.getElementById('login-email').value.trim();
         const passIn = document.getElementById('login-pass').value.trim();
@@ -559,22 +602,15 @@
             const user = pasajeros.find(u => (u.usuario === userIn.toLowerCase() || u.correo === userIn.toLowerCase()) && u.pass === passIn);
             if (user) { 
                 currentUser = user;
-
-                // INYECTAR DATOS EN LA NUEVA SECCIÓN DE PERFIL[cite: 1]
-                document.getElementById('side-p-photo').src = user.foto || '';
-                document.getElementById('side-p-name').innerText = user.name;
-                document.getElementById('side-role').innerText = "Pasajero Verificado";
-
                 document.getElementById('login-screen').classList.add('hidden'); 
                 document.getElementById('passenger-view').classList.remove('hidden');
-                document.getElementById('nav-passenger').classList.remove('hidden'); 
-                updateWalletDisplay();
+                document.getElementById('nav-passenger').classList.remove('hidden'); updateWalletDisplay();
             } else { alert('Incorrecto'); }
         }
         lucide.createIcons();
     }
 
-    // UI Helpers[cite: 1]
+    // UI Helpers
     function openMenu() { document.getElementById('sidebar').classList.add('open'); document.getElementById('overlay').classList.add('opacity-100', 'pointer-events-auto'); }
     function closeAll() { document.getElementById('sidebar').classList.remove('open'); document.getElementById('cost-sheet').classList.remove('active'); document.getElementById('overlay').classList.remove('opacity-100', 'pointer-events-auto'); }
     function toggleAccordion(id) { document.getElementById(id).classList.toggle('expanded'); }
@@ -582,17 +618,35 @@
     function setPay(btn, method) { document.querySelectorAll('.payment-opt').forEach(b => b.classList.remove('selected')); btn.classList.add('selected'); appState.selectedPayment = method; }
     function handleDriverBack() { document.getElementById('driver-registration-view').classList.add('hidden'); document.getElementById('login-screen').classList.remove('hidden'); }
 
-    // Navigation[cite: 1]
+    // Unified Registration Navigation
     function goToStep(n) {
-        const steps = ['step-photo', 'step-name', 'step-ine-front', 'step-ine-back', 'step-vehicle', 'step-circ', 'step-v-photo', 'step-phone'];
-        steps.forEach(s => document.getElementById(s)?.classList.add('hidden'));
-        if (steps[n - 1]) document.getElementById(steps[n - 1]).classList.remove('hidden');
+        const steps = ['step-photo', 'step-name', 'step-ine-front', 'step-ine-back', 'step-vehicle', 'step-circ', 'step-v-photo', 'step-phone', 'step-finish-driver', 'step-finish-passenger'];
+        steps.forEach(s => { const el = document.getElementById(s); if (el) el.classList.add('hidden'); });
+        
+        const normalSteps = ['step-photo', 'step-name', 'step-ine-front', 'step-ine-back', 'step-vehicle', 'step-circ', 'step-v-photo', 'step-phone'];
+        if (normalSteps[n - 1]) document.getElementById(normalSteps[n - 1]).classList.remove('hidden');
         currentStep = n;
         lucide.createIcons();
     }
     
-    function processImage(i) { if (i.files[0]) { document.getElementById('driver-photo-preview').src = URL.createObjectURL(i.files[0]); document.getElementById('driver-photo-preview').classList.remove('hidden'); document.getElementById('placeholder-icon').classList.add('hidden'); document.getElementById('btn-photo-next').disabled = false; document.getElementById('btn-photo-next').classList.replace('bg-gray-300', 'bg-red-600'); } }
-    function processFile(i, p, b) { if (i.files[0]) { document.getElementById(p).src = URL.createObjectURL(i.files[0]); document.getElementById(p).classList.remove('hidden'); document.getElementById(b).disabled = false; document.getElementById(b).classList.replace('bg-gray-300', 'bg-red-600'); } }
+    // Media & Validation
+    function processImage(i) { 
+        if (i.files[0]) { 
+            document.getElementById('driver-photo-preview').src = URL.createObjectURL(i.files[0]); 
+            document.getElementById('driver-photo-preview').classList.remove('hidden'); 
+            document.getElementById('placeholder-icon').classList.add('hidden'); 
+            document.getElementById('btn-photo-next').disabled = false; 
+            document.getElementById('btn-photo-next').classList.replace('bg-gray-300', 'bg-red-600'); 
+        } 
+    }
+    function processFile(i, p, b) { 
+        if (i.files[0]) { 
+            document.getElementById(p).src = URL.createObjectURL(i.files[0]); 
+            document.getElementById(p).classList.remove('hidden'); 
+            document.getElementById(b).disabled = false; 
+            document.getElementById(b).classList.replace('bg-gray-300', 'bg-red-600'); 
+        } 
+    }
     function checkName(i) { const b = document.getElementById('btn-name-next'); if(i.value.length > 3) { b.disabled = false; b.classList.replace('bg-gray-300', 'bg-red-600'); } }
     function checkVehicle() { document.getElementById('btn-v-next').disabled = false; document.getElementById('btn-v-next').classList.replace('bg-gray-300', 'bg-red-600'); }
     function checkPhone(i) { const b = document.getElementById('btn-phone-next'); if(i.value.length >= 10) { b.disabled = false; b.classList.replace('bg-gray-300', 'bg-red-600'); } }
@@ -606,18 +660,41 @@
         goToStep(1);
     }
 
-    function handleStepNameNext() { if (registrationMode === 'passenger') goToStep(8); else goToStep(3); }
+    function handleStepNameNext() { 
+        // Pasajero salta requisitos vehiculares[cite: 1]
+        if (registrationMode === 'passenger') goToStep(8); 
+        else goToStep(3); 
+    }
+
     function handleStepPhoneNext() {
-        document.getElementById('step-phone').classList.add('hidden');
+        const steps = ['step-photo', 'step-name', 'step-ine-front', 'step-ine-back', 'step-vehicle', 'step-circ', 'step-v-photo', 'step-phone'];
+        steps.forEach(s => { const el = document.getElementById(s); if (el) el.classList.add('hidden'); });
+
         if (registrationMode === 'passenger') document.getElementById('step-finish-passenger').classList.remove('hidden');
         else document.getElementById('step-finish-driver').classList.remove('hidden');
         lucide.createIcons();
     }
     
     function saveDriverRequest() { 
+        const newDriver = {
+            id: String(Date.now()),
+            name: document.getElementById('dr-name').value,
+            usuario: document.getElementById('reg-user').value || 'Sin usuario',
+            pass: document.getElementById('reg-pass').value || 'Sin pass',
+            correo: document.getElementById('reg-email').value || 'Sin correo',
+            phone: document.getElementById('dr-phone').value,
+            vehiculo: {
+                marca: document.getElementById('v-brand').value,
+                modelo: document.getElementById('v-model').value,
+                placa: document.getElementById('v-plate').value
+            },
+            status: 'pendiente',
+            date: new Date().toLocaleDateString()
+        };
         let drivers = JSON.parse(localStorage.getItem('driver_requests') || '[]');
-        drivers.push({ id: String(Date.now()), name: document.getElementById('dr-name').value, status: 'pendiente', date: new Date().toLocaleDateString() });
+        drivers.push(newDriver);
         localStorage.setItem('driver_requests', JSON.stringify(drivers));
+        alert('Solicitud enviada. En revisión.'); 
         location.reload(); 
     }
 </script>

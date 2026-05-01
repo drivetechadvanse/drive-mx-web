@@ -485,10 +485,11 @@
                 <div id="card-${req.id}" onclick="toggleCardSelection('${req.id}')" class="bg-white p-5 rounded-[2rem] shadow-sm border border-gray-100 flex flex-col gap-4 cursor-pointer relative transition-all">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-3">
-                            <div class="w-12 h-12 bg-red-600 rounded-2xl flex items-center justify-center text-white"><i data-lucide="car" class="w-6 h-6"></i></div>
+                            <img src="${req.foto || ''}" class="w-12 h-12 bg-red-600 rounded-2xl flex items-center justify-center object-cover shadow-lg">
                             <div>
                                 <h4 class="text-[12px] font-black uppercase italic text-gray-900 leading-none">${req.name}</h4>
-                                <p class="text-[8px] font-bold text-gray-400 mt-1">${req.vehiculo?.marca || 'Motorista'}</p>
+                                <p class="text-[8px] font-bold text-gray-400 mt-1">TEL: ${req.phone || 'NO REGISTRADO'}</p>
+                                <p class="text-[8px] font-black text-red-600 uppercase mt-0.5">${req.vehiculo?.marca || 'Motorista'} - ${req.date}</p>
                             </div>
                         </div>
                         <span class="text-[8px] font-black px-3 py-1 bg-yellow-100 text-yellow-600 rounded-full uppercase italic">Pendiente</span>
@@ -682,6 +683,8 @@
             id: String(Date.now()),
             name: document.getElementById('dr-name').value,
             usuario: document.getElementById('reg-user').value || 'driver_' + Date.now(),
+            phone: document.getElementById('dr-phone').value,
+            foto: tempBase64Photo,
             status: 'pendiente',
             date: new Date().toLocaleDateString(),
             vehiculo: { marca: document.getElementById('v-brand').value }

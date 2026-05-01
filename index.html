@@ -232,18 +232,33 @@
     </div>
 
     <!-- Panel Operativo Conductor (NUEVO) -->
-    <div id="driver-view-active" class="hidden h-full flex flex-col bg-gray-50">
+    <div id="driver-view-active" class="hidden h-full flex flex-col bg-gray-50 relative">
+
+        <div id="driver-sidebar" class="absolute inset-y-0 left-0 w-72 bg-white shadow-2xl z-[200] transform -translate-x-full transition-transform duration-300">
+            <div class="p-5 border-b flex items-center justify-between">
+                <h3 class="text-xs font-black italic uppercase text-gray-800">Menú Driver</h3>
+                <button onclick="closeDriverSidebar()" class="p-2 rounded-lg bg-gray-100">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+            <div class="p-4"></div>
+        </div>
+
+        <div id="driver-sidebar-overlay" onclick="closeDriverSidebar()" class="hidden absolute inset-0 bg-black/40 z-[190]"></div>
         <header class="px-4 py-3 flex items-center justify-between border-b bg-gray-900 text-white z-10 shrink-0">
             <div class="flex items-center gap-3">
+                <button onclick="openDriverSidebar()" class="p-2 rounded-lg bg-white/10">
+                    <i data-lucide="menu" class="w-5 h-5"></i>
+                </button>
                 <div class="w-8 h-8 rounded-full border-2 border-red-600 overflow-hidden bg-gray-800">
                     <img id="active-driver-photo" src="" class="w-full h-full object-cover">
                 </div>
                 <h2 class="text-xs font-black italic uppercase">Panel <span class="text-red-600">Driver</span></h2>
             </div>
-            <div id="status-badge" class="flex items-center gap-2 bg-red-600/20 px-3 py-1 rounded-full border border-red-600/30">
+            <button onclick="toggleDriverAvailability()" id="status-badge" class="flex items-center gap-2 bg-red-600/20 px-3 py-1 rounded-full border border-red-600/30">
                 <div id="status-dot" class="w-2 h-2 rounded-full bg-red-600"></div>
                 <span id="status-text" class="text-[9px] font-black uppercase italic text-red-600">No Disponible</span>
-            </div>
+            </button>
         </header>
 
         <main class="flex-1 flex flex-col p-6 space-y-6 overflow-y-auto">
@@ -511,45 +526,82 @@
 
         isAvailable = !isAvailable;
 
-        const btn = document.getElementById('driver-status-toggle');
-        const icon = document.getElementById('driver-state-icon');
-        const title = document.getElementById('driver-state-title');
-        const sub = document.getElementById('driver-state-sub');
+        const statusBadge = document.getElementById('status-badge');
+        const statusDot = document.getElementById('status-dot');
+        const statusText = document.getElementById('status-text');
+
+        const mainMsg = document.getElementById('driver-main-msg');
+        const subMsg = document.getElementById('driver-sub-msg');
+
+        const pulse = document.getElementById('search-pulse-driver');
+        const offlineIcon = document.getElementById('offline-icon-driver');
+
+        const services = document.getElementById('available-services-section');
+
+        const connectBtn = document.getElementById('toggle-driver-status');
 
         if (isAvailable) {
 
-            btn.innerText = 'Disponible';
-            btn.classList.remove('bg-red-600');
-            btn.classList.add('bg-green-600');
+            statusBadge.classList.remove('bg-red-600/20','border-red-600/30');
+            statusBadge.classList.add('bg-green-600/20','border-green-600/30');
 
-            icon.classList.remove('bg-gray-200');
-            icon.classList.add('bg-green-100');
+            statusDot.classList.remove('bg-red-600');
+            statusDot.classList.add('bg-green-500');
 
-            icon.innerHTML = `
-                <i data-lucide="radio" class="w-10 h-10 text-green-600"></i>
-            `;
+            statusText.classList.remove('text-red-600');
+            statusText.classList.add('text-green-500');
+            statusText.innerText = 'Disponible';
 
-            title.innerText = 'Conectado';
-            sub.innerText = 'Buscando servicios';
+            mainMsg.innerText = 'Estás conectado';
+            subMsg.innerText = 'Buscando viajes cercanos';
+
+            pulse.classList.remove('hidden');
+            offlineIcon.classList.add('hidden');
+
+            services.classList.remove('hidden');
+
+            connectBtn.innerText = 'DESCONECTARME';
+            connectBtn.classList.remove('bg-red-600');
+            connectBtn.classList.add('bg-green-600');
+
+            renderMockServices();
 
         } else {
 
-            btn.innerText = 'No Disponible';
-            btn.classList.remove('bg-green-600');
-            btn.classList.add('bg-red-600');
+            statusBadge.classList.remove('bg-green-600/20','border-green-600/30');
+            statusBadge.classList.add('bg-red-600/20','border-red-600/30');
 
-            icon.classList.remove('bg-green-100');
-            icon.classList.add('bg-gray-200');
+            statusDot.classList.remove('bg-green-500');
+            statusDot.classList.add('bg-red-600');
 
-            icon.innerHTML = `
-                <i data-lucide="power" class="w-10 h-10 text-gray-500"></i>
-            `;
+            statusText.classList.remove('text-green-500');
+            statusText.classList.add('text-red-600');
+            statusText.innerText = 'No Disponible';
 
-            title.innerText = 'Desconectado';
-            sub.innerText = 'Activa tu disponibilidad';
+            mainMsg.innerText = 'Estás desconectado';
+            subMsg.innerText = 'Activa tu estado para recibir viajes';
+
+            pulse.classList.add('hidden');
+            offlineIcon.classList.remove('hidden');
+
+            services.classList.add('hidden');
+
+            connectBtn.innerText = 'CONECTARME AHORA';
+            connectBtn.classList.remove('bg-green-600');
+            connectBtn.classList.add('bg-red-600');
         }
 
         lucide.createIcons();
+    }
+
+    function openDriverSidebar() {
+        document.getElementById('driver-sidebar').classList.remove('-translate-x-full');
+        document.getElementById('driver-sidebar-overlay').classList.remove('hidden');
+    }
+
+    function closeDriverSidebar() {
+        document.getElementById('driver-sidebar').classList.add('-translate-x-full');
+        document.getElementById('driver-sidebar-overlay').classList.add('hidden');
     }
 
     function renderMockServices() {

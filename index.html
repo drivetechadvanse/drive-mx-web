@@ -274,15 +274,7 @@
 </div>
 
 
-            <div id="available-services-section" class="hidden space-y-4">
-                <div class="flex items-center justify-between px-2">
-                    <h4 class="text-[10px] font-black text-gray-400 uppercase italic">Servicios Disponibles</h4>
-                    <span class="text-[9px] font-black text-red-600 animate-pulse">BUSCANDO...</span>
-                </div>
-                <div id="driver-services-list" class="space-y-3">
-                    <p class="text-center py-10 text-[9px] font-bold text-gray-300 uppercase italic">No hay servicios en tu zona</p>
-                </div>
-            </div>
+            
         </main>
     </div>
 
@@ -535,7 +527,7 @@
         const pulse = document.getElementById('search-pulse-driver');
         
 
-        const services = document.getElementById('available-services-section');
+        
 
         
 
@@ -555,9 +547,9 @@
 
             pulse.classList.remove('hidden');
 
-            services.classList.remove('hidden');
+            
 
-            renderMockServices();
+
 
         } else {
 
@@ -573,7 +565,7 @@
 
             pulse.classList.add('hidden');
 
-            services.classList.add('hidden');
+            
         }
 
         lucide.createIcons();

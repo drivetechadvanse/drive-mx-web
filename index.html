@@ -14,6 +14,23 @@
         document.getElementById('driver-sidebar-overlay').classList.add('hidden');
     }
 
+    function openPassengerFromDriver() {
+        closeDriverSidebar();
+
+        document.getElementById('driver-view-active').classList.add('hidden');
+        document.getElementById('driver-selection-view').classList.add('hidden');
+
+        document.getElementById('passenger-view').classList.remove('hidden');
+
+        document.getElementById('nav-passenger').classList.remove('hidden');
+
+        if (typeof updateProfileUI === 'function') {
+            updateProfileUI();
+        }
+
+        lucide.createIcons();
+    }
+
 </script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
@@ -241,7 +258,12 @@
                     <i data-lucide="x" class="w-4 h-4"></i>
                 </button>
             </div>
-            <div class="p-4"></div>
+            <div class="p-4">
+                <button onclick="openPassengerFromDriver()" class="w-full flex items-center gap-3 bg-gray-100 hover:bg-gray-200 transition-all rounded-2xl px-4 py-4 text-left">
+                    <i data-lucide="users" class="w-5 h-5 text-red-600"></i>
+                    <span class="text-[11px] font-black uppercase italic text-gray-800">Pasajeros</span>
+                </button>
+            </div>
         </div>
 
         <div id="driver-sidebar-overlay" onclick="closeDriverSidebar()" class="hidden absolute inset-0 bg-black/40 z-[190]"></div>

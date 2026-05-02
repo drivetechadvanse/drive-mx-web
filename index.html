@@ -531,14 +531,9 @@
         const statusText = document.getElementById('status-text');
 
         const mainMsg = document.getElementById('driver-main-msg');
-        const subMsg = document.getElementById('driver-sub-msg');
-
         const pulse = document.getElementById('search-pulse-driver');
-        const offlineIcon = document.getElementById('offline-icon-driver');
 
         const services = document.getElementById('available-services-section');
-
-        const connectBtn = document.getElementById('toggle-driver-status');
 
         if (isAvailable) {
 
@@ -552,17 +547,11 @@
             statusText.classList.add('text-green-500');
             statusText.innerText = 'Disponible';
 
-            mainMsg.innerText = 'Estás conectado';
-            subMsg.innerText = 'Buscando viajes cercanos';
+            mainMsg.innerText = 'Buscando viajes cercanos';
 
             pulse.classList.remove('hidden');
-            offlineIcon.classList.add('hidden');
 
             services.classList.remove('hidden');
-
-            connectBtn.innerText = 'DESCONECTARME';
-            connectBtn.classList.remove('bg-red-600');
-            connectBtn.classList.add('bg-green-600');
 
             renderMockServices();
 
@@ -578,17 +567,11 @@
             statusText.classList.add('text-red-600');
             statusText.innerText = 'No Disponible';
 
-            mainMsg.innerText = 'Estás desconectado';
-            subMsg.innerText = 'Activa tu estado para recibir viajes';
+            mainMsg.innerText = 'Buscando viajes cercanos';
 
             pulse.classList.add('hidden');
-            offlineIcon.classList.remove('hidden');
 
             services.classList.add('hidden');
-
-            connectBtn.innerText = 'CONECTARME AHORA';
-            connectBtn.classList.remove('bg-green-600');
-            connectBtn.classList.add('bg-red-600');
         }
 
         lucide.createIcons();

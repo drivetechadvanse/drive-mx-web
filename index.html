@@ -27,8 +27,6 @@
         .reg-label { font-size: 9px; font-weight: 900; color: #9ca3af; text-transform: uppercase; margin-bottom: 0.4rem; display: block; margin-left: 0.5rem; }
         .payment-opt.selected { border-color: #ef4444; background-color: #fef2f2; color: #ef4444; }
         .card-selected { border-color: #ef4444 !important; background-color: #fef2f2 !important; ring: 2px; ring-color: #ef4444; }
-        
-        /* Animación para pulso de búsqueda de viajes */
         .ping-slow { animation: ping 3s cubic-bezier(0, 0, 0.2, 1) infinite; }
     </style>
 </head>
@@ -52,12 +50,12 @@
             </div>
             <h3 id="side-user-name" class="text-sm font-black uppercase italic tracking-tighter">Cargando...</h3>
             <div class="flex items-center gap-4 mt-3">
-                <div class="flex flex-col">
+                <div class="flex flex-col text-center">
                     <span class="text-[8px] text-gray-400 font-bold uppercase">Calificación</span>
                     <span class="text-[10px] font-black text-yellow-500 italic">★ 5.0</span>
                 </div>
                 <div class="w-[1px] h-4 bg-gray-700"></div>
-                <div class="flex flex-col">
+                <div class="flex flex-col text-center">
                     <span class="text-[8px] text-gray-400 font-bold uppercase">Viajes</span>
                     <span id="side-user-trips" class="text-[10px] font-black text-white italic">0</span>
                 </div>
@@ -221,8 +219,8 @@
         </div>
     </div>
 
-    <!-- Panel Operativo Conductor (NUEVO) -->
-    <div id="driver-view-active" class="hidden h-full flex flex-col bg-gray-50">
+    <!-- Panel Operativo Conductor (ACTUALIZADO: PANTALLA BLANCA) -->
+    <div id="driver-view-active" class="hidden h-full flex flex-col bg-white">
         <header class="px-4 py-3 flex items-center justify-between border-b bg-gray-900 text-white z-10 shrink-0">
             <div class="flex items-center gap-3">
                 <div class="w-8 h-8 rounded-full border-2 border-red-600 overflow-hidden bg-gray-800">
@@ -236,21 +234,22 @@
             </div>
         </header>
 
-        <main class="flex-1 flex flex-col p-6 space-y-6 overflow-y-auto">
-            <div class="bg-white p-6 rounded-[2rem] shadow-xl border border-gray-100 flex flex-col items-center text-center">
-                <div id="search-pulse-driver" class="hidden w-16 h-16 bg-red-600 rounded-full flex items-center justify-center text-white mb-4 ping-slow">
-                    <i data-lucide="radar" class="w-8 h-8"></i>
-                </div>
-                <div id="offline-icon-driver" class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center text-gray-400 mb-4">
-                    <i data-lucide="power-off" class="w-8 h-8"></i>
-                </div>
+        <main class="flex-1 flex flex-col items-center justify-center p-6 space-y-6">
+            <div id="search-pulse-driver" class="hidden w-16 h-16 bg-red-600 rounded-full flex items-center justify-center text-white mb-4 ping-slow">
+                <i data-lucide="radar" class="w-8 h-8"></i>
+            </div>
+            <div id="offline-icon-driver" class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center text-gray-400 mb-4">
+                <i data-lucide="power-off" class="w-8 h-8"></i>
+            </div>
+            
+            <div class="text-center">
                 <h3 id="driver-main-msg" class="text-lg font-black italic uppercase text-gray-900">Estás desconectado</h3>
                 <p id="driver-sub-msg" class="text-[10px] font-bold text-gray-400 uppercase mt-2">Activa tu estado para recibir viajes</p>
-                
-                <button id="toggle-driver-status" onclick="toggleDriverAvailability()" class="mt-8 w-full bg-red-600 text-white py-4 rounded-2xl font-black text-[11px] uppercase italic shadow-lg active:scale-95 transition-all">CONECTARME AHORA</button>
             </div>
+            
+            <button id="toggle-driver-status" onclick="toggleDriverAvailability()" class="mt-8 w-full max-w-xs bg-red-600 text-white py-4 rounded-2xl font-black text-[11px] uppercase italic shadow-lg active:scale-95 transition-all">CONECTARME AHORA</button>
 
-            <div id="available-services-section" class="hidden space-y-4">
+            <div id="available-services-section" class="hidden w-full space-y-4 pt-6">
                 <div class="flex items-center justify-between px-2">
                     <h4 class="text-[10px] font-black text-gray-400 uppercase italic">Servicios Disponibles</h4>
                     <span class="text-[9px] font-black text-red-600 animate-pulse">BUSCANDO...</span>
@@ -278,7 +277,6 @@
             <h2 id="reg-main-title" class="ml-3 text-lg font-black italic uppercase tracking-tighter">REGISTRO <span class="text-red-600 uppercase">DRIVER</span></h2>
         </header>
         <div class="flex-1 overflow-y-auto p-6 pb-12">
-            <!-- Pasos del registro (sin cambios) -->
             <div id="step-photo" class="w-full flex flex-col items-center">
                 <h3 class="text-center font-black text-[10px] text-gray-400 uppercase mb-4 italic">Fotografía de Perfil</h3>
                 <div class="relative mb-8 mt-2">
@@ -348,7 +346,6 @@
                 </div>
                 <h2 class="text-xl font-black italic uppercase leading-none mb-4">REVISIÓN EN<br><span class="text-red-600">PROGRESO</span></h2>
                 <p class="text-[11px] font-bold text-gray-500 uppercase tracking-tight italic mb-10 px-4">Si todo sale bien, te activaremos en<br><span class="text-gray-900">menos de 24 hrs.</span></p>
-                <!-- Botón de confirmar driver modificado -->
                 <button onclick="saveDriverRequest()" class="w-full bg-red-600 text-white py-4 rounded-xl font-black text-[12px] uppercase italic transition-all shadow-xl shadow-red-600/30 active:scale-95">CONFIRMAR</button>
             </div>
 
@@ -371,7 +368,7 @@
     let currentAdminView = 'requests'; 
     let selectedIds = [];
     let currentUser = null;
-    let isAvailable = false; // Estado del conductor
+    let isAvailable = false; 
     let appState = {
         selectedPayment: 'efectivo',
         precioViaje: 120.00
@@ -452,7 +449,6 @@
         location.reload();
     }
 
-    // --- FUNCIÓN SOLICITADA: Registro y Acceso Automático a Panel Driver ---
     function saveDriverRequest() { 
         const driverId = "DRV_" + Date.now();
         const newDriver = {
@@ -472,31 +468,19 @@
             }
         };
 
-        // Guardar en base de datos de usuarios (como activo por petición de acceso directo)
         let db = JSON.parse(localStorage.getItem('db_usuarios_permanente') || '[]');
         db.push(newDriver);
         localStorage.setItem('db_usuarios_permanente', JSON.stringify(db));
-        
-        // Crear cartera
         saveWalletData(driverId, { saldo: 0.00, historial: [], trips: 0 });
 
-        // Acceso Automático
         currentUser = newDriver;
-        
-        // Ocultar registro, mostrar panel driver
         document.getElementById('driver-registration-view').classList.add('hidden');
         document.getElementById('driver-view-active').classList.remove('hidden');
-        
-        // Cargar foto en el panel driver
-        if(tempBase64Photo) {
-            document.getElementById('active-driver-photo').src = tempBase64Photo;
-        }
-        
+        if(tempBase64Photo) document.getElementById('active-driver-photo').src = tempBase64Photo;
         alert('¡Bienvenido Driver! Tu cuenta ha sido activada automáticamente.');
         lucide.createIcons();
     }
 
-    // --- FUNCIONES DEL PANEL CONDUCTOR ---
     function toggleDriverAvailability() {
         const btn = document.getElementById('toggle-driver-status');
         const badge = document.getElementById('status-badge');
@@ -557,10 +541,6 @@
                         <i data-lucide="map-pin" class="w-3 h-3 text-red-600"></i>
                         <span class="text-[9px] font-bold text-gray-600 uppercase">Centro Histórico</span>
                     </div>
-                    <div class="flex items-center gap-2">
-                        <i data-lucide="navigation" class="w-3 h-3 text-gray-400"></i>
-                        <span class="text-[9px] font-bold text-gray-400 uppercase italic">A 1.2 km de ti</span>
-                    </div>
                 </div>
                 <button onclick="alert('Viaje Aceptado')" class="w-full bg-green-600 text-white py-2 rounded-xl font-black text-[9px] uppercase italic">Aceptar Viaje</button>
             </div>
@@ -583,7 +563,6 @@
             topPhoto.classList.remove('hidden');
             topIcon.classList.add('hidden');
         }
-
         const wallet = getWalletData(currentUser.id);
         sideTrips.innerText = wallet.trips || 0;
         updateWalletDisplay();
@@ -602,11 +581,9 @@
         } else {
             const db = JSON.parse(localStorage.getItem('db_usuarios_permanente') || '[]');
             const user = db.find(u => (u.usuario === userIn.toLowerCase() || u.correo === userIn.toLowerCase()) && u.pass === passIn);
-            
             if (user) { 
                 currentUser = user;
                 document.getElementById('login-screen').classList.add('hidden'); 
-                
                 if (user.role === 'conductor') {
                     document.getElementById('driver-view-active').classList.remove('hidden');
                     if(user.foto) document.getElementById('active-driver-photo').src = user.foto;
@@ -623,7 +600,6 @@
 
     function renderAdminPassengers() {
         currentAdminView = 'passengers';
-        selectedIds = [];
         const container = document.getElementById('admin-requests-container');
         const reqs = JSON.parse(localStorage.getItem('db_usuarios_permanente') || '[]');
         document.getElementById('admin-list-title').innerText = "Pasajeros Registrados";
@@ -636,7 +612,6 @@
                             <img src="${req.foto || ''}" class="w-12 h-12 bg-gray-900 rounded-2xl object-cover shadow-lg">
                             <div>
                                 <h4 class="text-[12px] font-black uppercase italic text-gray-900 leading-none">${req.name}</h4>
-                                <p class="text-[8px] font-bold text-gray-400 mt-1">ID: ${req.id} | TEL: ${req.phone || 'N/A'}</p>
                             </div>
                         </div>
                         <span class="text-[8px] font-black px-3 py-1 bg-green-100 text-green-600 rounded-full uppercase italic border border-green-200">Activo</span>
@@ -647,7 +622,7 @@
     }
 
     function renderAdminRequests() {
-        currentAdminView = 'requests'; selectedIds = [];
+        currentAdminView = 'requests'; 
         const container = document.getElementById('admin-requests-container');
         const reqs = JSON.parse(localStorage.getItem('driver_requests') || '[]');
         document.getElementById('admin-list-title').innerText = "Solicitudes Conductor";
@@ -657,11 +632,9 @@
                 <div id="card-${req.id}" onclick="toggleCardSelection('${req.id}')" class="bg-white p-5 rounded-[2rem] shadow-sm border border-gray-100 flex flex-col gap-4 cursor-pointer relative transition-all">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-3">
-                            <img src="${req.foto || ''}" class="w-12 h-12 bg-red-600 rounded-2xl flex items-center justify-center object-cover shadow-lg">
+                            <img src="${req.foto || ''}" class="w-12 h-12 bg-red-600 rounded-2xl object-cover shadow-lg">
                             <div>
                                 <h4 class="text-[12px] font-black uppercase italic text-gray-900 leading-none">${req.name}</h4>
-                                <p class="text-[8px] font-bold text-gray-400 mt-1">TEL: ${req.phone || 'NO REGISTRADO'}</p>
-                                <p class="text-[8px] font-black text-red-600 uppercase mt-0.5">${req.vehiculo?.marca || 'Motorista'} - ${req.date}</p>
                             </div>
                         </div>
                         <span class="text-[8px] font-black px-3 py-1 bg-yellow-100 text-yellow-600 rounded-full uppercase italic">Pendiente</span>
@@ -679,56 +652,47 @@
     }
 
     function eliminarSeleccionados() {
-        if (selectedIds.length === 0) { alert("Selecciona registros para eliminar"); return; }
+        if (selectedIds.length === 0) { alert("Selecciona registros"); return; }
         const key = (currentAdminView === 'passengers') ? 'db_usuarios_permanente' : 'driver_requests';
         let data = JSON.parse(localStorage.getItem(key) || '[]');
         const newData = data.filter(item => !selectedIds.includes(String(item.id)));
         localStorage.setItem(key, JSON.stringify(newData));
         if (currentAdminView === 'passengers') renderAdminPassengers();
         else renderAdminRequests();
-        selectedIds = []; alert("Registros eliminados.");
+        selectedIds = [];
     }
 
-    let userTargetAdmin = null;
     function openAdminWallet() { 
         closeAll(); document.getElementById('admin-dashboard').classList.add('hidden'); 
         document.getElementById('admin-wallet-section').classList.remove('hidden');
         document.getElementById('admin-menu-btn').classList.add('hidden');
         document.getElementById('admin-back-btn').classList.remove('hidden');
-        document.getElementById('admin-title').innerHTML = 'CARTERA <span class="text-red-600 text-lg">ADMIN</span>';
     }
     function closeAdminWallet() { 
         document.getElementById('admin-dashboard').classList.remove('hidden');
         document.getElementById('admin-wallet-section').classList.add('hidden');
         document.getElementById('admin-menu-btn').classList.remove('hidden');
         document.getElementById('admin-back-btn').classList.add('hidden');
-        document.getElementById('admin-title').innerHTML = 'PANEL <span class="text-red-600 text-lg">ADMIN</span>';
     }
+
     function searchPassengerInWallet() {
         const term = document.getElementById('admin-search-user').value.toLowerCase().trim();
         const pasajeros = JSON.parse(localStorage.getItem('db_usuarios_permanente') || '[]');
-        userTargetAdmin = pasajeros.find(u => u.name.toLowerCase().includes(term) || u.correo.toLowerCase().includes(term) || u.usuario === term);
+        let userTargetAdmin = pasajeros.find(u => u.name.toLowerCase().includes(term));
         const disp = document.getElementById('admin-view-saldo');
         if (userTargetAdmin) {
             const wallet = getWalletData(userTargetAdmin.id);
             disp.innerText = `$${wallet.saldo.toFixed(2)} MXN`;
-            document.getElementById('admin-search-status').innerText = `Pasajero: ${userTargetAdmin.name}`;
             renderHistorial(wallet.historial, document.getElementById('admin-movimientos-list'));
         } else { disp.innerText = "No encontrado"; }
     }
+
     function renderHistorial(hist, container) {
         container.innerHTML = hist.length === 0 ? '<p class="text-[8px] text-center uppercase py-4">Sin movimientos</p>' : '';
         hist.forEach(m => {
             const color = m.tipo === 'sumar' ? 'text-green-600' : 'text-red-600';
             container.innerHTML += `<div class="bg-white p-3 rounded-xl border flex justify-between items-center"><div><p class="text-[9px] uppercase italic font-black">${m.desc}</p></div><p class="text-[10px] font-black ${color}">$${m.monto.toFixed(2)}</p></div>`;
         });
-    }
-    function adminModificarSaldo(tipo) {
-        if (!userTargetAdmin) return;
-        const monto = parseFloat(document.getElementById('admin-monto-input').value);
-        if (isNaN(monto) || monto <= 0) return;
-        addMovement(userTargetAdmin.id, tipo, monto, tipo === 'sumar' ? 'Recarga Admin' : 'Ajuste Admin');
-        document.getElementById('admin-monto-input').value = ''; searchPassengerInWallet();
     }
 
     function updateWalletDisplay() {
@@ -739,13 +703,8 @@
 
     function handleRequest() {
         const wallet = getWalletData(currentUser.id);
-        if (wallet.saldo < 0) { alert("Saldo negativo. Recarga para continuar."); return; }
-        if (appState.selectedPayment === 'cartera' && wallet.saldo < appState.precioViaje) { 
-            alert('Saldo insuficiente.'); return; 
-        }
-        if (appState.selectedPayment === 'cartera') { 
-            addMovement(currentUser.id, 'restar', appState.precioViaje, 'Pago Viaje'); 
-        }
+        if (appState.selectedPayment === 'cartera' && wallet.saldo < appState.precioViaje) { alert('Saldo insuficiente.'); return; }
+        if (appState.selectedPayment === 'cartera') addMovement(currentUser.id, 'restar', appState.precioViaje, 'Pago Viaje');
         wallet.trips = (wallet.trips || 0) + 1;
         saveWalletData(currentUser.id, wallet);
         updateProfileUI();
@@ -756,48 +715,7 @@
         closeAll();
         document.getElementById('radar').classList.remove('hidden');
         document.getElementById('search-msg').classList.remove('hidden');
-        document.getElementById('p-banners').classList.add('hidden-view');
-        document.getElementById('p-wallet').classList.add('hidden-view');
-        document.getElementById('p-header').classList.add('hidden-view');
-        setTimeout(() => { showDriverSelection(); }, 3000);
-    }
-
-    function showDriverSelection() {
-        document.getElementById('radar').classList.add('hidden');
-        document.getElementById('search-msg').classList.add('hidden');
-        document.getElementById('passenger-view').classList.add('hidden');
-        document.getElementById('driver-selection-view').classList.remove('hidden');
-        renderAvailableDrivers();
-    }
-
-    function renderAvailableDrivers() {
-        const container = document.getElementById('driver-cards-container');
-        container.innerHTML = '';
-        const drivers = [
-            { id: 'd1', name: "Luis Jiménez", rating: "4.9", vehicle: "Nissan Versa", plate: "ABC-123-D", time: "3 min" },
-            { id: 'd2', name: "Sofía Martínez", rating: "4.7", vehicle: "Chevrolet Aveo", plate: "XYZ-789-M", time: "5 min" }
-        ];
-        drivers.forEach(dr => {
-            container.innerHTML += `
-                <div class="bg-white p-5 rounded-[2rem] shadow-lg border flex flex-col space-y-4">
-                    <div class="flex items-center gap-4">
-                        <div class="w-14 h-14 bg-red-600 rounded-full flex items-center justify-center text-white font-black italic border-2 border-white">${dr.name.charAt(0)}</div>
-                        <div class="flex-1">
-                            <h4 class="font-black italic uppercase text-xs">${dr.name}</h4>
-                            <p class="text-[9px] font-bold text-gray-400 uppercase">${dr.vehicle} • ${dr.plate}</p>
-                        </div>
-                        <div class="text-right">
-                             <p class="text-[10px] font-black text-yellow-500">★ ${dr.rating}</p>
-                             <p class="text-[8px] font-bold text-gray-400 uppercase">${dr.time}</p>
-                        </div>
-                    </div>
-                    <div class="grid grid-cols-2 gap-3">
-                        <button onclick="alert('Conductor aceptado'); location.reload()" class="bg-green-600 text-white py-3 rounded-2xl text-[10px] font-black uppercase italic active:scale-95 transition-all">Aceptar</button>
-                        <button onclick="this.closest('.bg-white').remove()" class="bg-gray-200 text-gray-600 py-3 rounded-2xl text-[10px] font-black uppercase italic active:scale-95 transition-all">Rechazar</button>
-                    </div>
-                </div>`;
-        });
-        lucide.createIcons();
+        setTimeout(() => { alert('Buscando conductores...'); }, 3000);
     }
 
     function openMenu() { document.getElementById('sidebar').classList.add('open'); document.getElementById('overlay').classList.add('opacity-100', 'pointer-events-auto'); }
@@ -807,12 +725,9 @@
     function setPay(btn, method) { document.querySelectorAll('.payment-opt').forEach(b => b.classList.remove('selected')); btn.classList.add('selected'); appState.selectedPayment = method; }
     
     function goToStep(n) {
-        const steps = ['step-photo', 'step-name', 'step-ine-front', 'step-ine-back', 'step-vehicle', 'step-circ', 'step-v-photo', 'step-phone', 'step-finish-driver', 'step-finish-passenger'];
-        steps.forEach(s => { const el = document.getElementById(s); if(el) el.classList.add('hidden'); });
-        const normalSteps = ['step-photo', 'step-name', 'step-ine-front', 'step-ine-back', 'step-vehicle', 'step-circ', 'step-v-photo', 'step-phone'];
-        if (normalSteps[n - 1]) document.getElementById(normalSteps[n - 1]).classList.remove('hidden');
-        currentStep = n;
-        lucide.createIcons();
+        const steps = ['step-photo', 'step-name', 'step-ine-front', 'step-ine-back', 'step-vehicle', 'step-circ', 'step-v-photo', 'step-phone'];
+        steps.forEach(s => document.getElementById(s).classList.add('hidden'));
+        document.getElementById(steps[n - 1]).classList.remove('hidden');
     }
 
     function processFile(i, p, b) { 
@@ -832,24 +747,16 @@
         registrationMode = 'driver'; closeAll();
         document.getElementById('passenger-view').classList.add('hidden');
         document.getElementById('driver-registration-view').classList.remove('hidden');
-        document.getElementById('reg-main-title').innerHTML = 'REGISTRO <span class="text-red-600 uppercase">DRIVER</span>';
-        document.getElementById('fields-account').classList.add('hidden');
         goToStep(1);
     }
 
-    function handleStepNameNext() { 
-        if (registrationMode === 'passenger') goToStep(8); 
-        else goToStep(3); 
-    }
-
+    function handleStepNameNext() { if (registrationMode === 'passenger') goToStep(8); else goToStep(3); }
     function handleStepPhoneNext() {
-        const steps = ['step-photo', 'step-name', 'step-ine-front', 'step-ine-back', 'step-vehicle', 'step-circ', 'step-v-photo', 'step-phone'];
-        steps.forEach(s => { const el = document.getElementById(s); if(el) el.classList.add('hidden'); });
+        document.getElementById('step-phone').classList.add('hidden');
         if (registrationMode === 'passenger') document.getElementById('step-finish-passenger').classList.remove('hidden');
         else document.getElementById('step-finish-driver').classList.remove('hidden');
         lucide.createIcons();
     }
-
     function handleDriverBack() { document.getElementById('driver-registration-view').classList.add('hidden'); document.getElementById('login-screen').classList.remove('hidden'); }
 </script>
 </body>

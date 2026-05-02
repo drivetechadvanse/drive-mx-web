@@ -219,11 +219,11 @@
         </div>
     </div>
 
-    <!-- Panel Operativo Conductor (ACTUALIZADO: PANTALLA BLANCA) -->
+    <!-- Panel Operativo Conductor (PANTALLA LIMPIA - SOLO STATUS Y BOTÓN) -->
     <div id="driver-view-active" class="hidden h-full flex flex-col bg-white">
-        <header class="px-4 py-3 flex items-center justify-between border-b bg-gray-900 text-white z-10 shrink-0">
+        <header class="px-4 py-3 flex items-center justify-between border-b bg-white text-gray-900 z-10 shrink-0">
             <div class="flex items-center gap-3">
-                <div class="w-8 h-8 rounded-full border-2 border-red-600 overflow-hidden bg-gray-800">
+                <div class="w-8 h-8 rounded-full border-2 border-red-600 overflow-hidden bg-gray-100">
                     <img id="active-driver-photo" src="" class="w-full h-full object-cover">
                 </div>
                 <h2 class="text-xs font-black italic uppercase">Panel <span class="text-red-600">Driver</span></h2>
@@ -234,29 +234,27 @@
             </div>
         </header>
 
-        <main class="flex-1 flex flex-col items-center justify-center p-6 space-y-6">
-            <div id="search-pulse-driver" class="hidden w-16 h-16 bg-red-600 rounded-full flex items-center justify-center text-white mb-4 ping-slow">
-                <i data-lucide="radar" class="w-8 h-8"></i>
-            </div>
-            <div id="offline-icon-driver" class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center text-gray-400 mb-4">
-                <i data-lucide="power-off" class="w-8 h-8"></i>
+        <main class="flex-1 flex flex-col items-center justify-center p-6 bg-white">
+            <!-- Espacio para el pulso de radar (solo visible al estar activo) -->
+            <div id="search-pulse-driver" class="hidden w-24 h-24 bg-red-600 rounded-full flex items-center justify-center text-white mb-8 ping-slow">
+                <i data-lucide="radar" class="w-10 h-10"></i>
             </div>
             
-            <div class="text-center">
-                <h3 id="driver-main-msg" class="text-lg font-black italic uppercase text-gray-900">Estás desconectado</h3>
-                <p id="driver-sub-msg" class="text-[10px] font-bold text-gray-400 uppercase mt-2">Activa tu estado para recibir viajes</p>
+            <!-- Icono offline -->
+            <div id="offline-icon-driver" class="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center text-gray-300 mb-8 border-2 border-gray-100">
+                <i data-lucide="power" class="w-10 h-10"></i>
             </div>
-            
-            <button id="toggle-driver-status" onclick="toggleDriverAvailability()" class="mt-8 w-full max-w-xs bg-red-600 text-white py-4 rounded-2xl font-black text-[11px] uppercase italic shadow-lg active:scale-95 transition-all">CONECTARME AHORA</button>
 
-            <div id="available-services-section" class="hidden w-full space-y-4 pt-6">
-                <div class="flex items-center justify-between px-2">
-                    <h4 class="text-[10px] font-black text-gray-400 uppercase italic">Servicios Disponibles</h4>
-                    <span class="text-[9px] font-black text-red-600 animate-pulse">BUSCANDO...</span>
-                </div>
-                <div id="driver-services-list" class="space-y-3">
-                    <p class="text-center py-10 text-[9px] font-bold text-gray-300 uppercase italic">No hay servicios en tu zona</p>
-                </div>
+            <!-- El mensaje central ahora es invisible por defecto para mantener "limpio" -->
+            <h3 id="driver-main-msg" class="hidden"></h3>
+            <p id="driver-sub-msg" class="hidden"></p>
+            
+            <!-- Botón principal -->
+            <button id="toggle-driver-status" onclick="toggleDriverAvailability()" class="w-full max-w-xs bg-red-600 text-white py-5 rounded-2xl font-black text-[12px] uppercase italic shadow-2xl active:scale-95 transition-all">CONECTARME AHORA</button>
+
+            <!-- Sección de servicios oculta para mantener limpieza -->
+            <div id="available-services-section" class="hidden">
+                <div id="driver-services-list"></div>
             </div>
         </main>
     </div>
@@ -345,7 +343,6 @@
                     <i data-lucide="hourglass" class="w-12 h-12 text-red-600 animate-[spin_3s_linear_infinite]"></i>
                 </div>
                 <h2 class="text-xl font-black italic uppercase leading-none mb-4">REVISIÓN EN<br><span class="text-red-600">PROGRESO</span></h2>
-                <p class="text-[11px] font-bold text-gray-500 uppercase tracking-tight italic mb-10 px-4">Si todo sale bien, te activaremos en<br><span class="text-gray-900">menos de 24 hrs.</span></p>
                 <button onclick="saveDriverRequest()" class="w-full bg-red-600 text-white py-4 rounded-xl font-black text-[12px] uppercase italic transition-all shadow-xl shadow-red-600/30 active:scale-95">CONFIRMAR</button>
             </div>
 
@@ -354,7 +351,6 @@
                     <i data-lucide="check" class="w-12 h-12 text-white"></i>
                 </div>
                 <h2 class="text-2xl font-black italic uppercase leading-none mb-4 text-gray-900">CUENTA CREADA<br><span class="text-green-600">CORRECTAMENTE</span></h2>
-                <p class="text-[11px] font-bold text-gray-500 uppercase tracking-tight italic mb-10 px-4">Ya puedes iniciar sesión y comenzar a usar Drive MX.</p>
                 <button onclick="savePassengerRequest()" class="w-full bg-green-600 text-white py-4 rounded-xl font-black text-[12px] uppercase italic transition-all shadow-xl shadow-green-600/30 active:scale-95">CONTINUAR</button>
             </div>
         </div>
@@ -488,8 +484,6 @@
         const text = document.getElementById('status-text');
         const pulse = document.getElementById('search-pulse-driver');
         const offline = document.getElementById('offline-icon-driver');
-        const mainMsg = document.getElementById('driver-main-msg');
-        const subMsg = document.getElementById('driver-sub-msg');
         const services = document.getElementById('available-services-section');
 
         isAvailable = !isAvailable;
@@ -504,8 +498,6 @@
             text.classList.replace('text-red-600', 'text-green-500');
             pulse.classList.remove('hidden');
             offline.classList.add('hidden');
-            mainMsg.innerText = "Buscando Viajes";
-            subMsg.innerText = "Mantente cerca de zonas concurridas";
             services.classList.remove('hidden');
             renderMockServices();
         } else {
@@ -518,8 +510,6 @@
             text.classList.replace('text-green-500', 'text-red-600');
             pulse.classList.add('hidden');
             offline.classList.remove('hidden');
-            mainMsg.innerText = "Estás desconectado";
-            subMsg.innerText = "Activa tu estado para recibir viajes";
             services.classList.add('hidden');
         }
         lucide.createIcons();
@@ -528,19 +518,13 @@
     function renderMockServices() {
         const list = document.getElementById('driver-services-list');
         list.innerHTML = `
-            <div class="bg-white p-4 rounded-2xl border-2 border-red-600 shadow-lg animate-bounce-custom">
+            <div class="bg-white p-4 rounded-2xl border-2 border-red-600 shadow-lg animate-bounce-custom mt-10">
                 <div class="flex justify-between items-start mb-3">
                     <div>
                         <p class="text-[8px] font-black text-gray-400 uppercase italic">Nuevo Servicio</p>
                         <h5 class="text-sm font-black italic uppercase">Usuario: Maria G.</h5>
                     </div>
                     <span class="bg-green-100 text-green-600 text-[10px] font-black px-2 py-1 rounded-lg">$85.00</span>
-                </div>
-                <div class="space-y-2 mb-4">
-                    <div class="flex items-center gap-2">
-                        <i data-lucide="map-pin" class="w-3 h-3 text-red-600"></i>
-                        <span class="text-[9px] font-bold text-gray-600 uppercase">Centro Histórico</span>
-                    </div>
                 </div>
                 <button onclick="alert('Viaje Aceptado')" class="w-full bg-green-600 text-white py-2 rounded-xl font-black text-[9px] uppercase italic">Aceptar Viaje</button>
             </div>

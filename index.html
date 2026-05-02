@@ -679,10 +679,19 @@
     function renderAdminPassengers() {
         currentAdminView = 'passengers';
         selectedIds = [];
+
         const container = document.getElementById('admin-requests-container');
-        const reqs = JSON.parse(localStorage.getItem('db_usuarios_permanente') || '[]');
+
+        const reqs = JSON.parse(
+            localStorage.getItem('db_usuarios_permanente') || '[]'
+        ).filter(user => user.role === 'pasajero');
+
         document.getElementById('admin-list-title').innerText = "Pasajeros Registrados";
-        container.innerHTML = reqs.length === 0 ? '<p class="text-center text-[9px] uppercase py-10">Sin pasajeros</p>' : '';
+
+        container.innerHTML = reqs.length === 0
+            ? '<p class="text-center text-[9px] uppercase py-10">Sin pasajeros</p>'
+            : '';
+
         reqs.forEach(req => {
             container.innerHTML += `
                 <div id="card-${req.id}" onclick="toggleCardSelection('${req.id}')" class="bg-white p-5 rounded-[2rem] shadow-sm border border-gray-100 flex flex-col gap-4 cursor-pointer relative transition-all">
@@ -698,15 +707,26 @@
                     </div>
                 </div>`;
         });
+
         lucide.createIcons();
     }
 
     function renderAdminRequests() {
-        currentAdminView = 'requests'; selectedIds = [];
+        currentAdminView = 'requests';
+        selectedIds = [];
+
         const container = document.getElementById('admin-requests-container');
-        const reqs = JSON.parse(localStorage.getItem('driver_requests') || '[]');
-        document.getElementById('admin-list-title').innerText = "Solicitudes Conductor";
-        container.innerHTML = reqs.length === 0 ? '<p class="text-center text-[9px] uppercase py-10">Sin solicitudes</p>' : '';
+
+        const reqs = JSON.parse(
+            localStorage.getItem('db_usuarios_permanente') || '[]'
+        ).filter(user => user.role === 'conductor');
+
+        document.getElementById('admin-list-title').innerText = "Conductores Registrados";
+
+        container.innerHTML = reqs.length === 0
+            ? '<p class="text-center text-[9px] uppercase py-10">Sin conductores</p>'
+            : '';
+
         reqs.forEach(req => {
             container.innerHTML += `
                 <div id="card-${req.id}" onclick="toggleCardSelection('${req.id}')" class="bg-white p-5 rounded-[2rem] shadow-sm border border-gray-100 flex flex-col gap-4 cursor-pointer relative transition-all">
@@ -716,13 +736,14 @@
                             <div>
                                 <h4 class="text-[12px] font-black uppercase italic text-gray-900 leading-none">${req.name}</h4>
                                 <p class="text-[8px] font-bold text-gray-400 mt-1">TEL: ${req.phone || 'NO REGISTRADO'}</p>
-                                <p class="text-[8px] font-black text-red-600 uppercase mt-0.5">${req.vehiculo?.marca || 'Motorista'} - ${req.date}</p>
+                                <p class="text-[8px] font-black text-red-600 uppercase mt-0.5">${req.vehiculo?.marca || 'Conductor'} - ${req.date}</p>
                             </div>
                         </div>
-                        <span class="text-[8px] font-black px-3 py-1 bg-yellow-100 text-yellow-600 rounded-full uppercase italic">Pendiente</span>
+                        <span class="text-[8px] font-black px-3 py-1 bg-red-100 text-red-600 rounded-full uppercase italic">Conductor</span>
                     </div>
                 </div>`;
         });
+
         lucide.createIcons();
     }
 

@@ -5,27 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Drive MX | Pro System</title>
     <script src="https://cdn.tailwindcss.com"></script>
-<script>
-function openDriverSidebar() {
- document.getElementById("driver-sidebar").classList.remove("-translate-x-full");
- document.getElementById("driver-sidebar-overlay").classList.remove("hidden");
-}
-function closeDriverSidebar() {
- document.getElementById("driver-sidebar").classList.add("-translate-x-full");
- document.getElementById("driver-sidebar-overlay").classList.add("hidden");
-}
-function openPassengerFromDriver(){
- closeDriverSidebar();
- ['driver-view-active','driver-selection-view','admin-view','login-screen','driver-registration-view'].forEach(id=>{let el=document.getElementById(id); if(el) el.classList.add('hidden');});
- let pv=document.getElementById('passenger-view'); if(pv) pv.classList.remove('hidden');
- let nav=document.getElementById('nav-passenger'); if(nav) nav.classList.remove('hidden');
- let profile=document.getElementById('user-profile-header'); if(profile) profile.classList.remove('hidden');
- if(window.currentUser){window.currentUser.role='pasajero';}
- if(typeof updateProfileUI==='function'){updateProfileUI();}
- if(window.lucide){lucide.createIcons();}
-}
-</script>
-<scriptfunction openDriverSidebar() {
+<script>function openDriverSidebar() {
         document.getElementById('driver-sidebar').classList.remove('-translate-x-full');
         document.getElementById('driver-sidebar-overlay').classList.remove('hidden');
     }
@@ -109,7 +89,7 @@ function openPassengerFromDriver(){
                 </button>
                 <div id="admin-acc" class="accordion-content bg-gray-50/50 rounded-xl">
                     <button onclick="renderAdminRequests()" class="w-full text-left p-3 pl-10 text-[9px] font-bold text-gray-500 uppercase border-b border-white">Conductores</button>
-                    <button onclick="renderAdminPassengers()" class="w-full text-left p-3 pl-10 text-[9px] font-bold text-gray-500 uppercase border-b border-white">Pasajeros" onclick="openPassengerFromDriver()</button>
+                    <button onclick="renderAdminPassengers()" class="w-full text-left p-3 pl-10 text-[9px] font-bold text-gray-500 uppercase border-b border-white">Pasajeros</button>
                 </div>
                 <button onclick="openAdminWallet()" class="w-full flex items-center gap-3 p-3 text-gray-700 font-black hover:bg-gray-50 rounded-xl uppercase text-[10px] italic mt-1">
                     <i data-lucide="wallet" class="text-red-600 w-4 h-4"></i><span>Cartera Admin</span>
@@ -707,7 +687,7 @@ function openPassengerFromDriver(){
             localStorage.getItem('db_usuarios_permanente') || '[]'
         ).filter(user => user.role === 'pasajero');
 
-        document.getElementById('admin-list-title').innerText = "Pasajeros" onclick="openPassengerFromDriver() Registrados";
+        document.getElementById('admin-list-title').innerText = "Pasajeros Registrados";
 
         container.innerHTML = reqs.length === 0
             ? '<p class="text-center text-[9px] uppercase py-10">Sin pasajeros</p>'

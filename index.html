@@ -15,29 +15,29 @@
     }
 
     function openPassengerFromDriver() {
-    closeDriverSidebar();
-    document.getElementById('driver-view-active').classList.add('hidden');
-    document.getElementById('driver-selection-view').classList.add('hidden');
-    document.getElementById('admin-view').classList.add('hidden');
-    document.getElementById('login-screen').classList.add('hidden');
-    document.getElementById('driver-registration-view').classList.add('hidden');
+        closeDriverSidebar();
+        closeAll();
 
-    document.getElementById('passenger-view').classList.remove('hidden');
-    document.getElementById('nav-passenger').classList.remove('hidden');
-    document.getElementById('user-profile-header').classList.remove('hidden');
-    document.getElementById('nav-admin').classList.add('hidden');
-    document.getElementById('side-header-admin').classList.add('hidden');
+        ['driver-view-active','driver-selection-view','admin-view','login-screen','driver-registration-view'].forEach(function(id){
+            const el=document.getElementById(id); if(el) el.classList.add('hidden');
+        });
 
-    if (currentUser) { currentUser.role = 'pasajero'; }
-    if (typeof updateProfileUI === 'function') { updateProfileUI(); }
+        const pv=document.getElementById('passenger-view');
+        if(pv) pv.classList.remove('hidden');
 
-    document.getElementById('p-banners').classList.remove('hidden-view');
-    document.getElementById('p-wallet').classList.remove('hidden-view');
-    document.getElementById('p-header').classList.remove('hidden-view');
+        const nav=document.getElementById('nav-passenger');
+        if(nav) nav.classList.remove('hidden');
 
-    closeAll();
-    lucide.createIcons();
-}
+        const prof=document.getElementById('user-profile-header');
+        if(prof) prof.classList.remove('hidden');
+
+        if(currentUser){ currentUser.role='pasajero'; }
+        if(typeof updateProfileUI==='function'){ updateProfileUI(); }
+        lucide.createIcons();
+    }
+
+        lucide.createIcons();
+    }
 
 </script>
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -786,13 +786,23 @@
 
     function eliminarSeleccionados() {
         if (selectedIds.length === 0) { alert("Selecciona registros para eliminar"); return; }
-        const key = (currentAdminView === 'passengers') ? 'db_usuarios_permanente' : 'driver_requests';
+
+        let key = 'db_usuarios_permanente';
         let data = JSON.parse(localStorage.getItem(key) || '[]');
-        const newData = data.filter(item => !selectedIds.includes(String(item.id)));
-        localStorage.setItem(key, JSON.stringify(newData));
+
+        if (currentAdminView === 'passengers') {
+            data = data.filter(item => !(selectedIds.includes(String(item.id)) && item.role === 'pasajero'));
+        } else {
+            data = data.filter(item => !(selectedIds.includes(String(item.id)) && item.role === 'conductor'));
+        }
+
+        localStorage.setItem(key, JSON.stringify(data));
+
         if (currentAdminView === 'passengers') renderAdminPassengers();
         else renderAdminRequests();
-        selectedIds = []; alert("Registros eliminados.");
+
+        selectedIds = [];
+        alert("Registros eliminados.");
     }
 
     let userTargetAdmin = null;

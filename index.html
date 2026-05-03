@@ -242,7 +242,7 @@
                 </button>
             </div>
             <div class="p-4 space-y-2">
-                <button class="w-full flex items-center gap-3 p-3 text-gray-700 font-black hover:bg-gray-50 rounded-xl uppercase text-[10px] italic">
+                <button onclick="goToPassengerPanelFromDriver()" class="w-full flex items-center gap-3 p-3 text-gray-700 font-black hover:bg-gray-50 rounded-xl uppercase text-[10px] italic">
                     <i data-lucide="user" class="text-red-600 w-4 h-4"></i><span>Pasajero</span>
                 </button>
             </div>
@@ -391,6 +391,7 @@
     let currentAdminView = 'requests'; 
     let selectedIds = [];
     let currentUser = null;
+    let activePanel = null;
     let isAvailable = false; // Estado del conductor
     let appState = {
         selectedPayment: 'efectivo',
@@ -502,6 +503,7 @@
 
         // Acceso Automático
         currentUser = newDriver;
+        activePanel = 'driver';
         
         // Ocultar registro, mostrar panel driver
         document.getElementById('driver-registration-view').classList.add('hidden');
@@ -585,6 +587,47 @@
         document.getElementById('driver-sidebar-overlay').classList.add('hidden');
     }
 
+    function goToPassengerPanelFromDriver() {
+        activePanel = 'passenger';
+        isAvailable = false;
+
+        closeDriverSidebar();
+        closeAll();
+
+        document.getElementById('driver-view-active').classList.add('hidden');
+        document.getElementById('driver-selection-view').classList.add('hidden');
+        document.getElementById('admin-view').classList.add('hidden');
+        document.getElementById('login-screen').classList.add('hidden');
+        document.getElementById('driver-registration-view').classList.add('hidden');
+
+        document.getElementById('passenger-view').classList.remove('hidden');
+        document.getElementById('nav-admin').classList.add('hidden');
+        document.getElementById('side-header-admin').classList.add('hidden');
+        document.getElementById('nav-passenger').classList.remove('hidden');
+        document.getElementById('user-profile-header').classList.remove('hidden');
+
+        document.getElementById('p-header').classList.remove('hidden-view');
+        document.getElementById('p-banners').classList.remove('hidden-view');
+        document.getElementById('p-wallet').classList.remove('hidden-view');
+        document.getElementById('radar').classList.add('hidden');
+        document.getElementById('search-msg').classList.add('hidden');
+        document.getElementById('search-pulse-driver').classList.add('hidden');
+
+        const statusBadge = document.getElementById('status-badge');
+        const statusDot = document.getElementById('status-dot');
+        const statusText = document.getElementById('status-text');
+        statusBadge.classList.remove('bg-green-600/20','border-green-600/30');
+        statusBadge.classList.add('bg-red-600/20','border-red-600/30');
+        statusDot.classList.remove('bg-green-500');
+        statusDot.classList.add('bg-red-600');
+        statusText.classList.remove('text-green-500');
+        statusText.classList.add('text-red-600');
+        statusText.innerText = 'No Disponible';
+
+        updateProfileUI();
+        lucide.createIcons();
+    }
+
     function renderMockServices() {
         const list = document.getElementById('driver-services-list');
         list.innerHTML = `
@@ -638,6 +681,7 @@
         const passIn = document.getElementById('login-pass').value.trim();
         
         if (userIn === 'admincentral' && passIn === '9271@') {
+            activePanel = 'admin';
             document.getElementById('login-screen').classList.add('hidden');
             document.getElementById('admin-view').classList.remove('hidden');
             document.getElementById('nav-admin').classList.remove('hidden');
@@ -652,6 +696,7 @@
                 document.getElementById('login-screen').classList.add('hidden'); 
                 
                 if (user.role === 'conductor') {
+                    activePanel = 'driver';
 
                     document.getElementById('passenger-view').classList.add('hidden');
                     document.getElementById('admin-view').classList.add('hidden');
@@ -670,6 +715,7 @@
                     }
 
                 } else {
+                    activePanel = 'passenger';
                     document.getElementById('passenger-view').classList.remove('hidden');
                     document.getElementById('nav-passenger').classList.remove('hidden');
                     document.getElementById('user-profile-header').classList.remove('hidden');
@@ -882,7 +928,7 @@
 
     function openMenu() {
 
-        if(currentUser && currentUser.role === 'conductor') {
+        if(activePanel === 'driver') {
             openDriverSidebar();
             return;
         }
@@ -943,9 +989,5 @@
 </script>
 </body>
 </html>
-
-       
-                    
-             
 
        

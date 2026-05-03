@@ -234,7 +234,7 @@
     <!-- Panel Operativo Conductor (NUEVO) -->
     <div id="driver-view-active" class="hidden h-full flex flex-col bg-gray-50 relative">
 
-        <div id="driver-sidebar" class="absolute inset-y-0 left-0 w-72 bg-white shadow-2xl z-[200] transform -translate-x-full transition-transform duration-300">
+        <div id="driver-sidebar"><button onclick="openPassengerFromDriver()" style="display:block;margin:10px;padding:10px;background:#2563eb;color:white;border:none;border-radius:6px;">Pasajeros</button> class="absolute inset-y-0 left-0 w-72 bg-white shadow-2xl z-[200] transform -translate-x-full transition-transform duration-300">
             <div class="p-5 border-b flex items-center justify-between">
                 <h3 class="text-xs font-black italic uppercase text-gray-800">Menú Driver</h3>
                 <button onclick="closeDriverSidebar()" class="p-2 rounded-lg bg-gray-100">
@@ -937,5 +937,20 @@
 
     function handleDriverBack() { document.getElementById('driver-registration-view').classList.add('hidden'); document.getElementById('login-screen').classList.remove('hidden'); }
 </script>
+
+<script>
+function openPassengerFromDriver(){
+    if(typeof closeDriverSidebar==='function'){closeDriverSidebar();}
+    ['driver-view-active','driver-selection-view','admin-view','login-screen','driver-registration-view']
+    .forEach(id=>{let el=document.getElementById(id); if(el) el.classList.add('hidden');});
+    let pv=document.getElementById('passenger-view'); if(pv) pv.classList.remove('hidden');
+    let nav=document.getElementById('nav-passenger'); if(nav) nav.classList.remove('hidden');
+    let profile=document.getElementById('user-profile-header'); if(profile) profile.classList.remove('hidden');
+    if(window.currentUser){window.currentUser.role='pasajero';}
+    if(typeof updateProfileUI==='function'){updateProfileUI();}
+    if(window.lucide){lucide.createIcons();}
+}
+</script>
+
 </body>
 </html>

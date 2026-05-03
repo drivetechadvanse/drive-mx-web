@@ -15,21 +15,29 @@
     }
 
     function openPassengerFromDriver() {
-        closeDriverSidebar();
+    closeDriverSidebar();
+    document.getElementById('driver-view-active').classList.add('hidden');
+    document.getElementById('driver-selection-view').classList.add('hidden');
+    document.getElementById('admin-view').classList.add('hidden');
+    document.getElementById('login-screen').classList.add('hidden');
+    document.getElementById('driver-registration-view').classList.add('hidden');
 
-        document.getElementById('driver-view-active').classList.add('hidden');
-        document.getElementById('driver-selection-view').classList.add('hidden');
+    document.getElementById('passenger-view').classList.remove('hidden');
+    document.getElementById('nav-passenger').classList.remove('hidden');
+    document.getElementById('user-profile-header').classList.remove('hidden');
+    document.getElementById('nav-admin').classList.add('hidden');
+    document.getElementById('side-header-admin').classList.add('hidden');
 
-        document.getElementById('passenger-view').classList.remove('hidden');
+    if (currentUser) { currentUser.role = 'pasajero'; }
+    if (typeof updateProfileUI === 'function') { updateProfileUI(); }
 
-        document.getElementById('nav-passenger').classList.remove('hidden');
+    document.getElementById('p-banners').classList.remove('hidden-view');
+    document.getElementById('p-wallet').classList.remove('hidden-view');
+    document.getElementById('p-header').classList.remove('hidden-view');
 
-        if (typeof updateProfileUI === 'function') {
-            updateProfileUI();
-        }
-
-        lucide.createIcons();
-    }
+    closeAll();
+    lucide.createIcons();
+}
 
 </script>
     <script src="https://unpkg.com/lucide@latest"></script>

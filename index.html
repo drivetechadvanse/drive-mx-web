@@ -4,17 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Drive MX | Pro System</title>
-    <script src="https://cdn.tailwindcss.com">function openDriverSidebar() {
-        document.getElementById('driver-sidebar').classList.remove('-translate-x-full');
-        document.getElementById('driver-sidebar-overlay').classList.remove('hidden');
-    }
-
-    function closeDriverSidebar() {
-        document.getElementById('driver-sidebar').classList.add('-translate-x-full');
-        document.getElementById('driver-sidebar-overlay').classList.add('hidden');
-    }
-
-</script>
+    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
@@ -37,8 +27,6 @@
         .reg-label { font-size: 9px; font-weight: 900; color: #9ca3af; text-transform: uppercase; margin-bottom: 0.4rem; display: block; margin-left: 0.5rem; }
         .payment-opt.selected { border-color: #ef4444; background-color: #fef2f2; color: #ef4444; }
         .card-selected { border-color: #ef4444 !important; background-color: #fef2f2 !important; ring: 2px; ring-color: #ef4444; }
-        
-        /* Animación para pulso de búsqueda de viajes */
         .ping-slow { animation: ping 3s cubic-bezier(0, 0, 0.2, 1) infinite; }
     </style>
 </head>
@@ -231,17 +219,27 @@
         </div>
     </div>
 
-    <!-- Panel Operativo Conductor (NUEVO) -->
+    <!-- Panel Operativo Conductor -->
     <div id="driver-view-active" class="hidden h-full flex flex-col bg-gray-50 relative">
 
-        <div id="driver-sidebar"><button onclick="openPassengerFromDriver()" style="display:block;margin:10px;padding:10px;background:#2563eb;color:white;border:none;border-radius:6px;">Pasajeros</button> class="absolute inset-y-0 left-0 w-72 bg-white shadow-2xl z-[200] transform -translate-x-full transition-transform duration-300">
+        <div id="driver-sidebar" class="absolute inset-y-0 left-0 w-72 bg-white shadow-2xl z-[200] transform -translate-x-full transition-transform duration-300">
             <div class="p-5 border-b flex items-center justify-between">
                 <h3 class="text-xs font-black italic uppercase text-gray-800">Menú Driver</h3>
                 <button onclick="closeDriverSidebar()" class="p-2 rounded-lg bg-gray-100">
                     <i data-lucide="x" class="w-4 h-4"></i>
                 </button>
             </div>
-            <div class="p-4"></div>
+            <div class="p-4 space-y-2">
+                <button onclick="openPassengerFromDriver()" class="w-full flex items-center gap-3 bg-gray-100 hover:bg-gray-200 transition-all rounded-2xl px-4 py-4 text-left">
+                    <i data-lucide="users" class="w-5 h-5 text-red-600"></i>
+                    <span class="text-[11px] font-black uppercase italic text-gray-800">Pasajeros</span>
+                </button>
+                <!-- BOTÓN AÑADIDO: CONDUCTORES -->
+                <button class="w-full flex items-center gap-3 bg-gray-100 hover:bg-gray-200 transition-all rounded-2xl px-4 py-4 text-left">
+                    <i data-lucide="car" class="w-5 h-5 text-red-600"></i>
+                    <span class="text-[11px] font-black uppercase italic text-gray-800">Conductores</span>
+                </button>
+            </div>
         </div>
 
         <div id="driver-sidebar-overlay" onclick="closeDriverSidebar()" class="hidden absolute inset-0 bg-black/40 z-[190]"></div>
@@ -262,19 +260,12 @@
         </header>
 
         <main class="flex-1 flex flex-col p-6 space-y-6 overflow-y-auto">
-            
-<div class="flex flex-col items-center justify-center py-6">
-    <div id="search-pulse-driver" class="hidden w-16 h-16 bg-red-600 rounded-full flex items-center justify-center text-white mb-4 ping-slow">
-        <i data-lucide="radar" class="w-8 h-8"></i>
-    </div>
-
-    <h3 id="driver-main-msg" class="text-sm font-black italic uppercase text-gray-900 text-center">
-        Buscando viajes cercanos
-    </h3>
-</div>
-
-
-            
+            <div class="flex flex-col items-center justify-center py-6">
+                <div id="search-pulse-driver" class="hidden w-16 h-16 bg-red-600 rounded-full flex items-center justify-center text-white mb-4 ping-slow">
+                    <i data-lucide="radar" class="w-8 h-8"></i>
+                </div>
+                <h3 id="driver-main-msg" class="text-sm font-black italic uppercase text-gray-900 text-center">Buscando viajes cercanos</h3>
+            </div>
         </main>
     </div>
 
@@ -294,7 +285,6 @@
             <h2 id="reg-main-title" class="ml-3 text-lg font-black italic uppercase tracking-tighter">REGISTRO <span class="text-red-600 uppercase">DRIVER</span></h2>
         </header>
         <div class="flex-1 overflow-y-auto p-6 pb-12">
-            <!-- Pasos del registro (sin cambios) -->
             <div id="step-photo" class="w-full flex flex-col items-center">
                 <h3 class="text-center font-black text-[10px] text-gray-400 uppercase mb-4 italic">Fotografía de Perfil</h3>
                 <div class="relative mb-8 mt-2">
@@ -364,7 +354,6 @@
                 </div>
                 <h2 class="text-xl font-black italic uppercase leading-none mb-4">REVISIÓN EN<br><span class="text-red-600">PROGRESO</span></h2>
                 <p class="text-[11px] font-bold text-gray-500 uppercase tracking-tight italic mb-10 px-4">Si todo sale bien, te activaremos en<br><span class="text-gray-900">menos de 24 hrs.</span></p>
-                <!-- Botón de confirmar driver modificado -->
                 <button onclick="saveDriverRequest()" class="w-full bg-red-600 text-white py-4 rounded-xl font-black text-[12px] uppercase italic transition-all shadow-xl shadow-red-600/30 active:scale-95">CONFIRMAR</button>
             </div>
 
@@ -387,7 +376,7 @@
     let currentAdminView = 'requests'; 
     let selectedIds = [];
     let currentUser = null;
-    let isAvailable = false; // Estado del conductor
+    let isAvailable = false; 
     let appState = {
         selectedPayment: 'efectivo',
         precioViaje: 120.00
@@ -468,7 +457,6 @@
         location.reload();
     }
 
-    // --- FUNCIÓN SOLICITADA: Registro y Acceso Automático a Panel Driver ---
     function saveDriverRequest() { 
         const driverId = "DRV_" + Date.now();
         const newDriver = {
@@ -488,86 +476,43 @@
             }
         };
 
-        // Guardar en base de datos de usuarios (como activo por petición de acceso directo)
         let db = JSON.parse(localStorage.getItem('db_usuarios_permanente') || '[]');
         db.push(newDriver);
         localStorage.setItem('db_usuarios_permanente', JSON.stringify(db));
-        
-        // Crear cartera
         saveWalletData(driverId, { saldo: 0.00, historial: [], trips: 0 });
 
-        // Acceso Automático
         currentUser = newDriver;
-        
-        // Ocultar registro, mostrar panel driver
         document.getElementById('driver-registration-view').classList.add('hidden');
         document.getElementById('driver-view-active').classList.remove('hidden');
-        
-        // Cargar foto en el panel driver
-        if(tempBase64Photo) {
-            document.getElementById('active-driver-photo').src = tempBase64Photo;
-        }
-        
+        if(tempBase64Photo) { document.getElementById('active-driver-photo').src = tempBase64Photo; }
         alert('¡Bienvenido Driver! Tu cuenta ha sido activada automáticamente.');
         lucide.createIcons();
     }
 
-    // --- FUNCIONES DEL PANEL CONDUCTOR ---
     function toggleDriverAvailability() {
-
         isAvailable = !isAvailable;
-
         const statusBadge = document.getElementById('status-badge');
         const statusDot = document.getElementById('status-dot');
         const statusText = document.getElementById('status-text');
-
         const mainMsg = document.getElementById('driver-main-msg');
-        
-
         const pulse = document.getElementById('search-pulse-driver');
-        
-
-        
-
-        
 
         if (isAvailable) {
-
-            statusBadge.classList.remove('bg-red-600/20','border-red-600/30');
-            statusBadge.classList.add('bg-green-600/20','border-green-600/30');
-
-            statusDot.classList.remove('bg-red-600');
-            statusDot.classList.add('bg-green-500');
-
-            statusText.classList.remove('text-red-600');
-            statusText.classList.add('text-green-500');
+            statusBadge.classList.replace('bg-red-600/20','bg-green-600/20');
+            statusBadge.classList.replace('border-red-600/30','border-green-600/30');
+            statusDot.classList.replace('bg-red-600','bg-green-500');
+            statusText.classList.replace('text-red-600','text-green-500');
             statusText.innerText = 'Disponible';
-
             mainMsg.innerText = 'Buscando viajes cercanos';
-
             pulse.classList.remove('hidden');
-
-            
-
-
-
         } else {
-
-            statusBadge.classList.remove('bg-green-600/20','border-green-600/30');
-            statusBadge.classList.add('bg-red-600/20','border-red-600/30');
-
-            statusDot.classList.remove('bg-green-500');
-            statusDot.classList.add('bg-red-600');
-
-            statusText.classList.remove('text-green-500');
-            statusText.classList.add('text-red-600');
+            statusBadge.classList.replace('bg-green-600/20','bg-red-600/20');
+            statusBadge.classList.replace('border-green-600/30','border-red-600/30');
+            statusDot.classList.replace('bg-green-500','bg-red-600');
+            statusText.classList.replace('text-green-500','text-red-600');
             statusText.innerText = 'No Disponible';
-
             pulse.classList.add('hidden');
-
-            
         }
-
         lucide.createIcons();
     }
 
@@ -581,30 +526,16 @@
         document.getElementById('driver-sidebar-overlay').classList.add('hidden');
     }
 
-    function renderMockServices() {
-        const list = document.getElementById('driver-services-list');
-        list.innerHTML = `
-            <div class="bg-white p-4 rounded-2xl border-2 border-red-600 shadow-lg animate-bounce-custom">
-                <div class="flex justify-between items-start mb-3">
-                    <div>
-                        <p class="text-[8px] font-black text-gray-400 uppercase italic">Nuevo Servicio</p>
-                        <h5 class="text-sm font-black italic uppercase">Usuario: Maria G.</h5>
-                    </div>
-                    <span class="bg-green-100 text-green-600 text-[10px] font-black px-2 py-1 rounded-lg">$85.00</span>
-                </div>
-                <div class="space-y-2 mb-4">
-                    <div class="flex items-center gap-2">
-                        <i data-lucide="map-pin" class="w-3 h-3 text-red-600"></i>
-                        <span class="text-[9px] font-bold text-gray-600 uppercase">Centro Histórico</span>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <i data-lucide="navigation" class="w-3 h-3 text-gray-400"></i>
-                        <span class="text-[9px] font-bold text-gray-400 uppercase italic">A 1.2 km de ti</span>
-                    </div>
-                </div>
-                <button onclick="alert('Viaje Aceptado')" class="w-full bg-green-600 text-white py-2 rounded-xl font-black text-[9px] uppercase italic">Aceptar Viaje</button>
-            </div>
-        `;
+    function openPassengerFromDriver() {
+        closeDriverSidebar();
+        ['driver-view-active','driver-selection-view','admin-view','login-screen','driver-registration-view'].forEach(id=>{
+            const el=document.getElementById(id); if(el) el.classList.add('hidden');
+        });
+        document.getElementById('passenger-view').classList.remove('hidden');
+        document.getElementById('nav-passenger').classList.remove('hidden');
+        document.getElementById('user-profile-header').classList.remove('hidden');
+        if(currentUser){ currentUser.role='pasajero'; }
+        updateProfileUI();
         lucide.createIcons();
     }
 
@@ -623,7 +554,6 @@
             topPhoto.classList.remove('hidden');
             topIcon.classList.add('hidden');
         }
-
         const wallet = getWalletData(currentUser.id);
         sideTrips.innerText = wallet.trips || 0;
         updateWalletDisplay();
@@ -642,29 +572,12 @@
         } else {
             const db = JSON.parse(localStorage.getItem('db_usuarios_permanente') || '[]');
             const user = db.find(u => (u.usuario === userIn.toLowerCase() || u.correo === userIn.toLowerCase()) && u.pass === passIn);
-            
             if (user) { 
                 currentUser = user;
                 document.getElementById('login-screen').classList.add('hidden'); 
-                
                 if (user.role === 'conductor') {
-
-                    document.getElementById('passenger-view').classList.add('hidden');
-                    document.getElementById('admin-view').classList.add('hidden');
-                    document.getElementById('driver-selection-view').classList.add('hidden');
-
-                    document.getElementById('nav-passenger').classList.add('hidden');
-                    document.getElementById('nav-admin').classList.add('hidden');
-
-                    document.getElementById('user-profile-header').classList.add('hidden');
-                    document.getElementById('side-header-admin').classList.add('hidden');
-
                     document.getElementById('driver-view-active').classList.remove('hidden');
-
-                    if(user.foto) {
-                        document.getElementById('active-driver-photo').src = user.foto;
-                    }
-
+                    if(user.foto) { document.getElementById('active-driver-photo').src = user.foto; }
                 } else {
                     document.getElementById('passenger-view').classList.remove('hidden');
                     document.getElementById('nav-passenger').classList.remove('hidden');
@@ -679,71 +592,32 @@
     function renderAdminPassengers() {
         currentAdminView = 'passengers';
         selectedIds = [];
-
         const container = document.getElementById('admin-requests-container');
-
-        const reqs = JSON.parse(
-            localStorage.getItem('db_usuarios_permanente') || '[]'
-        ).filter(user => user.role === 'pasajero');
-
+        const reqs = JSON.parse(localStorage.getItem('db_usuarios_permanente') || '[]').filter(user => user.role === 'pasajero');
         document.getElementById('admin-list-title').innerText = "Pasajeros Registrados";
-
-        container.innerHTML = reqs.length === 0
-            ? '<p class="text-center text-[9px] uppercase py-10">Sin pasajeros</p>'
-            : '';
-
+        container.innerHTML = reqs.length === 0 ? '<p class="text-center text-[9px] uppercase py-10">Sin pasajeros</p>' : '';
         reqs.forEach(req => {
-            container.innerHTML += `
-                <div id="card-${req.id}" onclick="toggleCardSelection('${req.id}')" class="bg-white p-5 rounded-[2rem] shadow-sm border border-gray-100 flex flex-col gap-4 cursor-pointer relative transition-all">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-3">
-                            <img src="${req.foto || ''}" class="w-12 h-12 bg-gray-900 rounded-2xl object-cover shadow-lg">
-                            <div>
-                                <h4 class="text-[12px] font-black uppercase italic text-gray-900 leading-none">${req.name}</h4>
-                                <p class="text-[8px] font-bold text-gray-400 mt-1">ID: ${req.id} | TEL: ${req.phone || 'N/A'}</p>
-                            </div>
-                        </div>
-                        <span class="text-[8px] font-black px-3 py-1 bg-green-100 text-green-600 rounded-full uppercase italic border border-green-200">Activo</span>
-                    </div>
-                </div>`;
+            container.innerHTML += `<div id="card-${req.id}" onclick="toggleCardSelection('${req.id}')" class="bg-white p-5 rounded-[2rem] shadow-sm border border-gray-100 flex flex-col gap-4 cursor-pointer relative transition-all">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3"><img src="${req.foto || ''}" class="w-12 h-12 bg-gray-900 rounded-2xl object-cover shadow-lg"><div><h4 class="text-[12px] font-black uppercase italic text-gray-900 leading-none">${req.name}</h4><p class="text-[8px] font-bold text-gray-400 mt-1">ID: ${req.id} | TEL: ${req.phone || 'N/A'}</p></div></div><span class="text-[8px] font-black px-3 py-1 bg-green-100 text-green-600 rounded-full uppercase italic border border-green-200">Activo</span>
+                </div></div>`;
         });
-
         lucide.createIcons();
     }
 
     function renderAdminRequests() {
         currentAdminView = 'requests';
         selectedIds = [];
-
         const container = document.getElementById('admin-requests-container');
-
-        const reqs = JSON.parse(
-            localStorage.getItem('db_usuarios_permanente') || '[]'
-        ).filter(user => user.role === 'conductor');
-
+        const reqs = JSON.parse(localStorage.getItem('db_usuarios_permanente') || '[]').filter(user => user.role === 'conductor');
         document.getElementById('admin-list-title').innerText = "Conductores Registrados";
-
-        container.innerHTML = reqs.length === 0
-            ? '<p class="text-center text-[9px] uppercase py-10">Sin conductores</p>'
-            : '';
-
+        container.innerHTML = reqs.length === 0 ? '<p class="text-center text-[9px] uppercase py-10">Sin conductores</p>' : '';
         reqs.forEach(req => {
-            container.innerHTML += `
-                <div id="card-${req.id}" onclick="toggleCardSelection('${req.id}')" class="bg-white p-5 rounded-[2rem] shadow-sm border border-gray-100 flex flex-col gap-4 cursor-pointer relative transition-all">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-3">
-                            <img src="${req.foto || ''}" class="w-12 h-12 bg-red-600 rounded-2xl flex items-center justify-center object-cover shadow-lg">
-                            <div>
-                                <h4 class="text-[12px] font-black uppercase italic text-gray-900 leading-none">${req.name}</h4>
-                                <p class="text-[8px] font-bold text-gray-400 mt-1">TEL: ${req.phone || 'NO REGISTRADO'}</p>
-                                <p class="text-[8px] font-black text-red-600 uppercase mt-0.5">${req.vehiculo?.marca || 'Conductor'} - ${req.date}</p>
-                            </div>
-                        </div>
-                        <span class="text-[8px] font-black px-3 py-1 bg-red-100 text-red-600 rounded-full uppercase italic">Conductor</span>
-                    </div>
-                </div>`;
+            container.innerHTML += `<div id="card-${req.id}" onclick="toggleCardSelection('${req.id}')" class="bg-white p-5 rounded-[2rem] shadow-sm border border-gray-100 flex flex-col gap-4 cursor-pointer relative transition-all">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3"><img src="${req.foto || ''}" class="w-12 h-12 bg-red-600 rounded-2xl flex items-center justify-center object-cover shadow-lg"><div><h4 class="text-[12px] font-black uppercase italic text-gray-900 leading-none">${req.name}</h4><p class="text-[8px] font-bold text-gray-400 mt-1">TEL: ${req.phone || 'NO REGISTRADO'}</p><p class="text-[8px] font-black text-red-600 uppercase mt-0.5">${req.vehiculo?.marca || 'Conductor'} - ${req.date}</p></div></div><span class="text-[8px] font-black px-3 py-1 bg-red-100 text-red-600 rounded-full uppercase italic">Conductor</span>
+                </div></div>`;
         });
-
         lucide.createIcons();
     }
 
@@ -756,16 +630,14 @@
 
     function eliminarSeleccionados() {
         if (selectedIds.length === 0) { alert("Selecciona registros para eliminar"); return; }
-        const key = (currentAdminView === 'passengers') ? 'db_usuarios_permanente' : 'driver_requests';
-        let data = JSON.parse(localStorage.getItem(key) || '[]');
-        const newData = data.filter(item => !selectedIds.includes(String(item.id)));
-        localStorage.setItem(key, JSON.stringify(newData));
-        if (currentAdminView === 'passengers') renderAdminPassengers();
-        else renderAdminRequests();
+        let data = JSON.parse(localStorage.getItem('db_usuarios_permanente') || '[]');
+        if (currentAdminView === 'passengers') { data = data.filter(item => !(selectedIds.includes(String(item.id)) && item.role === 'pasajero')); }
+        else { data = data.filter(item => !(selectedIds.includes(String(item.id)) && item.role === 'conductor')); }
+        localStorage.setItem('db_usuarios_permanente', JSON.stringify(data));
+        if (currentAdminView === 'passengers') renderAdminPassengers(); else renderAdminRequests();
         selectedIds = []; alert("Registros eliminados.");
     }
 
-    let userTargetAdmin = null;
     function openAdminWallet() { 
         closeAll(); document.getElementById('admin-dashboard').classList.add('hidden'); 
         document.getElementById('admin-wallet-section').classList.remove('hidden');
@@ -783,28 +655,13 @@
     function searchPassengerInWallet() {
         const term = document.getElementById('admin-search-user').value.toLowerCase().trim();
         const pasajeros = JSON.parse(localStorage.getItem('db_usuarios_permanente') || '[]');
-        userTargetAdmin = pasajeros.find(u => u.name.toLowerCase().includes(term) || u.correo.toLowerCase().includes(term) || u.usuario === term);
+        const userTargetAdmin = pasajeros.find(u => u.name.toLowerCase().includes(term) || u.correo.toLowerCase().includes(term) || u.usuario === term);
         const disp = document.getElementById('admin-view-saldo');
         if (userTargetAdmin) {
             const wallet = getWalletData(userTargetAdmin.id);
             disp.innerText = `$${wallet.saldo.toFixed(2)} MXN`;
             document.getElementById('admin-search-status').innerText = `Pasajero: ${userTargetAdmin.name}`;
-            renderHistorial(wallet.historial, document.getElementById('admin-movimientos-list'));
         } else { disp.innerText = "No encontrado"; }
-    }
-    function renderHistorial(hist, container) {
-        container.innerHTML = hist.length === 0 ? '<p class="text-[8px] text-center uppercase py-4">Sin movimientos</p>' : '';
-        hist.forEach(m => {
-            const color = m.tipo === 'sumar' ? 'text-green-600' : 'text-red-600';
-            container.innerHTML += `<div class="bg-white p-3 rounded-xl border flex justify-between items-center"><div><p class="text-[9px] uppercase italic font-black">${m.desc}</p></div><p class="text-[10px] font-black ${color}">$${m.monto.toFixed(2)}</p></div>`;
-        });
-    }
-    function adminModificarSaldo(tipo) {
-        if (!userTargetAdmin) return;
-        const monto = parseFloat(document.getElementById('admin-monto-input').value);
-        if (isNaN(monto) || monto <= 0) return;
-        addMovement(userTargetAdmin.id, tipo, monto, tipo === 'sumar' ? 'Recarga Admin' : 'Ajuste Admin');
-        document.getElementById('admin-monto-input').value = ''; searchPassengerInWallet();
     }
 
     function updateWalletDisplay() {
@@ -816,12 +673,8 @@
     function handleRequest() {
         const wallet = getWalletData(currentUser.id);
         if (wallet.saldo < 0) { alert("Saldo negativo. Recarga para continuar."); return; }
-        if (appState.selectedPayment === 'cartera' && wallet.saldo < appState.precioViaje) { 
-            alert('Saldo insuficiente.'); return; 
-        }
-        if (appState.selectedPayment === 'cartera') { 
-            addMovement(currentUser.id, 'restar', appState.precioViaje, 'Pago Viaje'); 
-        }
+        if (appState.selectedPayment === 'cartera' && wallet.saldo < appState.precioViaje) { alert('Saldo insuficiente.'); return; }
+        if (appState.selectedPayment === 'cartera') { addMovement(currentUser.id, 'restar', appState.precioViaje, 'Pago Viaje'); }
         wallet.trips = (wallet.trips || 0) + 1;
         saveWalletData(currentUser.id, wallet);
         updateProfileUI();
@@ -849,40 +702,15 @@
     function renderAvailableDrivers() {
         const container = document.getElementById('driver-cards-container');
         container.innerHTML = '';
-        const drivers = [
-            { id: 'd1', name: "Luis Jiménez", rating: "4.9", vehicle: "Nissan Versa", plate: "ABC-123-D", time: "3 min" },
-            { id: 'd2', name: "Sofía Martínez", rating: "4.7", vehicle: "Chevrolet Aveo", plate: "XYZ-789-M", time: "5 min" }
-        ];
+        const drivers = [{ id: 'd1', name: "Luis Jiménez", rating: "4.9", vehicle: "Nissan Versa", plate: "ABC-123-D", time: "3 min" }];
         drivers.forEach(dr => {
-            container.innerHTML += `
-                <div class="bg-white p-5 rounded-[2rem] shadow-lg border flex flex-col space-y-4">
-                    <div class="flex items-center gap-4">
-                        <div class="w-14 h-14 bg-red-600 rounded-full flex items-center justify-center text-white font-black italic border-2 border-white">${dr.name.charAt(0)}</div>
-                        <div class="flex-1">
-                            <h4 class="font-black italic uppercase text-xs">${dr.name}</h4>
-                            <p class="text-[9px] font-bold text-gray-400 uppercase">${dr.vehicle} • ${dr.plate}</p>
-                        </div>
-                        <div class="text-right">
-                             <p class="text-[10px] font-black text-yellow-500">★ ${dr.rating}</p>
-                             <p class="text-[8px] font-bold text-gray-400 uppercase">${dr.time}</p>
-                        </div>
-                    </div>
-                    <div class="grid grid-cols-2 gap-3">
-                        <button onclick="alert('Conductor aceptado'); location.reload()" class="bg-green-600 text-white py-3 rounded-2xl text-[10px] font-black uppercase italic active:scale-95 transition-all">Aceptar</button>
-                        <button onclick="this.closest('.bg-white').remove()" class="bg-gray-200 text-gray-600 py-3 rounded-2xl text-[10px] font-black uppercase italic active:scale-95 transition-all">Rechazar</button>
-                    </div>
-                </div>`;
+            container.innerHTML += `<div class="bg-white p-5 rounded-[2rem] shadow-lg border flex flex-col space-y-4"><div class="flex items-center gap-4"><div class="w-14 h-14 bg-red-600 rounded-full flex items-center justify-center text-white font-black italic border-2 border-white">${dr.name.charAt(0)}</div><div class="flex-1"><h4 class="font-black italic uppercase text-xs">${dr.name}</h4><p class="text-[9px] font-bold text-gray-400 uppercase">${dr.vehicle} • ${dr.plate}</p></div></div><button onclick="alert('Conductor aceptado'); location.reload()" class="bg-green-600 text-white py-3 rounded-2xl text-[10px] font-black uppercase italic">Aceptar</button></div>`;
         });
         lucide.createIcons();
     }
 
     function openMenu() {
-
-        if(currentUser && currentUser.role === 'conductor') {
-            openDriverSidebar();
-            return;
-        }
-
+        if(currentUser && currentUser.role === 'conductor') { openDriverSidebar(); return; }
         document.getElementById('sidebar').classList.add('open');
         document.getElementById('overlay').classList.add('opacity-100', 'pointer-events-auto');
     }
@@ -892,21 +720,15 @@
     function setPay(btn, method) { document.querySelectorAll('.payment-opt').forEach(b => b.classList.remove('selected')); btn.classList.add('selected'); appState.selectedPayment = method; }
     
     function goToStep(n) {
-        const steps = ['step-photo', 'step-name', 'step-ine-front', 'step-ine-back', 'step-vehicle', 'step-circ', 'step-v-photo', 'step-phone', 'step-finish-driver', 'step-finish-passenger'];
+        const steps = ['step-photo', 'step-name', 'step-ine-front', 'step-ine-back', 'step-vehicle', 'step-circ', 'step-v-photo', 'step-phone'];
         steps.forEach(s => { const el = document.getElementById(s); if(el) el.classList.add('hidden'); });
-        const normalSteps = ['step-photo', 'step-name', 'step-ine-front', 'step-ine-back', 'step-vehicle', 'step-circ', 'step-v-photo', 'step-phone'];
-        if (normalSteps[n - 1]) document.getElementById(normalSteps[n - 1]).classList.remove('hidden');
+        if (steps[n - 1]) document.getElementById(steps[n - 1]).classList.remove('hidden');
         currentStep = n;
         lucide.createIcons();
     }
 
     function processFile(i, p, b) { 
-        if (i.files[0]) { 
-            document.getElementById(p).src = URL.createObjectURL(i.files[0]); 
-            document.getElementById(p).classList.remove('hidden'); 
-            document.getElementById(b).disabled = false; 
-            document.getElementById(b).classList.replace('bg-gray-300', 'bg-red-600'); 
-        } 
+        if (i.files[0]) { document.getElementById(p).src = URL.createObjectURL(i.files[0]); document.getElementById(p).classList.remove('hidden'); document.getElementById(b).disabled = false; document.getElementById(b).classList.replace('bg-gray-300', 'bg-red-600'); } 
     }
 
     function checkName(i) { const b = document.getElementById('btn-name-next'); if(i.value.length > 3) { b.disabled = false; b.classList.replace('bg-gray-300', 'bg-red-600'); } }
@@ -922,35 +744,14 @@
         goToStep(1);
     }
 
-    function handleStepNameNext() { 
-        if (registrationMode === 'passenger') goToStep(8); 
-        else goToStep(3); 
-    }
-
+    function handleStepNameNext() { if (registrationMode === 'passenger') goToStep(8); else goToStep(3); }
     function handleStepPhoneNext() {
-        const steps = ['step-photo', 'step-name', 'step-ine-front', 'step-ine-back', 'step-vehicle', 'step-circ', 'step-v-photo', 'step-phone'];
-        steps.forEach(s => { const el = document.getElementById(s); if(el) el.classList.add('hidden'); });
+        document.querySelectorAll('[id^="step-"]').forEach(el => el.classList.add('hidden'));
         if (registrationMode === 'passenger') document.getElementById('step-finish-passenger').classList.remove('hidden');
         else document.getElementById('step-finish-driver').classList.remove('hidden');
         lucide.createIcons();
     }
-
     function handleDriverBack() { document.getElementById('driver-registration-view').classList.add('hidden'); document.getElementById('login-screen').classList.remove('hidden'); }
 </script>
-
-<script>
-function openPassengerFromDriver(){
-    if(typeof closeDriverSidebar==='function'){closeDriverSidebar();}
-    ['driver-view-active','driver-selection-view','admin-view','login-screen','driver-registration-view']
-    .forEach(id=>{let el=document.getElementById(id); if(el) el.classList.add('hidden');});
-    let pv=document.getElementById('passenger-view'); if(pv) pv.classList.remove('hidden');
-    let nav=document.getElementById('nav-passenger'); if(nav) nav.classList.remove('hidden');
-    let profile=document.getElementById('user-profile-header'); if(profile) profile.classList.remove('hidden');
-    if(window.currentUser){window.currentUser.role='pasajero';}
-    if(typeof updateProfileUI==='function'){updateProfileUI();}
-    if(window.lucide){lucide.createIcons();}
-}
-</script>
-
 </body>
 </html>

@@ -422,7 +422,122 @@
         return wallet;
     }
 
+
+    function getUsersDb() {
+        return JSON.parse(localStorage.getItem('db_usuarios_permanente') || '[]');
+    }
+
+    function saveUsersDb(db) {
+        const cleanDb = [];
+        const seen = new Set();
+        db.forEach(user => {
+            if (!user || !user.id) return;
+            const uniqueKey = `${user.role || ''}_${String(user.id)}`;
+            if (seen.has(uniqueKey)) return;
+            seen.add(uniqueKey);
+            cleanDb.push(user);
+        });
+        localStorage.setItem('db_usuarios_permanente', JSON.stringify(cleanDb));
+        return cleanDb;
+    }
+
+    function upsertUser(userData) {
+        let db = getUsersDb();
+        const userName = (userData.usuario || '').toLowerCase().trim();
+        const userEmail = (userData.correo || '').toLowerCase().trim();
+        db = db.filter(user => {
+            const sameId = String(user.id) === String(userData.id);
+            const sameUser = userName && (user.usuario || '').toLowerCase().trim() === userName;
+            const sameEmail = userEmail && (user.correo || '').toLowerCase().trim() === userEmail;
+            return !(sameId || sameUser || sameEmail);
+        });
+        db.push(userData);
+        return saveUsersDb(db);
+    }
+
+    function hideAllMainPanels() {
+        ['login-screen', 'admin-view', 'passenger-view', 'driver-view-active', 'driver-selection-view', 'driver-registration-view'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.classList.add('hidden');
+        });
+        closeAll();
+        closeDriverSidebar();
+    }
+
+    function resetPassengerTransientState() {
+        ['p-header', 'p-banners', 'p-wallet'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.classList.remove('hidden-view');
+        });
+        const radar = document.getElementById('radar');
+        const searchMsg = document.getElementById('search-msg');
+        if (radar) radar.classList.add('hidden');
+        if (searchMsg) searchMsg.classList.add('hidden');
+    }
+
+    function resetDriverTransientState() {
+        isAvailable = false;
+        const pulse = document.getElementById('search-pulse-driver');
+        const mainMsg = document.getElementById('driver-main-msg');
+        const statusBadge = document.getElementById('status-badge');
+        const statusDot = document.getElementById('status-dot');
+        const statusText = document.getElementById('status-text');
+        if (pulse) pulse.classList.add('hidden');
+        if (mainMsg) mainMsg.innerText = 'Buscando viajes cercanos';
+        if (statusBadge) {
+            statusBadge.classList.remove('bg-green-600/20','border-green-600/30');
+            statusBadge.classList.add('bg-red-600/20','border-red-600/30');
+        }
+        if (statusDot) {
+            statusDot.classList.remove('bg-green-500');
+            statusDot.classList.add('bg-red-600');
+        }
+        if (statusText) {
+            statusText.classList.remove('text-green-500');
+            statusText.classList.add('text-red-600');
+            statusText.innerText = 'No Disponible';
+        }
+    }
+
+    function configureSharedSidebarFor(panel) {
+        document.getElementById('nav-admin').classList.toggle('hidden', panel !== 'admin');
+        document.getElementById('side-header-admin').classList.toggle('hidden', panel !== 'admin');
+        document.getElementById('nav-passenger').classList.toggle('hidden', panel !== 'passenger');
+        document.getElementById('user-profile-header').classList.toggle('hidden', panel !== 'passenger');
+    }
+
+    function showAdminPanel() {
+        activePanel = 'admin';
+        hideAllMainPanels();
+        configureSharedSidebarFor('admin');
+        document.getElementById('admin-view').classList.remove('hidden');
+        renderAdminRequests();
+        lucide.createIcons();
+    }
+
+    function showDriverPanel() {
+        activePanel = 'driver';
+        hideAllMainPanels();
+        configureSharedSidebarFor('driver');
+        resetPassengerTransientState();
+        document.getElementById('driver-view-active').classList.remove('hidden');
+        if (currentUser && currentUser.foto) document.getElementById('active-driver-photo').src = currentUser.foto;
+        lucide.createIcons();
+    }
+
+    function showPassengerPanel() {
+        activePanel = 'passenger';
+        hideAllMainPanels();
+        configureSharedSidebarFor('passenger');
+        resetDriverTransientState();
+        resetPassengerTransientState();
+        document.getElementById('passenger-view').classList.remove('hidden');
+        updateProfileUI();
+        lucide.createIcons();
+    }
+
     function startPassengerRegistration() {
+        activePanel = 'registration';
         registrationMode = 'passenger';
         const stepsToHide = ['step-ine-front', 'step-ine-back', 'step-vehicle', 'step-circ', 'step-v-photo'];
         stepsToHide.forEach(s => document.getElementById(s).classList.add('hidden'));
@@ -465,9 +580,7 @@
             role: 'pasajero',
             date: new Date().toLocaleDateString()
         };
-        let db = JSON.parse(localStorage.getItem('db_usuarios_permanente') || '[]');
-        db.push(newRequest); 
-        localStorage.setItem('db_usuarios_permanente', JSON.stringify(db));
+        upsertUser(newRequest);
         saveWalletData(userId, { saldo: 0.00, historial: [], trips: 0 });
         alert(`Cuenta creada correctamente.`); 
         location.reload();
@@ -494,28 +607,16 @@
         };
 
         // Guardar en base de datos de usuarios (como activo por petición de acceso directo)
-        let db = JSON.parse(localStorage.getItem('db_usuarios_permanente') || '[]');
-        db.push(newDriver);
-        localStorage.setItem('db_usuarios_permanente', JSON.stringify(db));
+        upsertUser(newDriver);
         
         // Crear cartera
         saveWalletData(driverId, { saldo: 0.00, historial: [], trips: 0 });
 
         // Acceso Automático
         currentUser = newDriver;
-        activePanel = 'driver';
-        
-        // Ocultar registro, mostrar panel driver
-        document.getElementById('driver-registration-view').classList.add('hidden');
-        document.getElementById('driver-view-active').classList.remove('hidden');
-        
-        // Cargar foto en el panel driver
-        if(tempBase64Photo) {
-            document.getElementById('active-driver-photo').src = tempBase64Photo;
-        }
+        showDriverPanel();
         
         alert('¡Bienvenido Driver! Tu cuenta ha sido activada automáticamente.');
-        lucide.createIcons();
     }
 
     // --- FUNCIONES DEL PANEL CONDUCTOR ---
@@ -588,44 +689,7 @@
     }
 
     function goToPassengerPanelFromDriver() {
-        activePanel = 'passenger';
-        isAvailable = false;
-
-        closeDriverSidebar();
-        closeAll();
-
-        document.getElementById('driver-view-active').classList.add('hidden');
-        document.getElementById('driver-selection-view').classList.add('hidden');
-        document.getElementById('admin-view').classList.add('hidden');
-        document.getElementById('login-screen').classList.add('hidden');
-        document.getElementById('driver-registration-view').classList.add('hidden');
-
-        document.getElementById('passenger-view').classList.remove('hidden');
-        document.getElementById('nav-admin').classList.add('hidden');
-        document.getElementById('side-header-admin').classList.add('hidden');
-        document.getElementById('nav-passenger').classList.remove('hidden');
-        document.getElementById('user-profile-header').classList.remove('hidden');
-
-        document.getElementById('p-header').classList.remove('hidden-view');
-        document.getElementById('p-banners').classList.remove('hidden-view');
-        document.getElementById('p-wallet').classList.remove('hidden-view');
-        document.getElementById('radar').classList.add('hidden');
-        document.getElementById('search-msg').classList.add('hidden');
-        document.getElementById('search-pulse-driver').classList.add('hidden');
-
-        const statusBadge = document.getElementById('status-badge');
-        const statusDot = document.getElementById('status-dot');
-        const statusText = document.getElementById('status-text');
-        statusBadge.classList.remove('bg-green-600/20','border-green-600/30');
-        statusBadge.classList.add('bg-red-600/20','border-red-600/30');
-        statusDot.classList.remove('bg-green-500');
-        statusDot.classList.add('bg-red-600');
-        statusText.classList.remove('text-green-500');
-        statusText.classList.add('text-red-600');
-        statusText.innerText = 'No Disponible';
-
-        updateProfileUI();
-        lucide.createIcons();
+        showPassengerPanel();
     }
 
     function renderMockServices() {
@@ -681,45 +745,18 @@
         const passIn = document.getElementById('login-pass').value.trim();
         
         if (userIn === 'admincentral' && passIn === '9271@') {
-            activePanel = 'admin';
-            document.getElementById('login-screen').classList.add('hidden');
-            document.getElementById('admin-view').classList.remove('hidden');
-            document.getElementById('nav-admin').classList.remove('hidden');
-            document.getElementById('side-header-admin').classList.remove('hidden');
-            renderAdminRequests();
+            currentUser = null;
+            showAdminPanel();
         } else {
-            const db = JSON.parse(localStorage.getItem('db_usuarios_permanente') || '[]');
+            const db = saveUsersDb(getUsersDb());
             const user = db.find(u => (u.usuario === userIn.toLowerCase() || u.correo === userIn.toLowerCase()) && u.pass === passIn);
             
             if (user) { 
                 currentUser = user;
-                document.getElementById('login-screen').classList.add('hidden'); 
-                
                 if (user.role === 'conductor') {
-                    activePanel = 'driver';
-
-                    document.getElementById('passenger-view').classList.add('hidden');
-                    document.getElementById('admin-view').classList.add('hidden');
-                    document.getElementById('driver-selection-view').classList.add('hidden');
-
-                    document.getElementById('nav-passenger').classList.add('hidden');
-                    document.getElementById('nav-admin').classList.add('hidden');
-
-                    document.getElementById('user-profile-header').classList.add('hidden');
-                    document.getElementById('side-header-admin').classList.add('hidden');
-
-                    document.getElementById('driver-view-active').classList.remove('hidden');
-
-                    if(user.foto) {
-                        document.getElementById('active-driver-photo').src = user.foto;
-                    }
-
+                    showDriverPanel();
                 } else {
-                    activePanel = 'passenger';
-                    document.getElementById('passenger-view').classList.remove('hidden');
-                    document.getElementById('nav-passenger').classList.remove('hidden');
-                    document.getElementById('user-profile-header').classList.remove('hidden');
-                    updateProfileUI();
+                    showPassengerPanel();
                 }
             } else { alert('Usuario o contraseña incorrectos'); }
         }
@@ -732,9 +769,7 @@
 
         const container = document.getElementById('admin-requests-container');
 
-        const reqs = JSON.parse(
-            localStorage.getItem('db_usuarios_permanente') || '[]'
-        ).filter(user => user.role === 'pasajero');
+        const reqs = saveUsersDb(getUsersDb()).filter(user => user.role === 'pasajero');
 
         document.getElementById('admin-list-title').innerText = "Pasajeros Registrados";
 
@@ -767,9 +802,7 @@
 
         const container = document.getElementById('admin-requests-container');
 
-        const reqs = JSON.parse(
-            localStorage.getItem('db_usuarios_permanente') || '[]'
-        ).filter(user => user.role === 'conductor');
+        const reqs = saveUsersDb(getUsersDb()).filter(user => user.role === 'conductor');
 
         document.getElementById('admin-list-title').innerText = "Conductores Registrados";
 
@@ -806,13 +839,22 @@
 
     function eliminarSeleccionados() {
         if (selectedIds.length === 0) { alert("Selecciona registros para eliminar"); return; }
-        const key = (currentAdminView === 'passengers') ? 'db_usuarios_permanente' : 'driver_requests';
-        let data = JSON.parse(localStorage.getItem(key) || '[]');
-        const newData = data.filter(item => !selectedIds.includes(String(item.id)));
-        localStorage.setItem(key, JSON.stringify(newData));
+
+        const idsToDelete = selectedIds.map(String);
+        let db = getUsersDb();
+        const roleToDelete = currentAdminView === 'passengers' ? 'pasajero' : 'conductor';
+
+        const deletedUsers = db.filter(user => user.role === roleToDelete && idsToDelete.includes(String(user.id)));
+        db = db.filter(user => !(user.role === roleToDelete && idsToDelete.includes(String(user.id))));
+        saveUsersDb(db);
+
+        deletedUsers.forEach(user => localStorage.removeItem(`wallet_${user.id}`));
+        localStorage.removeItem('driver_requests');
+
+        selectedIds = [];
         if (currentAdminView === 'passengers') renderAdminPassengers();
         else renderAdminRequests();
-        selectedIds = []; alert("Registros eliminados.");
+        alert("Registros eliminados.");
     }
 
     let userTargetAdmin = null;
@@ -832,8 +874,8 @@
     }
     function searchPassengerInWallet() {
         const term = document.getElementById('admin-search-user').value.toLowerCase().trim();
-        const pasajeros = JSON.parse(localStorage.getItem('db_usuarios_permanente') || '[]');
-        userTargetAdmin = pasajeros.find(u => u.name.toLowerCase().includes(term) || u.correo.toLowerCase().includes(term) || u.usuario === term);
+        const pasajeros = saveUsersDb(getUsersDb()).filter(u => u.role === 'pasajero');
+        userTargetAdmin = pasajeros.find(u => (u.name || '').toLowerCase().includes(term) || (u.correo || '').toLowerCase().includes(term) || (u.usuario || '') === term);
         const disp = document.getElementById('admin-view-saldo');
         if (userTargetAdmin) {
             const wallet = getWalletData(userTargetAdmin.id);
@@ -964,6 +1006,7 @@
     function checkPhone(i) { const b = document.getElementById('btn-phone-next'); if(i.value.length >= 10) { b.disabled = false; b.classList.replace('bg-gray-300', 'bg-red-600'); } }
     
     function applyToBeDriver() {
+        activePanel = 'registration';
         registrationMode = 'driver'; closeAll();
         document.getElementById('passenger-view').classList.add('hidden');
         document.getElementById('driver-registration-view').classList.remove('hidden');
@@ -985,9 +1028,8 @@
         lucide.createIcons();
     }
 
-    function handleDriverBack() { document.getElementById('driver-registration-view').classList.add('hidden'); document.getElementById('login-screen').classList.remove('hidden'); }
+    function handleDriverBack() { activePanel = null; document.getElementById('driver-registration-view').classList.add('hidden'); document.getElementById('login-screen').classList.remove('hidden'); }
 </script>
 </body>
 </html>
 
-       

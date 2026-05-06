@@ -580,30 +580,94 @@
         return JSON.parse(localStorage.getItem('db_usuarios_permanente') || '[]');
     }
 
+    function normalizeText(value) {
+        return String(value || '').toLowerCase().trim();
+    }
+
+    function normalizePhone(value) {
+        return String(value || '').replace(/\D/g, '');
+    }
+
+    function getUserUniqueKeys(user) {
+        const role = user.role || '';
+        const keys = [];
+        const id = String(user.id || '').trim();
+        const usuario = normalizeText(user.usuario);
+        const correo = normalizeText(user.correo);
+        const phone = normalizePhone(user.phone);
+        const plate = normalizeText(user.vehiculo?.placa);
+
+        if (id) keys.push(`${role}_id_${id}`);
+        if (usuario) keys.push(`${role}_usuario_${usuario}`);
+        if (correo) keys.push(`${role}_correo_${correo}`);
+        if (phone) keys.push(`${role}_phone_${phone}`);
+        if (role === 'conductor' && plate) keys.push(`${role}_placa_${plate}`);
+
+        return keys;
+    }
+
     function saveUsersDb(db) {
         const cleanDb = [];
-        const seen = new Set();
+        const keyToIndex = new Map();
+
         db.forEach(user => {
-            if (!user || !user.id) return;
-            const uniqueKey = `${user.role || ''}_${String(user.id)}`;
-            if (seen.has(uniqueKey)) return;
-            seen.add(uniqueKey);
+            if (!user) return;
+
+            const keys = getUserUniqueKeys(user);
+            if (keys.length === 0) return;
+
+            const existingIndex = keys
+                .map(key => keyToIndex.get(key))
+                .find(index => index !== undefined);
+
+            if (existingIndex !== undefined) {
+                cleanDb[existingIndex] = {
+                    ...cleanDb[existingIndex],
+                    ...user,
+                    id: cleanDb[existingIndex].id || user.id,
+                    vehiculo: {
+                        ...(cleanDb[existingIndex].vehiculo || {}),
+                        ...(user.vehiculo || {})
+                    }
+                };
+                getUserUniqueKeys(cleanDb[existingIndex]).forEach(key => keyToIndex.set(key, existingIndex));
+                return;
+            }
+
+            const newIndex = cleanDb.length;
             cleanDb.push(user);
+            keys.forEach(key => keyToIndex.set(key, newIndex));
         });
+
         localStorage.setItem('db_usuarios_permanente', JSON.stringify(cleanDb));
         return cleanDb;
     }
 
     function upsertUser(userData) {
-        let db = getUsersDb();
-        const userName = (userData.usuario || '').toLowerCase().trim();
-        const userEmail = (userData.correo || '').toLowerCase().trim();
-        db = db.filter(user => {
-            const sameId = String(user.id) === String(userData.id);
-            const sameUser = userName && (user.usuario || '').toLowerCase().trim() === userName;
-            const sameEmail = userEmail && (user.correo || '').toLowerCase().trim() === userEmail;
-            return !(sameId || sameUser || sameEmail);
+        let db = saveUsersDb(getUsersDb());
+        const incomingKeys = getUserUniqueKeys(userData);
+        const existingUser = db.find(user => {
+            const currentKeys = getUserUniqueKeys(user);
+            return incomingKeys.some(key => currentKeys.includes(key));
         });
+
+        if (existingUser) {
+            userData = {
+                ...existingUser,
+                ...userData,
+                id: existingUser.id || userData.id,
+                vehiculo: {
+                    ...(existingUser.vehiculo || {}),
+                    ...(userData.vehiculo || {})
+                }
+            };
+        }
+
+        db = db.filter(user => {
+            const currentKeys = getUserUniqueKeys(user);
+            return !incomingKeys.some(key => currentKeys.includes(key));
+        });
+
         db.push(userData);
         return saveUsersDb(db);
     }
@@ -676,25 +740,6 @@
         lucide.createIcons();
     }
 
-    function updateCurrentDriverLocation() {
-        if (!currentUser || currentUser.role !== 'conductor' || !navigator.geolocation) return;
-        navigator.geolocation.getCurrentPosition(pos => {
-            const db = getUsersDb();
-            const idx = db.findIndex(u => String(u.id) === String(currentUser.id) && u.role === 'conductor');
-            const ubicacion = {
-                lat: pos.coords.latitude,
-                lng: pos.coords.longitude,
-                accuracy: pos.coords.accuracy,
-                updatedAt: new Date().toISOString()
-            };
-            currentUser.ubicacion = ubicacion;
-            if (idx > -1) {
-                db[idx].ubicacion = ubicacion;
-                saveUsersDb(db);
-            }
-        }, () => {}, { enableHighAccuracy: true, maximumAge: 60000, timeout: 5000 });
-    }
-
     function showDriverPanel() {
         activePanel = 'driver';
         hideAllMainPanels();
@@ -702,7 +747,6 @@
         resetPassengerTransientState();
         document.getElementById('driver-view-active').classList.remove('hidden');
         if (currentUser && currentUser.foto) document.getElementById('active-driver-photo').src = currentUser.foto;
-        updateCurrentDriverLocation();
         lucide.createIcons();
     }
 
@@ -769,30 +813,50 @@
 
     // --- FUNCIÓN SOLICITADA: Registro y Acceso Automático a Panel Driver ---
     function saveDriverRequest() { 
-        const driverId = "DRV_" + Date.now();
+        const nameValue = document.getElementById('dr-name').value.trim();
+        const phoneValue = document.getElementById('dr-phone').value.trim();
+        const plateValue = document.getElementById('v-plate').value.trim();
+        const userValue = (document.getElementById('reg-user').value || '').trim();
+        const cleanPhone = normalizePhone(phoneValue);
+        const cleanPlate = normalizeText(plateValue);
+
+        const db = saveUsersDb(getUsersDb());
+        const existingDriver = db.find(user => {
+            if (user.role !== 'conductor') return false;
+            const sameUser = userValue && normalizeText(user.usuario) === normalizeText(userValue);
+            const samePhone = cleanPhone && normalizePhone(user.phone) === cleanPhone;
+            const samePlate = cleanPlate && normalizeText(user.vehiculo?.placa) === cleanPlate;
+            return sameUser || samePhone || samePlate;
+        });
+
+        const driverId = existingDriver?.id || "DRV_" + Date.now();
         const newDriver = {
+            ...(existingDriver || {}),
             id: driverId,
-            name: document.getElementById('dr-name').value,
-            usuario: document.getElementById('reg-user').value || 'driver_' + Date.now(),
-            pass: document.getElementById('reg-pass').value || '1234',
-            phone: document.getElementById('dr-phone').value,
-            foto: tempBase64Photo,
+            name: nameValue,
+            usuario: userValue || existingDriver?.usuario || 'driver_' + driverId,
+            pass: document.getElementById('reg-pass').value || existingDriver?.pass || '1234',
+            phone: phoneValue,
+            foto: tempBase64Photo || existingDriver?.foto || '',
             status: 'activo',
             role: 'conductor',
-            date: new Date().toLocaleDateString(),
+            date: existingDriver?.date || new Date().toLocaleDateString(),
             vehiculo: { 
+                ...(existingDriver?.vehiculo || {}),
                 marca: document.getElementById('v-brand').value,
                 modelo: document.getElementById('v-model').value,
                 color: document.getElementById('v-color').value,
-                placa: document.getElementById('v-plate').value
+                placa: plateValue
             }
         };
 
-        // Guardar en base de datos de usuarios (como activo por petición de acceso directo)
+        // Guardar o actualizar conductor sin duplicar registros
         upsertUser(newDriver);
         
-        // Crear cartera
-        saveWalletData(driverId, { saldo: 0.00, historial: [], trips: 0 });
+        // Crear cartera solo si no existe
+        if (!localStorage.getItem(`wallet_${driverId}`)) {
+            saveWalletData(driverId, { saldo: 0.00, historial: [], trips: 0 });
+        }
 
         // Acceso Automático
         currentUser = newDriver;
@@ -1120,110 +1184,35 @@
         renderAvailableDrivers();
     }
 
-    function getRegisteredDriversForPassengerOffers() {
-        const dbDrivers = saveUsersDb(getUsersDb()).filter(user => user.role === 'conductor' && user.status === 'activo');
-        return dbDrivers.map((driver, index) => {
-            const vehicle = driver.vehiculo || {};
-            const brand = vehicle.marca || driver.brand || 'Vehículo';
-            const model = vehicle.modelo || driver.model || 'Modelo';
-            const color = vehicle.color || driver.color || 'Color';
-            const plate = vehicle.placa || driver.plate || 'N/A';
-            return {
-                id: driver.id,
-                name: driver.name || 'Conductor',
-                rating: driver.rating || driver.calificacion || '5.0',
-                color,
-                brand,
-                model,
-                vehicle: `${brand} ${model}`.trim(),
-                plate,
-                time: calculateDriverEta(driver, index),
-                phone: driver.phone || driver.telefono || '',
-                photo: driver.foto || driver.photo || '',
-                ubicacion: driver.ubicacion || null
-            };
-        });
-    }
-
-    function calculateDriverEta(driver, index = 0) {
-        const passengerLocation = JSON.parse(localStorage.getItem('drive_mx_passenger_location') || 'null');
-        const driverLocation = driver.ubicacion || null;
-        if (passengerLocation && driverLocation && passengerLocation.lat && passengerLocation.lng && driverLocation.lat && driverLocation.lng) {
-            const km = getDistanceKm(passengerLocation.lat, passengerLocation.lng, driverLocation.lat, driverLocation.lng);
-            const minutes = Math.max(2, Math.ceil((km / 28) * 60));
-            return `${minutes} min`;
-        }
-        return `${3 + (index * 2)} min`;
-    }
-
-    function getDistanceKm(lat1, lng1, lat2, lng2) {
-        const R = 6371;
-        const toRad = value => value * Math.PI / 180;
-        const dLat = toRad(lat2 - lat1);
-        const dLng = toRad(lng2 - lng1);
-        const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
-        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    }
-
-    function updatePassengerLocationForEta(callback) {
-        if (!navigator.geolocation) { callback && callback(); return; }
-        navigator.geolocation.getCurrentPosition(pos => {
-            localStorage.setItem('drive_mx_passenger_location', JSON.stringify({
-                lat: pos.coords.latitude,
-                lng: pos.coords.longitude,
-                accuracy: pos.coords.accuracy,
-                updatedAt: new Date().toISOString()
-            }));
-            callback && callback();
-        }, () => { callback && callback(); }, { enableHighAccuracy: true, maximumAge: 60000, timeout: 5000 });
-    }
-
     function renderAvailableDrivers() {
         activePanel = 'passenger-offers';
         const container = document.getElementById('driver-cards-container');
         container.innerHTML = '';
-        updatePassengerLocationForEta(() => {
-            const drivers = getRegisteredDriversForPassengerOffers();
-            if (drivers.length === 0) {
-                container.innerHTML = '<div class="bg-white p-6 rounded-[2rem] shadow-lg border text-center"><p class="text-[10px] font-black text-gray-500 uppercase italic">No hay conductores registrados disponibles.</p></div>';
-                lucide.createIcons();
-                return;
-            }
-            container.innerHTML = '';
-            drivers.forEach(dr => {
-                const encodedDriver = encodeURIComponent(JSON.stringify(dr));
-                const avatar = dr.photo
-                    ? `<img src="${dr.photo}" class="w-14 h-14 bg-red-600 rounded-full object-cover border-2 border-white shadow-lg">`
-                    : `<div class="w-14 h-14 bg-red-600 rounded-full flex items-center justify-center text-white font-black italic border-2 border-white">${dr.name.charAt(0)}</div>`;
-                container.innerHTML += `
-                    <div class="bg-white p-5 rounded-[2rem] shadow-lg border flex flex-col space-y-4">
-                        <div class="flex items-center gap-4">
-                            ${avatar}
-                            <div class="flex-1 min-w-0">
-                                <h4 class="font-black italic uppercase text-xs truncate">${dr.name}</h4>
-                                <p class="text-[9px] font-bold text-gray-400 uppercase truncate">${dr.vehicle} • ${dr.plate}</p>
-                            </div>
-                            <div class="text-right">
-                                 <p class="text-[10px] font-black text-yellow-500">★ ${dr.rating}</p>
-                                 <p class="text-[8px] font-bold text-gray-400 uppercase">${dr.time}</p>
-                            </div>
+        const drivers = [
+            { id: 'd1', name: "Luis Jiménez", rating: "4.9", color: "Blanco", brand: "Nissan", model: "Versa", vehicle: "Nissan Versa", plate: "ABC-123-D", time: "3 min", phone: "5512345678", photo: "" },
+            { id: 'd2', name: "Sofía Martínez", rating: "4.7", color: "Gris", brand: "Chevrolet", model: "Aveo", vehicle: "Chevrolet Aveo", plate: "XYZ-789-M", time: "5 min", phone: "5598765432", photo: "" }
+        ];
+        drivers.forEach(dr => {
+            container.innerHTML += `
+                <div class="bg-white p-5 rounded-[2rem] shadow-lg border flex flex-col space-y-4">
+                    <div class="flex items-center gap-4">
+                        <div class="w-14 h-14 bg-red-600 rounded-full flex items-center justify-center text-white font-black italic border-2 border-white">${dr.name.charAt(0)}</div>
+                        <div class="flex-1">
+                            <h4 class="font-black italic uppercase text-xs">${dr.name}</h4>
+                            <p class="text-[9px] font-bold text-gray-400 uppercase">${dr.vehicle} • ${dr.plate}</p>
                         </div>
-                        <div class="grid grid-cols-2 gap-3">
-                            <button onclick="acceptDriverOfferFromEncoded('${encodedDriver}')" class="bg-green-600 text-white py-3 rounded-2xl text-[10px] font-black uppercase italic active:scale-95 transition-all">Aceptar</button>
-                            <button onclick="this.closest('.bg-white').remove()" class="bg-gray-200 text-gray-600 py-3 rounded-2xl text-[10px] font-black uppercase italic active:scale-95 transition-all">Rechazar</button>
+                        <div class="text-right">
+                             <p class="text-[10px] font-black text-yellow-500">★ ${dr.rating}</p>
+                             <p class="text-[8px] font-bold text-gray-400 uppercase">${dr.time}</p>
                         </div>
-                    </div>`;
-            });
-            lucide.createIcons();
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <button onclick='acceptDriverOffer(${JSON.stringify(dr)})' class="bg-green-600 text-white py-3 rounded-2xl text-[10px] font-black uppercase italic active:scale-95 transition-all">Aceptar</button>
+                        <button onclick="this.closest('.bg-white').remove()" class="bg-gray-200 text-gray-600 py-3 rounded-2xl text-[10px] font-black uppercase italic active:scale-95 transition-all">Rechazar</button>
+                    </div>
+                </div>`;
         });
-    }
-
-    function acceptDriverOfferFromEncoded(encodedDriver) {
-        try {
-            acceptDriverOffer(JSON.parse(decodeURIComponent(encodedDriver)));
-        } catch (error) {
-            alert('No se pudo abrir la oferta del conductor.');
-        }
+        lucide.createIcons();
     }
 
     let activeTripData = null;

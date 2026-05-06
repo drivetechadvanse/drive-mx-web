@@ -86,6 +86,34 @@
         .passenger-message-card { width: 100%; background: #fff; border-radius: 2rem; padding: 1rem; box-shadow: 0 -18px 50px rgba(0,0,0,.25); }
         .sheet-spacer-fixed-cancel { height: 68px; }
 
+
+        /* Barra de iconos del panel administrador */
+        .admin-icon-toolbar {
+            background: #f9fafb;
+            border-bottom: 1px solid #e5e7eb;
+            box-shadow: 0 8px 18px rgba(0,0,0,.04);
+        }
+        .admin-icon-action {
+            min-width: 36px;
+            height: 36px;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+        .admin-icon-action span {
+            max-width: 0;
+            opacity: 0;
+            transform: translateX(-6px);
+            transition: max-width .28s ease, opacity .22s ease, transform .28s ease, margin-left .28s ease;
+            margin-left: 0;
+        }
+        .admin-icon-action:hover span {
+            max-width: 140px;
+            opacity: 1;
+            transform: translateX(0);
+            margin-left: .35rem;
+        }
+
+
     </style>
 </head>
 <body>
@@ -183,9 +211,10 @@
             <h2 id="admin-title" class="text-base font-black italic uppercase">PANEL <span class="text-red-600 text-lg">ADMIN</span></h2>
             <button onclick="location.reload()" class="w-8 h-8 rounded-lg bg-red-600 flex items-center justify-center"><i data-lucide="log-out" class="w-4 h-4 text-white"></i></button>
         </header>
-        <div class="w-full h-12 bg-gray-400 flex items-center px-4 shrink-0">
-            <button id="admin-delete-btn" onclick="eliminarSeleccionados()" class="bg-red-600 text-white px-3 py-1.5 rounded font-black text-[10px] uppercase italic flex items-center gap-2 active:scale-95 transition-all shadow-lg">
-                <i data-lucide="trash-2" class="w-4 h-4"></i> <span id="admin-delete-btn-text">Eliminar Selección</span>
+        <div class="w-full h-12 bg-gray-400 flex items-center px-4 shrink-0"></div>
+        <div id="admin-icon-toolbar" class="admin-icon-toolbar w-full h-12 flex items-center gap-2 px-4 shrink-0">
+            <button id="admin-delete-btn" onclick="eliminarSeleccionados()" class="admin-icon-action bg-red-600 text-white px-2.5 py-1.5 rounded font-black text-[10px] uppercase italic inline-flex items-center justify-center active:scale-95 transition-all shadow-lg" title="Eliminar Selección" aria-label="Eliminar Selección">
+                <i data-lucide="trash-2" class="w-4 h-4 shrink-0"></i><span id="admin-delete-btn-text">Eliminar Selección</span>
             </button>
         </div>
         <main id="admin-content" class="flex-1 p-5 space-y-4 overflow-y-auto">

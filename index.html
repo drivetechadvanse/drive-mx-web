@@ -44,6 +44,41 @@
         .trip-route-line::before, .trip-route-line::after { content: ''; position: absolute; width: 10px; height: 10px; border-radius: 999px; background: #ef4444; top: -3px; }
         .trip-route-line::before { left: -2px; }
         .trip-route-line::after { right: -2px; background: #111827; }
+
+
+        /* Bottom sheet de viaje activo pasajero */
+        #active-trip-passenger { background-color: #f3f4f6; background-image: radial-gradient(#d1d5db 1px, transparent 1px); background-size: 25px 25px; }
+        #active-trip-sheet {
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 55;
+            background: #fff;
+            border-radius: 2.2rem 2.2rem 0 0;
+            box-shadow: 0 -18px 50px rgba(0,0,0,.20);
+            padding: 1rem 1.25rem calc(env(safe-area-inset-bottom, 1rem) + 1rem);
+            transform: translateY(0);
+            transition: transform .38s cubic-bezier(.22,1,.36,1);
+            touch-action: none;
+            will-change: transform;
+        }
+        #active-trip-sheet.minimized { transform: translateY(calc(100% - 122px)); }
+        #active-trip-sheet.dragging { transition: none; }
+        #active-trip-handle { width: 48px; height: 6px; border-radius: 999px; background: #e5e7eb; margin: 0 auto .9rem; }
+        #fixed-cancel-trip-btn {
+            position: absolute;
+            left: 1rem;
+            right: 1rem;
+            bottom: calc(env(safe-area-inset-bottom, 1rem) + .85rem);
+            z-index: 70;
+        }
+        #active-trip-sheet:not(.minimized) ~ #fixed-cancel-trip-btn { bottom: calc(env(safe-area-inset-bottom, 1rem) + .85rem); }
+        .driver-avatar-wrap { position: relative; width: 70px; height: 70px; flex: 0 0 auto; }
+        .driver-avatar-wrap img, .driver-avatar-fallback { width: 70px; height: 70px; border-radius: 1.4rem; object-fit: cover; }
+        .driver-rating-badge { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); background: #111827; color: #facc15; border: 3px solid #fff; border-radius: 999px; padding: 3px 8px; font-size: 9px; font-weight: 900; font-style: italic; white-space: nowrap; box-shadow: 0 8px 18px rgba(0,0,0,.18); }
+        .sheet-spacer-fixed-cancel { height: 68px; }
+
     </style>
 </head>
 <body>
@@ -235,6 +270,66 @@
                     </div>
                 </div>
 
+                <div id="active-trip-sheet" class="minimized">
+                    <div id="active-trip-handle"></div>
+                    <div class="flex items-center gap-4 mb-4">
+                        <div class="driver-avatar-wrap">
+                            <span id="trip-driver-rating" class="driver-rating-badge">★ 4.9</span>
+                            <img id="trip-driver-photo" src="" class="hidden bg-gray-900 shadow-xl" alt="Foto del conductor">
+                            <div id="trip-driver-fallback" class="driver-avatar-fallback bg-red-600 text-white flex items-center justify-center font-black text-xl italic shadow-xl">D</div>
+                        </div>
+                        <div class="min-w-0 flex-1">
+                            <p class="text-[8px] font-black text-gray-400 uppercase italic tracking-widest">Tu conductor</p>
+                            <h3 id="trip-driver-name" class="text-base font-black italic uppercase text-gray-900 truncate">Conductor</h3>
+                            <p id="trip-driver-vehicle" class="text-[10px] font-black text-gray-500 uppercase italic truncate">Vehículo</p>
+                            <p id="trip-driver-plate" class="text-[10px] font-black text-red-600 uppercase italic mt-0.5">Placa</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3 mb-4">
+                        <div class="bg-gray-50 rounded-2xl p-3 border border-gray-100">
+                            <p class="text-[8px] font-black text-gray-400 uppercase italic">Método de pago</p>
+                            <h4 id="trip-payment-method" class="text-[11px] font-black uppercase italic text-gray-900">Efectivo</h4>
+                        </div>
+                        <div class="bg-gray-50 rounded-2xl p-3 border border-gray-100 text-right">
+                            <p class="text-[8px] font-black text-gray-400 uppercase italic">Costo del viaje</p>
+                            <h4 id="trip-cost" class="text-[11px] font-black uppercase italic text-gray-900">$120.00 MXN</h4>
+                        </div>
+                    </div>
+
+                    <div class="bg-gray-900 text-white rounded-[1.7rem] p-4 mb-4">
+                        <div class="flex items-center justify-between mb-3">
+                            <h4 class="text-[10px] font-black uppercase italic tracking-tight">Viaje actual</h4>
+                            <i data-lucide="route" class="w-4 h-4 text-red-500"></i>
+                        </div>
+                        <div class="space-y-3">
+                            <div class="flex items-start gap-3">
+                                <div class="mt-1 w-3 h-3 rounded-full bg-green-500 border-2 border-white"></div>
+                                <div>
+                                    <p class="text-[8px] font-black text-gray-500 uppercase italic">Punto de recogida</p>
+                                    <p id="trip-pickup" class="text-[10px] font-bold uppercase italic">Ubicación actual del pasajero</p>
+                                </div>
+                            </div>
+                            <div class="h-5 border-l-2 border-dashed border-gray-600 ml-[5px]"></div>
+                            <div class="flex items-start gap-3">
+                                <div class="mt-1 w-3 h-3 rounded-full bg-red-600 border-2 border-white"></div>
+                                <div>
+                                    <p class="text-[8px] font-black text-gray-500 uppercase italic">Destino</p>
+                                    <p id="trip-destination" class="text-[10px] font-bold uppercase italic">Destino del pasajero</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button onclick="shareTripWhatsApp()" class="w-full bg-green-600 text-white py-3 rounded-2xl font-black text-[10px] uppercase italic flex items-center justify-center gap-2 active:scale-95 transition-all">
+                        <i data-lucide="send" class="w-4 h-4"></i> Compartir viaje por WhatsApp
+                    </button>
+                    <div class="sheet-spacer-fixed-cancel"></div>
+                </div>
+
+                <button id="fixed-cancel-trip-btn" onclick="cancelPassengerTrip()" class="hidden bg-red-600 text-white py-4 rounded-2xl font-black text-[11px] uppercase italic shadow-2xl shadow-red-600/30 active:scale-95 transition-all">
+                    Cancelar viaje
+                </button>
             </div>
         </main>
         <!-- Bottom Sheet Pagos -->
@@ -497,6 +592,10 @@
         if (radar) radar.classList.add('hidden');
         if (searchMsg) searchMsg.classList.add('hidden');
         if (activeTrip) activeTrip.classList.add('hidden');
+        const fixedCancel = document.getElementById('fixed-cancel-trip-btn');
+        if (fixedCancel) fixedCancel.classList.add('hidden');
+        const tripSheet = document.getElementById('active-trip-sheet');
+        if (tripSheet) tripSheet.classList.add('minimized');
     }
 
     function resetDriverTransientState() {
@@ -967,8 +1066,8 @@
         const container = document.getElementById('driver-cards-container');
         container.innerHTML = '';
         const drivers = [
-            { id: 'd1', name: "Luis Jiménez", rating: "4.9", vehicle: "Nissan Versa", plate: "ABC-123-D", time: "3 min" },
-            { id: 'd2', name: "Sofía Martínez", rating: "4.7", vehicle: "Chevrolet Aveo", plate: "XYZ-789-M", time: "5 min" }
+            { id: 'd1', name: "Luis Jiménez", rating: "4.9", color: "Blanco", brand: "Nissan", model: "Versa", vehicle: "Nissan Versa", plate: "ABC-123-D", time: "3 min", photo: "" },
+            { id: 'd2', name: "Sofía Martínez", rating: "4.7", color: "Gris", brand: "Chevrolet", model: "Aveo", vehicle: "Chevrolet Aveo", plate: "XYZ-789-M", time: "5 min", photo: "" }
         ];
         drivers.forEach(dr => {
             container.innerHTML += `
@@ -993,8 +1092,16 @@
         lucide.createIcons();
     }
 
+    let activeTripData = null;
+
+    function getPaymentLabel(method) {
+        const labels = { efectivo: 'Efectivo', spei: 'SPEI', cartera: 'Cartera' };
+        return labels[method] || 'Efectivo';
+    }
+
     function acceptDriverOffer(driver) {
         activePanel = 'passenger-trip';
+        activeTripData = driver;
         document.getElementById('driver-selection-view').classList.add('hidden');
         document.getElementById('passenger-view').classList.remove('hidden');
         closeAll();
@@ -1006,9 +1113,98 @@
         document.getElementById('p-banners').classList.add('hidden-view');
         document.getElementById('p-wallet').classList.add('hidden-view');
 
-        document.getElementById('active-trip-passenger').classList.remove('hidden');
+        const activeTrip = document.getElementById('active-trip-passenger');
+        activeTrip.classList.remove('hidden');
+        populateActiveTripSheet(driver);
+        initActiveTripSheetDrag();
+        document.getElementById('fixed-cancel-trip-btn').classList.remove('hidden');
 
         lucide.createIcons();
+    }
+
+    function populateActiveTripSheet(driver) {
+        const brand = driver.brand || (driver.vehicle || '').split(' ')[0] || 'Vehículo';
+        const model = driver.model || (driver.vehicle || '').replace(brand, '').trim() || driver.vehicle || 'Modelo';
+        document.getElementById('trip-driver-rating').innerText = `★ ${driver.rating || '5.0'}`;
+        document.getElementById('trip-driver-name').innerText = driver.name || 'Conductor';
+        document.getElementById('trip-driver-vehicle').innerText = `${driver.color || 'Color'} • ${brand} ${model}`;
+        document.getElementById('trip-driver-plate').innerText = `Placa: ${driver.plate || 'N/A'}`;
+        document.getElementById('trip-payment-method').innerText = getPaymentLabel(appState.selectedPayment);
+        document.getElementById('trip-cost').innerText = `$${appState.precioViaje.toFixed(2)} MXN`;
+        document.getElementById('trip-pickup').innerText = 'Ubicación actual del pasajero';
+        document.getElementById('trip-destination').innerText = 'Destino del pasajero';
+
+        const photo = document.getElementById('trip-driver-photo');
+        const fallback = document.getElementById('trip-driver-fallback');
+        if (driver.photo) {
+            photo.src = driver.photo;
+            photo.classList.remove('hidden');
+            fallback.classList.add('hidden');
+        } else {
+            photo.classList.add('hidden');
+            fallback.classList.remove('hidden');
+            fallback.innerText = (driver.name || 'D').charAt(0).toUpperCase();
+        }
+    }
+
+    function initActiveTripSheetDrag() {
+        const sheet = document.getElementById('active-trip-sheet');
+        if (!sheet || sheet.dataset.ready === 'true') return;
+        sheet.dataset.ready = 'true';
+
+        let startY = 0;
+        let currentY = 0;
+        let isDragging = false;
+
+        const start = (e) => {
+            isDragging = true;
+            startY = e.touches ? e.touches[0].clientY : e.clientY;
+            currentY = startY;
+            sheet.classList.add('dragging');
+        };
+        const move = (e) => {
+            if (!isDragging) return;
+            currentY = e.touches ? e.touches[0].clientY : e.clientY;
+            const delta = currentY - startY;
+            const isMinimized = sheet.classList.contains('minimized');
+            const base = isMinimized ? sheet.offsetHeight - 122 : 0;
+            const next = Math.max(0, Math.min(sheet.offsetHeight - 122, base + delta));
+            sheet.style.transform = `translateY(${next}px)`;
+        };
+        const end = () => {
+            if (!isDragging) return;
+            isDragging = false;
+            sheet.classList.remove('dragging');
+            sheet.style.transform = '';
+            const delta = currentY - startY;
+            if (delta > 45) sheet.classList.add('minimized');
+            if (delta < -45) sheet.classList.remove('minimized');
+        };
+
+        sheet.addEventListener('touchstart', start, { passive: true });
+        sheet.addEventListener('touchmove', move, { passive: true });
+        sheet.addEventListener('touchend', end);
+        sheet.addEventListener('mousedown', start);
+        window.addEventListener('mousemove', move);
+        window.addEventListener('mouseup', end);
+        sheet.addEventListener('click', (e) => {
+            if (e.target.closest('button')) return;
+            if (sheet.classList.contains('minimized')) sheet.classList.remove('minimized');
+        });
+    }
+
+    function shareTripWhatsApp() {
+        const driver = activeTripData || {};
+        const msg = `Estoy en un viaje de Drive MX. Conductor: ${driver.name || 'Conductor'}, vehículo: ${driver.color || ''} ${driver.vehicle || ''}, placa: ${driver.plate || 'N/A'}. Recogida: Ubicación actual del pasajero. Destino: Destino del pasajero.`;
+        window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+    }
+
+    function cancelPassengerTrip() {
+        if (!confirm('¿Cancelar este viaje?')) return;
+        activeTripData = null;
+        document.getElementById('active-trip-passenger').classList.add('hidden');
+        document.getElementById('fixed-cancel-trip-btn').classList.add('hidden');
+        showPassengerPanel();
     }
 
     function openMenu() {

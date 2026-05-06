@@ -136,6 +136,13 @@
                     <button onclick="renderAdminRequests()" class="w-full text-left p-3 pl-10 text-[9px] font-bold text-gray-500 uppercase border-b border-white">Conductores</button>
                     <button onclick="renderAdminPassengers()" class="w-full text-left p-3 pl-10 text-[9px] font-bold text-gray-500 uppercase border-b border-white">Pasajeros</button>
                 </div>
+                <button onclick="toggleAccordion('services-acc')" class="w-full flex items-center justify-between p-3 text-gray-700 font-black hover:bg-gray-50 rounded-xl uppercase text-[10px] italic mt-1">
+                    <div class="flex items-center gap-3"><i data-lucide="briefcase" class="text-red-600 w-4 h-4"></i><span>Servicios</span></div>
+                    <i data-lucide="chevron-down" class="w-3 h-3"></i>
+                </button>
+                <div id="services-acc" class="accordion-content bg-gray-50/50 rounded-xl">
+                    <button onclick="openUrbanTripsView()" class="w-full text-left p-3 pl-10 text-[9px] font-bold text-gray-500 uppercase border-b border-white">Viajes Urbanos</button>
+                </div>
                 <button onclick="openAdminWallet()" class="w-full flex items-center gap-3 p-3 text-gray-700 font-black hover:bg-gray-50 rounded-xl uppercase text-[10px] italic mt-1">
                     <i data-lucide="wallet" class="text-red-600 w-4 h-4"></i><span>Cartera Admin</span>
                 </button>
@@ -177,8 +184,8 @@
             <button onclick="location.reload()" class="w-8 h-8 rounded-lg bg-red-600 flex items-center justify-center"><i data-lucide="log-out" class="w-4 h-4 text-white"></i></button>
         </header>
         <div class="w-full h-12 bg-gray-400 flex items-center px-4 shrink-0">
-            <button onclick="eliminarSeleccionados()" class="bg-red-600 text-white px-3 py-1.5 rounded font-black text-[10px] uppercase italic flex items-center gap-2 active:scale-95 transition-all shadow-lg">
-                <i data-lucide="trash-2" class="w-4 h-4"></i> Eliminar Selección
+            <button id="admin-delete-btn" onclick="eliminarSeleccionados()" class="bg-red-600 text-white px-3 py-1.5 rounded font-black text-[10px] uppercase italic flex items-center gap-2 active:scale-95 transition-all shadow-lg">
+                <i data-lucide="trash-2" class="w-4 h-4"></i> <span id="admin-delete-btn-text">Eliminar Selección</span>
             </button>
         </div>
         <main id="admin-content" class="flex-1 p-5 space-y-4 overflow-y-auto">
@@ -221,6 +228,7 @@
                     <div id="admin-movimientos-list" class="space-y-2"></div>
                 </div>
             </div>
+            <div id="urban-trips-section" class="hidden flex-1"></div>
         </main>
     </div>
 
@@ -993,9 +1001,45 @@
         lucide.createIcons();
     }
 
+    function resetAdminTopDeleteButton() {
+        const deleteBtnText = document.getElementById('admin-delete-btn-text');
+        if (deleteBtnText) deleteBtnText.innerText = 'Eliminar Selección';
+    }
+
+    function openUrbanTripsView() {
+        closeAll();
+        currentAdminView = 'urban-trips';
+        selectedIds = [];
+
+        const dashboard = document.getElementById('admin-dashboard');
+        const wallet = document.getElementById('admin-wallet-section');
+        const urbanTrips = document.getElementById('urban-trips-section');
+        const menuBtn = document.getElementById('admin-menu-btn');
+        const backBtn = document.getElementById('admin-back-btn');
+        const deleteBtnText = document.getElementById('admin-delete-btn-text');
+
+        if (dashboard) dashboard.classList.add('hidden');
+        if (wallet) wallet.classList.add('hidden');
+        if (urbanTrips) urbanTrips.classList.remove('hidden');
+        if (menuBtn) menuBtn.classList.remove('hidden');
+        if (backBtn) backBtn.classList.add('hidden');
+        if (deleteBtnText) deleteBtnText.innerText = 'Borrar';
+
+        document.getElementById('admin-title').innerHTML = 'VIAJES <span class="text-red-600 text-lg">URBANOS</span>';
+        lucide.createIcons();
+    }
+
     function renderAdminPassengers() {
         currentAdminView = 'passengers';
         selectedIds = [];
+        resetAdminTopDeleteButton();
+        const urbanTrips = document.getElementById('urban-trips-section');
+        if (urbanTrips) urbanTrips.classList.add('hidden');
+        document.getElementById('admin-dashboard').classList.remove('hidden');
+        document.getElementById('admin-wallet-section').classList.add('hidden');
+        document.getElementById('admin-menu-btn').classList.remove('hidden');
+        document.getElementById('admin-back-btn').classList.add('hidden');
+        document.getElementById('admin-title').innerHTML = 'PANEL <span class="text-red-600 text-lg">ADMIN</span>';
 
         const container = document.getElementById('admin-requests-container');
 
@@ -1029,6 +1073,14 @@
     function renderAdminRequests() {
         currentAdminView = 'requests';
         selectedIds = [];
+        resetAdminTopDeleteButton();
+        const urbanTrips = document.getElementById('urban-trips-section');
+        if (urbanTrips) urbanTrips.classList.add('hidden');
+        document.getElementById('admin-dashboard').classList.remove('hidden');
+        document.getElementById('admin-wallet-section').classList.add('hidden');
+        document.getElementById('admin-menu-btn').classList.remove('hidden');
+        document.getElementById('admin-back-btn').classList.add('hidden');
+        document.getElementById('admin-title').innerHTML = 'PANEL <span class="text-red-600 text-lg">ADMIN</span>';
 
         const container = document.getElementById('admin-requests-container');
 
@@ -1068,6 +1120,7 @@
     }
 
     function eliminarSeleccionados() {
+        if (currentAdminView === 'urban-trips') return;
         if (selectedIds.length === 0) { alert("Selecciona registros para eliminar"); return; }
 
         const idsToDelete = selectedIds.map(String);
@@ -1089,13 +1142,22 @@
 
     let userTargetAdmin = null;
     function openAdminWallet() { 
-        closeAll(); document.getElementById('admin-dashboard').classList.add('hidden'); 
+        closeAll();
+        currentAdminView = 'wallet';
+        selectedIds = [];
+        resetAdminTopDeleteButton();
+        const urbanTrips = document.getElementById('urban-trips-section');
+        if (urbanTrips) urbanTrips.classList.add('hidden');
+        document.getElementById('admin-dashboard').classList.add('hidden'); 
         document.getElementById('admin-wallet-section').classList.remove('hidden');
         document.getElementById('admin-menu-btn').classList.add('hidden');
         document.getElementById('admin-back-btn').classList.remove('hidden');
         document.getElementById('admin-title').innerHTML = 'CARTERA <span class="text-red-600 text-lg">ADMIN</span>';
     }
     function closeAdminWallet() { 
+        resetAdminTopDeleteButton();
+        const urbanTrips = document.getElementById('urban-trips-section');
+        if (urbanTrips) urbanTrips.classList.add('hidden');
         document.getElementById('admin-dashboard').classList.remove('hidden');
         document.getElementById('admin-wallet-section').classList.add('hidden');
         document.getElementById('admin-menu-btn').classList.remove('hidden');

@@ -77,6 +77,13 @@
         .driver-avatar-wrap { position: relative; width: 70px; height: 70px; flex: 0 0 auto; }
         .driver-avatar-wrap img, .driver-avatar-fallback { width: 70px; height: 70px; border-radius: 1.4rem; object-fit: cover; }
         .driver-rating-badge { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); background: #111827; color: #facc15; border: 3px solid #fff; border-radius: 999px; padding: 3px 8px; font-size: 9px; font-weight: 900; font-style: italic; white-space: nowrap; box-shadow: 0 8px 18px rgba(0,0,0,.18); }
+
+        .trip-action-buttons { display: flex; align-items: center; gap: .5rem; flex: 0 0 auto; }
+        .trip-action-btn { width: 40px; height: 40px; border-radius: 1rem; display: inline-flex; align-items: center; justify-content: center; font-weight: 900; box-shadow: 0 10px 22px rgba(0,0,0,.12); transition: transform .18s ease, opacity .18s ease; }
+        .trip-action-btn:active { transform: scale(.94); }
+        #passenger-message-modal { position: absolute; inset: 0; z-index: 90; background: rgba(0,0,0,.42); display: flex; align-items: flex-end; padding: 1rem; }
+        #passenger-message-modal.hidden { display: none; }
+        .passenger-message-card { width: 100%; background: #fff; border-radius: 2rem; padding: 1rem; box-shadow: 0 -18px 50px rgba(0,0,0,.25); }
         .sheet-spacer-fixed-cancel { height: 68px; }
 
     </style>
@@ -272,17 +279,25 @@
 
                 <div id="active-trip-sheet" class="minimized">
                     <div id="active-trip-handle"></div>
-                    <div class="flex items-center gap-4 mb-4">
-                        <div class="driver-avatar-wrap">
+                    <div class="flex items-start gap-4 mb-4">
+                        <div class="driver-avatar-wrap mt-1">
                             <span id="trip-driver-rating" class="driver-rating-badge">★ 4.9</span>
                             <img id="trip-driver-photo" src="" class="hidden bg-gray-900 shadow-xl" alt="Foto del conductor">
                             <div id="trip-driver-fallback" class="driver-avatar-fallback bg-red-600 text-white flex items-center justify-center font-black text-xl italic shadow-xl">D</div>
                         </div>
-                        <div class="min-w-0 flex-1">
+                        <div class="min-w-0 flex-1 pt-1">
                             <p class="text-[8px] font-black text-gray-400 uppercase italic tracking-widest">Tu conductor</p>
                             <h3 id="trip-driver-name" class="text-base font-black italic uppercase text-gray-900 truncate">Conductor</h3>
                             <p id="trip-driver-vehicle" class="text-[10px] font-black text-gray-500 uppercase italic truncate">Vehículo</p>
                             <p id="trip-driver-plate" class="text-[10px] font-black text-red-600 uppercase italic mt-0.5">Placa</p>
+                        </div>
+                        <div class="trip-action-buttons pt-1">
+                            <button onclick="openPassengerMessageModal()" class="trip-action-btn bg-gray-900 text-white" title="Enviar mensaje al conductor" aria-label="Enviar mensaje al conductor">
+                                <i data-lucide="message-circle" class="w-5 h-5"></i>
+                            </button>
+                            <button onclick="callActiveDriver()" class="trip-action-btn bg-green-600 text-white" title="Llamar al conductor" aria-label="Llamar al conductor">
+                                <i data-lucide="phone" class="w-5 h-5"></i>
+                            </button>
                         </div>
                     </div>
 
@@ -327,6 +342,27 @@
                     <div class="sheet-spacer-fixed-cancel"></div>
                 </div>
 
+                <div id="passenger-message-modal" class="hidden">
+                    <div class="passenger-message-card">
+                        <div class="flex items-center justify-between mb-3">
+                            <div>
+                                <p class="text-[8px] font-black text-gray-400 uppercase italic tracking-widest">Mensaje dentro de la app</p>
+                                <h3 class="text-sm font-black italic uppercase text-gray-900">Enviar al conductor</h3>
+                            </div>
+                            <button onclick="closePassengerMessageModal()" class="w-9 h-9 rounded-xl bg-gray-100 flex items-center justify-center active:scale-95 transition-all">
+                                <i data-lucide="x" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                        <textarea id="passenger-driver-message" class="reg-input min-h-[105px] resize-none" placeholder="Escribe tu mensaje para el conductor..."></textarea>
+                        <div id="passenger-message-status" class="hidden mt-3 bg-green-50 text-green-700 border border-green-100 rounded-2xl p-3 text-[9px] font-black uppercase italic"></div>
+                        <div class="grid grid-cols-2 gap-3 mt-4">
+                            <button onclick="closePassengerMessageModal()" class="bg-gray-200 text-gray-700 py-3 rounded-2xl font-black text-[10px] uppercase italic active:scale-95 transition-all">Cancelar</button>
+                            <button onclick="sendPassengerMessageToDriver()" class="bg-red-600 text-white py-3 rounded-2xl font-black text-[10px] uppercase italic flex items-center justify-center gap-2 active:scale-95 transition-all">
+                                <i data-lucide="send" class="w-4 h-4"></i> Enviar
+                            </button>
+                        </div>
+                    </div>
+                </div>
                 <button id="fixed-cancel-trip-btn" onclick="cancelPassengerTrip()" class="hidden bg-red-600 text-white py-4 rounded-2xl font-black text-[11px] uppercase italic shadow-2xl shadow-red-600/30 active:scale-95 transition-all">
                     Cancelar viaje
                 </button>
@@ -596,6 +632,8 @@
         if (fixedCancel) fixedCancel.classList.add('hidden');
         const tripSheet = document.getElementById('active-trip-sheet');
         if (tripSheet) tripSheet.classList.add('minimized');
+        const msgModal = document.getElementById('passenger-message-modal');
+        if (msgModal) msgModal.classList.add('hidden');
     }
 
     function resetDriverTransientState() {
@@ -1066,8 +1104,8 @@
         const container = document.getElementById('driver-cards-container');
         container.innerHTML = '';
         const drivers = [
-            { id: 'd1', name: "Luis Jiménez", rating: "4.9", color: "Blanco", brand: "Nissan", model: "Versa", vehicle: "Nissan Versa", plate: "ABC-123-D", time: "3 min", photo: "" },
-            { id: 'd2', name: "Sofía Martínez", rating: "4.7", color: "Gris", brand: "Chevrolet", model: "Aveo", vehicle: "Chevrolet Aveo", plate: "XYZ-789-M", time: "5 min", photo: "" }
+            { id: 'd1', name: "Luis Jiménez", rating: "4.9", color: "Blanco", brand: "Nissan", model: "Versa", vehicle: "Nissan Versa", plate: "ABC-123-D", time: "3 min", phone: "5512345678", photo: "" },
+            { id: 'd2', name: "Sofía Martínez", rating: "4.7", color: "Gris", brand: "Chevrolet", model: "Aveo", vehicle: "Chevrolet Aveo", plate: "XYZ-789-M", time: "5 min", phone: "5598765432", photo: "" }
         ];
         drivers.forEach(dr => {
             container.innerHTML += `
@@ -1193,6 +1231,69 @@
         });
     }
 
+
+    function getActiveDriverPhone() {
+        const driver = activeTripData || {};
+        const rawPhone = String(driver.phone || driver.telefono || driver.celular || '').trim();
+        return rawPhone.replace(/[^0-9+]/g, '');
+    }
+
+    function callActiveDriver() {
+        if (activePanel !== 'passenger-trip') return;
+        const phone = getActiveDriverPhone();
+        if (!phone) {
+            alert('Este conductor no tiene número registrado.');
+            return;
+        }
+        window.location.href = `tel:${phone}`;
+    }
+
+    function openPassengerMessageModal() {
+        if (activePanel !== 'passenger-trip') return;
+        const modal = document.getElementById('passenger-message-modal');
+        const input = document.getElementById('passenger-driver-message');
+        const status = document.getElementById('passenger-message-status');
+        if (!modal) return;
+        if (status) { status.classList.add('hidden'); status.innerText = ''; }
+        modal.classList.remove('hidden');
+        setTimeout(() => input && input.focus(), 60);
+        lucide.createIcons();
+    }
+
+    function closePassengerMessageModal() {
+        const modal = document.getElementById('passenger-message-modal');
+        if (modal) modal.classList.add('hidden');
+    }
+
+    function sendPassengerMessageToDriver() {
+        if (activePanel !== 'passenger-trip') return;
+        const input = document.getElementById('passenger-driver-message');
+        const status = document.getElementById('passenger-message-status');
+        const text = (input?.value || '').trim();
+        if (!text) {
+            alert('Escribe un mensaje para el conductor.');
+            return;
+        }
+        const driver = activeTripData || {};
+        const messages = JSON.parse(localStorage.getItem('drive_mx_trip_messages') || '[]');
+        messages.unshift({
+            id: 'MSG_' + Date.now(),
+            tripDriverId: driver.id || '',
+            driverName: driver.name || 'Conductor',
+            passengerId: currentUser?.id || '',
+            passengerName: currentUser?.name || 'Pasajero',
+            message: text,
+            createdAt: new Date().toLocaleString(),
+            panel: 'passenger'
+        });
+        localStorage.setItem('drive_mx_trip_messages', JSON.stringify(messages));
+        if (status) {
+            status.innerText = 'Mensaje enviado al conductor dentro de la app.';
+            status.classList.remove('hidden');
+        }
+        if (input) input.value = '';
+    }
+
     function shareTripWhatsApp() {
         const driver = activeTripData || {};
         const msg = `Estoy en un viaje de Drive MX. Conductor: ${driver.name || 'Conductor'}, vehículo: ${driver.color || ''} ${driver.vehicle || ''}, placa: ${driver.plate || 'N/A'}. Recogida: Ubicación actual del pasajero. Destino: Destino del pasajero.`;
@@ -1202,6 +1303,7 @@
     function cancelPassengerTrip() {
         if (!confirm('¿Cancelar este viaje?')) return;
         activeTripData = null;
+        closePassengerMessageModal();
         document.getElementById('active-trip-passenger').classList.add('hidden');
         document.getElementById('fixed-cancel-trip-btn').classList.add('hidden');
         showPassengerPanel();

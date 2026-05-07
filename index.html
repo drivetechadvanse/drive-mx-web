@@ -114,7 +114,47 @@
         }
 
 
-    </style>
+    
+
+        /* EXPANSIÓN SOLO PANEL ADMIN EN ESCRITORIO */
+        @media (min-width: 1024px) {
+            #app-container {
+                max-width: 100% !important;
+                width: 100vw !important;
+                height: 100vh !important;
+                margin: 0 !important;
+                border-radius: 0 !important;
+            }
+
+            #admin-view {
+                width: 100vw !important;
+                height: 100vh !important;
+            }
+
+            #admin-content {
+                width: 100% !important;
+                max-width: 100% !important;
+                padding-left: 1rem !important;
+                padding-right: 1rem !important;
+            }
+
+            #admin-dashboard,
+            #urban-trips-section,
+            #admin-wallet-section {
+                width: 100% !important;
+                max-width: 100% !important;
+            }
+
+            #urban-services-admin-module {
+                grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+            }
+
+            #admin-requests-container {
+                width: 100% !important;
+            }
+        }
+
+</style>
 </head>
 <body>
 

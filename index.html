@@ -259,7 +259,7 @@
             <button id="admin-edit-btn" onclick="editarServicioSeleccionado()" class="hidden admin-icon-action bg-gray-900 text-white px-2.5 py-1.5 rounded font-black text-[10px] uppercase italic items-center justify-center active:scale-95 transition-all shadow-lg" title="Editar" aria-label="Editar">
                 <i data-lucide="pencil" class="w-4 h-4 shrink-0"></i><span>Editar</span>
             </button>
-            <button id="admin-new-taximeter-btn" onclick="nuevoHorarioTaximetroViajesUrbanos()" class="hidden admin-icon-action bg-gray-900 text-white px-2.5 py-1.5 rounded font-black text-[10px] uppercase italic items-center justify-center active:scale-95 transition-all shadow-lg" title="Nuevo" aria-label="Nuevo">
+            <button id="admin-taximeter-new-btn" onclick="nuevoHorarioTaximetroViajesUrbanos()" class="hidden admin-icon-action bg-gray-900 text-white px-2.5 py-1.5 rounded font-black text-[10px] uppercase italic items-center justify-center active:scale-95 transition-all shadow-lg" title="Nuevo" aria-label="Nuevo">
                 <i data-lucide="plus" class="w-4 h-4 shrink-0"></i><span>Nuevo</span>
             </button>
             <button id="admin-taximeter-schedule-btn" onclick="abrirHorariosTaximetroViajesUrbanos()" class="hidden admin-icon-action bg-gray-900 text-white px-2.5 py-1.5 rounded font-black text-[10px] uppercase italic items-center justify-center active:scale-95 transition-all shadow-lg" title="Horarios del taxímetro" aria-label="Horarios del taxímetro">
@@ -378,8 +378,7 @@
                 </div>
             </div>
 
-            <div id="urban-taximeter-schedule-section" class="hidden flex-1">
-            </div>
+            <div id="urban-taximeter-section" class="hidden flex-1"></div>
         </main>
     </div>
 
@@ -702,6 +701,7 @@
     let registrationMode = 'driver'; 
     let currentAdminView = 'requests'; 
     let selectedIds = [];
+    let taximeterSelectedUrbanServiceId = null;
     let currentUser = null;
     let activePanel = null;
     let isAvailable = false; // Estado del conductor
@@ -1154,7 +1154,6 @@
 
 
     let selectedUrbanServiceId = null;
-    let activeTaximeterUrbanServiceId = null;
     let urbanEditPhotoBase64 = null;
 
     function getServiciosUrbanosAdminData() {
@@ -1234,9 +1233,7 @@
     }
 
     function editarServicioSeleccionado() {
-        if (currentAdminView !== 'urban-trips' && currentAdminView !== 'urban-taximeter') return;
-        if (currentAdminView === 'urban-taximeter' && activeTaximeterUrbanServiceId) selectedUrbanServiceId = activeTaximeterUrbanServiceId;
-        if (!selectedUrbanServiceId) return;
+        if (currentAdminView !== 'urban-trips' || !selectedUrbanServiceId) return;
 
         const card = document.getElementById(`service-card-${selectedUrbanServiceId}`);
         if (!card) return;
@@ -1317,8 +1314,8 @@
         const deleteBtnText = document.getElementById('admin-delete-btn-text');
         const editBtn = document.getElementById('admin-edit-btn');
         const taximeterScheduleBtn = document.getElementById('admin-taximeter-schedule-btn');
-        const newTaximeterBtn = document.getElementById('admin-new-taximeter-btn');
-        const taximeterScheduleSection = document.getElementById('urban-taximeter-schedule-section');
+        const taximeterNewBtn = document.getElementById('admin-taximeter-new-btn');
+        const taximeterSection = document.getElementById('urban-taximeter-section');
 
         if (deleteBtnText) deleteBtnText.innerText = 'Eliminar Selección';
 
@@ -1332,14 +1329,14 @@
             taximeterScheduleBtn.classList.remove('inline-flex');
         }
 
-        if (newTaximeterBtn) {
-            newTaximeterBtn.classList.add('hidden');
-            newTaximeterBtn.classList.remove('inline-flex');
+        if (taximeterNewBtn) {
+            taximeterNewBtn.classList.add('hidden');
+            taximeterNewBtn.classList.remove('inline-flex');
         }
 
-        if (taximeterScheduleSection) taximeterScheduleSection.classList.add('hidden');
+        if (taximeterSection) taximeterSection.classList.add('hidden');
 
-        activeTaximeterUrbanServiceId = null;
+        taximeterSelectedUrbanServiceId = null;
         limpiarSeleccionServicioUrbano();
         cancelarEdicionServicioUrbano();
     }
@@ -1352,15 +1349,15 @@
         const dashboard = document.getElementById('admin-dashboard');
         const wallet = document.getElementById('admin-wallet-section');
         const urbanTrips = document.getElementById('urban-trips-section');
-        const taximeterScheduleSection = document.getElementById('urban-taximeter-schedule-section');
+        const taximeterSection = document.getElementById('urban-taximeter-section');
         const menuBtn = document.getElementById('admin-menu-btn');
         const backBtn = document.getElementById('admin-back-btn');
         const deleteBtnText = document.getElementById('admin-delete-btn-text');
 
         if (dashboard) dashboard.classList.add('hidden');
         if (wallet) wallet.classList.add('hidden');
+        if (taximeterSection) taximeterSection.classList.add('hidden');
         if (urbanTrips) urbanTrips.classList.remove('hidden');
-        if (taximeterScheduleSection) taximeterScheduleSection.classList.add('hidden');
         if (menuBtn) menuBtn.classList.remove('hidden');
         if (backBtn) backBtn.classList.add('hidden');
         if (deleteBtnText) deleteBtnText.innerText = 'Borrar';
@@ -1374,10 +1371,10 @@
             taximeterScheduleBtn.classList.remove('hidden');
             taximeterScheduleBtn.classList.add('inline-flex');
         }
-        const newTaximeterBtn = document.getElementById('admin-new-taximeter-btn');
-        if (newTaximeterBtn) {
-            newTaximeterBtn.classList.add('hidden');
-            newTaximeterBtn.classList.remove('inline-flex');
+        const taximeterNewBtn = document.getElementById('admin-taximeter-new-btn');
+        if (taximeterNewBtn) {
+            taximeterNewBtn.classList.add('hidden');
+            taximeterNewBtn.classList.remove('inline-flex');
         }
 
         document.getElementById('admin-title').innerHTML = 'VIAJES <span class="text-red-600 text-lg">URBANOS</span>';
@@ -1389,24 +1386,25 @@
     function abrirHorariosTaximetroViajesUrbanos() {
         if (currentAdminView !== 'urban-trips' || !selectedUrbanServiceId) return;
 
-        activeTaximeterUrbanServiceId = selectedUrbanServiceId;
+        taximeterSelectedUrbanServiceId = selectedUrbanServiceId;
         currentAdminView = 'urban-taximeter';
 
         const dashboard = document.getElementById('admin-dashboard');
         const wallet = document.getElementById('admin-wallet-section');
         const urbanTrips = document.getElementById('urban-trips-section');
-        const taximeterScheduleSection = document.getElementById('urban-taximeter-schedule-section');
+        const taximeterSection = document.getElementById('urban-taximeter-section');
         const deleteBtnText = document.getElementById('admin-delete-btn-text');
         const editBtn = document.getElementById('admin-edit-btn');
         const taximeterScheduleBtn = document.getElementById('admin-taximeter-schedule-btn');
-        const newTaximeterBtn = document.getElementById('admin-new-taximeter-btn');
+        const taximeterNewBtn = document.getElementById('admin-taximeter-new-btn');
 
         if (dashboard) dashboard.classList.add('hidden');
         if (wallet) wallet.classList.add('hidden');
         if (urbanTrips) urbanTrips.classList.add('hidden');
-        if (taximeterScheduleSection) {
-            taximeterScheduleSection.classList.remove('hidden');
-            taximeterScheduleSection.innerHTML = '';
+
+        if (taximeterSection) {
+            taximeterSection.classList.remove('hidden');
+            taximeterSection.innerHTML = '';
         }
 
         if (deleteBtnText) deleteBtnText.innerText = 'Borrar';
@@ -1421,17 +1419,18 @@
             taximeterScheduleBtn.classList.remove('inline-flex');
         }
 
-        if (newTaximeterBtn) {
-            newTaximeterBtn.classList.remove('hidden');
-            newTaximeterBtn.classList.add('inline-flex');
+        if (taximeterNewBtn) {
+            taximeterNewBtn.classList.remove('hidden');
+            taximeterNewBtn.classList.add('inline-flex');
         }
 
         document.getElementById('admin-title').innerHTML = 'HORARIOS <span class="text-red-600 text-lg">TAXÍMETRO</span>';
+        cancelarEdicionServicioUrbano();
         lucide.createIcons();
     }
 
     function nuevoHorarioTaximetroViajesUrbanos() {
-        if (currentAdminView !== 'urban-taximeter' || !activeTaximeterUrbanServiceId) return;
+        if (currentAdminView !== 'urban-taximeter' || !taximeterSelectedUrbanServiceId) return;
     }
 
     function renderAdminPassengers() {
@@ -1439,7 +1438,9 @@
         selectedIds = [];
         resetAdminTopDeleteButton();
         const urbanTrips = document.getElementById('urban-trips-section');
+        const taximeterSection = document.getElementById('urban-taximeter-section');
         if (urbanTrips) urbanTrips.classList.add('hidden');
+        if (taximeterSection) taximeterSection.classList.add('hidden');
         document.getElementById('admin-dashboard').classList.remove('hidden');
         document.getElementById('admin-wallet-section').classList.add('hidden');
         document.getElementById('admin-menu-btn').classList.remove('hidden');
@@ -1480,7 +1481,9 @@
         selectedIds = [];
         resetAdminTopDeleteButton();
         const urbanTrips = document.getElementById('urban-trips-section');
+        const taximeterSection = document.getElementById('urban-taximeter-section');
         if (urbanTrips) urbanTrips.classList.add('hidden');
+        if (taximeterSection) taximeterSection.classList.add('hidden');
         document.getElementById('admin-dashboard').classList.remove('hidden');
         document.getElementById('admin-wallet-section').classList.add('hidden');
         document.getElementById('admin-menu-btn').classList.remove('hidden');
@@ -1525,11 +1528,11 @@
     }
 
     function eliminarSeleccionados() {
-        if (currentAdminView === 'urban-taximeter') return;
         if (currentAdminView === 'urban-trips') {
             eliminarServicioUrbanoSeleccionado();
             return;
         }
+        if (currentAdminView === 'urban-taximeter') return;
         if (selectedIds.length === 0) { alert("Selecciona registros para eliminar"); return; }
 
         const idsToDelete = selectedIds.map(String);
@@ -1556,7 +1559,9 @@
         selectedIds = [];
         resetAdminTopDeleteButton();
         const urbanTrips = document.getElementById('urban-trips-section');
+        const taximeterSection = document.getElementById('urban-taximeter-section');
         if (urbanTrips) urbanTrips.classList.add('hidden');
+        if (taximeterSection) taximeterSection.classList.add('hidden');
         document.getElementById('admin-dashboard').classList.add('hidden'); 
         document.getElementById('admin-wallet-section').classList.remove('hidden');
         document.getElementById('admin-menu-btn').classList.add('hidden');
@@ -1566,7 +1571,9 @@
     function closeAdminWallet() { 
         resetAdminTopDeleteButton();
         const urbanTrips = document.getElementById('urban-trips-section');
+        const taximeterSection = document.getElementById('urban-taximeter-section');
         if (urbanTrips) urbanTrips.classList.add('hidden');
+        if (taximeterSection) taximeterSection.classList.add('hidden');
         document.getElementById('admin-dashboard').classList.remove('hidden');
         document.getElementById('admin-wallet-section').classList.add('hidden');
         document.getElementById('admin-menu-btn').classList.remove('hidden');

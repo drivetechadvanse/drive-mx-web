@@ -14,6 +14,61 @@
         document.getElementById('driver-sidebar-overlay').classList.add('hidden');
     }
 
+
+
+    let selectedServiceCard = null;
+
+    function seleccionarServicio(card) {
+
+        document.querySelectorAll('[data-service-card="true"]').forEach(c => {
+            c.classList.remove('card-selected','ring-2','ring-red-500');
+        });
+
+        selectedServiceCard = card;
+
+        card.classList.add('card-selected','ring-2','ring-red-500');
+    }
+
+    function eliminarServicioSeleccionado() {
+
+        if (!selectedServiceCard) return;
+
+        selectedServiceCard.remove();
+
+        selectedServiceCard = null;
+
+        lucide.createIcons();
+    }
+
+    function editarServicioSeleccionado() {
+
+        if (!selectedServiceCard) return;
+
+        const image = selectedServiceCard.querySelector('img');
+        const title = selectedServiceCard.querySelector('h3');
+
+        const nuevoNombre = prompt('Editar nombre del servicio:', title.innerText);
+
+        if (nuevoNombre !== null && nuevoNombre.trim() !== '') {
+            title.innerHTML = nuevoNombre;
+        }
+
+        const nuevaImagen = prompt('Pega URL de nueva imagen del servicio:', image.src);
+
+        if (nuevaImagen !== null && nuevaImagen.trim() !== '') {
+            image.src = nuevaImagen;
+        }
+
+        const nuevaConfig = prompt('Configuración del servicio:', selectedServiceCard.dataset.config || '');
+
+        if (nuevaConfig !== null) {
+            selectedServiceCard.dataset.config = nuevaConfig;
+        }
+
+        lucide.createIcons();
+    }
+
+
 </script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
@@ -253,8 +308,12 @@
         </header>
         <div class="w-full h-12 bg-gray-400 flex items-center px-4 shrink-0"></div>
         <div id="admin-icon-toolbar" class="admin-icon-toolbar w-full h-12 flex items-center gap-2 px-4 shrink-0">
-            <button id="admin-delete-btn" onclick="eliminarSeleccionados()" class="admin-icon-action bg-red-600 text-white px-2.5 py-1.5 rounded font-black text-[10px] uppercase italic inline-flex items-center justify-center active:scale-95 transition-all shadow-lg" title="Eliminar Selección" aria-label="Eliminar Selección">
-                <i data-lucide="trash-2" class="w-4 h-4 shrink-0"></i><span id="admin-delete-btn-text">Eliminar Selección</span>
+            <button id="admin-delete-btn" onclick="eliminarServicioSeleccionado()" class="admin-icon-action bg-red-600 text-white px-2.5 py-1.5 rounded font-black text-[10px] uppercase italic inline-flex items-center justify-center active:scale-95 transition-all shadow-lg" title="Eliminar Selección" aria-label="Eliminar Selección">
+                <i data-lucide="trash-2" class="w-4 h-4 shrink-0"></i><span id="admin-delete-btn-text">Borrar</span>
+            </button>
+
+            <button id="admin-edit-btn" onclick="editarServicioSeleccionado()" class="admin-icon-action bg-gray-900 text-white px-2.5 py-1.5 rounded font-black text-[10px] uppercase italic inline-flex items-center justify-center active:scale-95 transition-all shadow-lg" title="Editar Servicio" aria-label="Editar Servicio">
+                <i data-lucide="pencil" class="w-4 h-4 shrink-0"></i><span>Editar</span>
             </button>
         </div>
         <main id="admin-content" class="flex-1 p-5 space-y-4 overflow-y-auto">
@@ -305,28 +364,28 @@
                 </div>
 
                 <div id="urban-services-admin-module" class="grid grid-cols-2 gap-3 pb-10">
-                    <div id="service-card-taxi-expres" class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden active:scale-95 transition-all">
+                    <div id="service-card-taxi-expres" onclick="seleccionarServicio(this)" data-service-card="true" class="bg-white cursor-pointer rounded-2xl border border-gray-200 shadow-sm overflow-hidden active:scale-95 transition-all">
                         <img id="service-image-taxi-expres" src="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22320%22%20height%3D%22220%22%20viewBox%3D%220%200%20320%20220%22%3E%3Crect%20width%3D%22320%22%20height%3D%22220%22%20rx%3D%2228%22%20fill%3D%22%23111827%22/%3E%3Ccircle%20cx%3D%22160%22%20cy%3D%2288%22%20r%3D%2248%22%20fill%3D%22%23ef4444%22/%3E%3Ctext%20x%3D%22160%22%20y%3D%22105%22%20text-anchor%3D%22middle%22%20font-size%3D%2242%22%20font-family%3D%22Arial%22%20font-weight%3D%22900%22%20fill%3D%22%23ffffff%22%3ETX%3C/text%3E%3Crect%20x%3D%2260%22%20y%3D%22158%22%20width%3D%22200%22%20height%3D%2220%22%20rx%3D%2210%22%20fill%3D%22%23ffffff%22%20opacity%3D%220.14%22/%3E%3C/svg%3E" alt="Taxi Express" class="w-full h-20 object-cover">
                         <div class="p-3 text-center">
                             <h3 id="service-name-taxi-expres" class="text-[10px] font-black italic uppercase text-gray-900 leading-tight">Taxi Express</h3>
                         </div>
                     </div>
 
-                    <div id="service-card-motocicleta" class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden active:scale-95 transition-all">
+                    <div id="service-card-motocicleta" onclick="seleccionarServicio(this)" data-service-card="true" class="bg-white cursor-pointer rounded-2xl border border-gray-200 shadow-sm overflow-hidden active:scale-95 transition-all">
                         <img id="service-image-motocicleta" src="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22320%22%20height%3D%22220%22%20viewBox%3D%220%200%20320%20220%22%3E%3Crect%20width%3D%22320%22%20height%3D%22220%22%20rx%3D%2228%22%20fill%3D%22%231f2937%22/%3E%3Ccircle%20cx%3D%22160%22%20cy%3D%2288%22%20r%3D%2248%22%20fill%3D%22%23ef4444%22/%3E%3Ctext%20x%3D%22160%22%20y%3D%22105%22%20text-anchor%3D%22middle%22%20font-size%3D%2242%22%20font-family%3D%22Arial%22%20font-weight%3D%22900%22%20fill%3D%22%23ffffff%22%3EMT%3C/text%3E%3Crect%20x%3D%2260%22%20y%3D%22158%22%20width%3D%22200%22%20height%3D%2220%22%20rx%3D%2210%22%20fill%3D%22%23ffffff%22%20opacity%3D%220.14%22/%3E%3C/svg%3E" alt="Motocicleta" class="w-full h-20 object-cover">
                         <div class="p-3 text-center">
                             <h3 id="service-name-motocicleta" class="text-[10px] font-black italic uppercase text-gray-900 leading-tight">Motocicleta</h3>
                         </div>
                     </div>
 
-                    <div id="service-card-paqueteria" class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden active:scale-95 transition-all">
+                    <div id="service-card-paqueteria" onclick="seleccionarServicio(this)" data-service-card="true" class="bg-white cursor-pointer rounded-2xl border border-gray-200 shadow-sm overflow-hidden active:scale-95 transition-all">
                         <img id="service-image-paqueteria" src="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22320%22%20height%3D%22220%22%20viewBox%3D%220%200%20320%20220%22%3E%3Crect%20width%3D%22320%22%20height%3D%22220%22%20rx%3D%2228%22%20fill%3D%22%23374151%22/%3E%3Ccircle%20cx%3D%22160%22%20cy%3D%2288%22%20r%3D%2248%22%20fill%3D%22%23ef4444%22/%3E%3Ctext%20x%3D%22160%22%20y%3D%22105%22%20text-anchor%3D%22middle%22%20font-size%3D%2242%22%20font-family%3D%22Arial%22%20font-weight%3D%22900%22%20fill%3D%22%23ffffff%22%3EPK%3C/text%3E%3Crect%20x%3D%2260%22%20y%3D%22158%22%20width%3D%22200%22%20height%3D%2220%22%20rx%3D%2210%22%20fill%3D%22%23ffffff%22%20opacity%3D%220.14%22/%3E%3C/svg%3E" alt="Paquetería" class="w-full h-20 object-cover">
                         <div class="p-3 text-center">
                             <h3 id="service-name-paqueteria" class="text-[10px] font-black italic uppercase text-gray-900 leading-tight">Paquetería</h3>
                         </div>
                     </div>
 
-                    <div id="service-card-taxi-xl" class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden active:scale-95 transition-all">
+                    <div id="service-card-taxi-xl" onclick="seleccionarServicio(this)" data-service-card="true" class="bg-white cursor-pointer rounded-2xl border border-gray-200 shadow-sm overflow-hidden active:scale-95 transition-all">
                         <img id="service-image-taxi-xl" src="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22320%22%20height%3D%22220%22%20viewBox%3D%220%200%20320%20220%22%3E%3Crect%20width%3D%22320%22%20height%3D%22220%22%20rx%3D%2228%22%20fill%3D%22%234b5563%22/%3E%3Ccircle%20cx%3D%22160%22%20cy%3D%2288%22%20r%3D%2248%22%20fill%3D%22%23ef4444%22/%3E%3Ctext%20x%3D%22160%22%20y%3D%22105%22%20text-anchor%3D%22middle%22%20font-size%3D%2242%22%20font-family%3D%22Arial%22%20font-weight%3D%22900%22%20fill%3D%22%23ffffff%22%3EXL%3C/text%3E%3Crect%20x%3D%2260%22%20y%3D%22158%22%20width%3D%22200%22%20height%3D%2220%22%20rx%3D%2210%22%20fill%3D%22%23ffffff%22%20opacity%3D%220.14%22/%3E%3C/svg%3E" alt="Taxi XL para 10 personas" class="w-full h-20 object-cover">
                         <div class="p-3 text-center">
                             <h3 id="service-name-taxi-xl" class="text-[10px] font-black italic uppercase text-gray-900 leading-tight">Taxi XL<br><span class="text-[8px] text-gray-400">10 personas</span></h3>

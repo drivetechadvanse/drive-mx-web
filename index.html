@@ -14,61 +14,6 @@
         document.getElementById('driver-sidebar-overlay').classList.add('hidden');
     }
 
-
-
-    let selectedServiceCard = null;
-
-    function seleccionarServicio(card) {
-
-        document.querySelectorAll('[data-service-card="true"]').forEach(c => {
-            c.classList.remove('card-selected','ring-2','ring-red-500');
-        });
-
-        selectedServiceCard = card;
-
-        card.classList.add('card-selected','ring-2','ring-red-500');
-    }
-
-    function eliminarServicioSeleccionado() {
-
-        if (!selectedServiceCard) return;
-
-        selectedServiceCard.remove();
-
-        selectedServiceCard = null;
-
-        lucide.createIcons();
-    }
-
-    function editarServicioSeleccionado() {
-
-        if (!selectedServiceCard) return;
-
-        const image = selectedServiceCard.querySelector('img');
-        const title = selectedServiceCard.querySelector('h3');
-
-        const nuevoNombre = prompt('Editar nombre del servicio:', title.innerText);
-
-        if (nuevoNombre !== null && nuevoNombre.trim() !== '') {
-            title.innerHTML = nuevoNombre;
-        }
-
-        const nuevaImagen = prompt('Pega URL de nueva imagen del servicio:', image.src);
-
-        if (nuevaImagen !== null && nuevaImagen.trim() !== '') {
-            image.src = nuevaImagen;
-        }
-
-        const nuevaConfig = prompt('Configuración del servicio:', selectedServiceCard.dataset.config || '');
-
-        if (nuevaConfig !== null) {
-            selectedServiceCard.dataset.config = nuevaConfig;
-        }
-
-        lucide.createIcons();
-    }
-
-
 </script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
@@ -308,11 +253,10 @@
         </header>
         <div class="w-full h-12 bg-gray-400 flex items-center px-4 shrink-0"></div>
         <div id="admin-icon-toolbar" class="admin-icon-toolbar w-full h-12 flex items-center gap-2 px-4 shrink-0">
-            <button id="admin-delete-btn" onclick="eliminarServicioSeleccionado()" class="admin-icon-action bg-red-600 text-white px-2.5 py-1.5 rounded font-black text-[10px] uppercase italic inline-flex items-center justify-center active:scale-95 transition-all shadow-lg" title="Eliminar Selección" aria-label="Eliminar Selección">
-                <i data-lucide="trash-2" class="w-4 h-4 shrink-0"></i><span id="admin-delete-btn-text">Borrar</span>
+            <button id="admin-delete-btn" onclick="eliminarSeleccionados()" class="admin-icon-action bg-red-600 text-white px-2.5 py-1.5 rounded font-black text-[10px] uppercase italic inline-flex items-center justify-center active:scale-95 transition-all shadow-lg" title="Eliminar Selección" aria-label="Eliminar Selección">
+                <i data-lucide="trash-2" class="w-4 h-4 shrink-0"></i><span id="admin-delete-btn-text">Eliminar Selección</span>
             </button>
-
-            <button id="admin-edit-btn" onclick="editarServicioSeleccionado()" class="admin-icon-action bg-gray-900 text-white px-2.5 py-1.5 rounded font-black text-[10px] uppercase italic inline-flex items-center justify-center active:scale-95 transition-all shadow-lg" title="Editar Servicio" aria-label="Editar Servicio">
+            <button id="admin-edit-btn" onclick="editarServicioSeleccionado()" class="hidden admin-icon-action bg-gray-900 text-white px-2.5 py-1.5 rounded font-black text-[10px] uppercase italic items-center justify-center active:scale-95 transition-all shadow-lg" title="Editar" aria-label="Editar">
                 <i data-lucide="pencil" class="w-4 h-4 shrink-0"></i><span>Editar</span>
             </button>
         </div>
@@ -364,31 +308,65 @@
                 </div>
 
                 <div id="urban-services-admin-module" class="grid grid-cols-2 gap-3 pb-10">
-                    <div id="service-card-taxi-expres" onclick="seleccionarServicio(this)" data-service-card="true" class="bg-white cursor-pointer rounded-2xl border border-gray-200 shadow-sm overflow-hidden active:scale-95 transition-all">
+                    <div id="service-card-taxi-expres" data-urban-service-id="taxi-expres" onclick="seleccionarServicioUrbano('taxi-expres')" class="bg-white cursor-pointer rounded-2xl border border-gray-200 shadow-sm overflow-hidden active:scale-95 transition-all">
                         <img id="service-image-taxi-expres" src="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22320%22%20height%3D%22220%22%20viewBox%3D%220%200%20320%20220%22%3E%3Crect%20width%3D%22320%22%20height%3D%22220%22%20rx%3D%2228%22%20fill%3D%22%23111827%22/%3E%3Ccircle%20cx%3D%22160%22%20cy%3D%2288%22%20r%3D%2248%22%20fill%3D%22%23ef4444%22/%3E%3Ctext%20x%3D%22160%22%20y%3D%22105%22%20text-anchor%3D%22middle%22%20font-size%3D%2242%22%20font-family%3D%22Arial%22%20font-weight%3D%22900%22%20fill%3D%22%23ffffff%22%3ETX%3C/text%3E%3Crect%20x%3D%2260%22%20y%3D%22158%22%20width%3D%22200%22%20height%3D%2220%22%20rx%3D%2210%22%20fill%3D%22%23ffffff%22%20opacity%3D%220.14%22/%3E%3C/svg%3E" alt="Taxi Express" class="w-full h-20 object-cover">
                         <div class="p-3 text-center">
                             <h3 id="service-name-taxi-expres" class="text-[10px] font-black italic uppercase text-gray-900 leading-tight">Taxi Express</h3>
                         </div>
                     </div>
 
-                    <div id="service-card-motocicleta" onclick="seleccionarServicio(this)" data-service-card="true" class="bg-white cursor-pointer rounded-2xl border border-gray-200 shadow-sm overflow-hidden active:scale-95 transition-all">
+                    <div id="service-card-motocicleta" data-urban-service-id="motocicleta" onclick="seleccionarServicioUrbano('motocicleta')" class="bg-white cursor-pointer rounded-2xl border border-gray-200 shadow-sm overflow-hidden active:scale-95 transition-all">
                         <img id="service-image-motocicleta" src="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22320%22%20height%3D%22220%22%20viewBox%3D%220%200%20320%20220%22%3E%3Crect%20width%3D%22320%22%20height%3D%22220%22%20rx%3D%2228%22%20fill%3D%22%231f2937%22/%3E%3Ccircle%20cx%3D%22160%22%20cy%3D%2288%22%20r%3D%2248%22%20fill%3D%22%23ef4444%22/%3E%3Ctext%20x%3D%22160%22%20y%3D%22105%22%20text-anchor%3D%22middle%22%20font-size%3D%2242%22%20font-family%3D%22Arial%22%20font-weight%3D%22900%22%20fill%3D%22%23ffffff%22%3EMT%3C/text%3E%3Crect%20x%3D%2260%22%20y%3D%22158%22%20width%3D%22200%22%20height%3D%2220%22%20rx%3D%2210%22%20fill%3D%22%23ffffff%22%20opacity%3D%220.14%22/%3E%3C/svg%3E" alt="Motocicleta" class="w-full h-20 object-cover">
                         <div class="p-3 text-center">
                             <h3 id="service-name-motocicleta" class="text-[10px] font-black italic uppercase text-gray-900 leading-tight">Motocicleta</h3>
                         </div>
                     </div>
 
-                    <div id="service-card-paqueteria" onclick="seleccionarServicio(this)" data-service-card="true" class="bg-white cursor-pointer rounded-2xl border border-gray-200 shadow-sm overflow-hidden active:scale-95 transition-all">
+                    <div id="service-card-paqueteria" data-urban-service-id="paqueteria" onclick="seleccionarServicioUrbano('paqueteria')" class="bg-white cursor-pointer rounded-2xl border border-gray-200 shadow-sm overflow-hidden active:scale-95 transition-all">
                         <img id="service-image-paqueteria" src="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22320%22%20height%3D%22220%22%20viewBox%3D%220%200%20320%20220%22%3E%3Crect%20width%3D%22320%22%20height%3D%22220%22%20rx%3D%2228%22%20fill%3D%22%23374151%22/%3E%3Ccircle%20cx%3D%22160%22%20cy%3D%2288%22%20r%3D%2248%22%20fill%3D%22%23ef4444%22/%3E%3Ctext%20x%3D%22160%22%20y%3D%22105%22%20text-anchor%3D%22middle%22%20font-size%3D%2242%22%20font-family%3D%22Arial%22%20font-weight%3D%22900%22%20fill%3D%22%23ffffff%22%3EPK%3C/text%3E%3Crect%20x%3D%2260%22%20y%3D%22158%22%20width%3D%22200%22%20height%3D%2220%22%20rx%3D%2210%22%20fill%3D%22%23ffffff%22%20opacity%3D%220.14%22/%3E%3C/svg%3E" alt="Paquetería" class="w-full h-20 object-cover">
                         <div class="p-3 text-center">
                             <h3 id="service-name-paqueteria" class="text-[10px] font-black italic uppercase text-gray-900 leading-tight">Paquetería</h3>
                         </div>
                     </div>
 
-                    <div id="service-card-taxi-xl" onclick="seleccionarServicio(this)" data-service-card="true" class="bg-white cursor-pointer rounded-2xl border border-gray-200 shadow-sm overflow-hidden active:scale-95 transition-all">
+                    <div id="service-card-taxi-xl" data-urban-service-id="taxi-xl" onclick="seleccionarServicioUrbano('taxi-xl')" class="bg-white cursor-pointer rounded-2xl border border-gray-200 shadow-sm overflow-hidden active:scale-95 transition-all">
                         <img id="service-image-taxi-xl" src="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22320%22%20height%3D%22220%22%20viewBox%3D%220%200%20320%20220%22%3E%3Crect%20width%3D%22320%22%20height%3D%22220%22%20rx%3D%2228%22%20fill%3D%22%234b5563%22/%3E%3Ccircle%20cx%3D%22160%22%20cy%3D%2288%22%20r%3D%2248%22%20fill%3D%22%23ef4444%22/%3E%3Ctext%20x%3D%22160%22%20y%3D%22105%22%20text-anchor%3D%22middle%22%20font-size%3D%2242%22%20font-family%3D%22Arial%22%20font-weight%3D%22900%22%20fill%3D%22%23ffffff%22%3EXL%3C/text%3E%3Crect%20x%3D%2260%22%20y%3D%22158%22%20width%3D%22200%22%20height%3D%2220%22%20rx%3D%2210%22%20fill%3D%22%23ffffff%22%20opacity%3D%220.14%22/%3E%3C/svg%3E" alt="Taxi XL para 10 personas" class="w-full h-20 object-cover">
                         <div class="p-3 text-center">
                             <h3 id="service-name-taxi-xl" class="text-[10px] font-black italic uppercase text-gray-900 leading-tight">Taxi XL<br><span class="text-[8px] text-gray-400">10 personas</span></h3>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="urban-service-edit-panel" class="hidden bg-white rounded-2xl border border-gray-200 shadow-sm p-4 mb-10">
+                    <div class="flex items-center justify-between mb-3">
+                        <div>
+                            <p class="text-[8px] font-black text-gray-400 uppercase italic tracking-widest">Modo edición</p>
+                            <h3 class="text-sm font-black italic uppercase text-gray-900">Editar servicio seleccionado</h3>
+                        </div>
+                        <button onclick="cancelarEdicionServicioUrbano()" class="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center active:scale-95 transition-all" title="Cerrar edición" aria-label="Cerrar edición">
+                            <i data-lucide="x" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="reg-label">Nombre del servicio</label>
+                            <input type="text" id="urban-edit-name" class="reg-input" placeholder="Nombre del servicio">
+                        </div>
+                        <div>
+                            <label class="reg-label">Foto del servicio</label>
+                            <input type="file" id="urban-edit-photo" accept="image/*" class="hidden" onchange="previsualizarFotoServicioUrbano(this)">
+                            <button onclick="document.getElementById('urban-edit-photo').click()" class="w-full bg-gray-900 text-white py-3 rounded-xl font-black text-[10px] uppercase italic flex items-center justify-center gap-2 active:scale-95 transition-all">
+                                <i data-lucide="image" class="w-4 h-4"></i> Cambiar foto
+                            </button>
+                            <img id="urban-edit-preview" src="" class="hidden mt-3 w-full h-28 object-cover rounded-2xl border border-gray-200" alt="Vista previa del servicio">
+                        </div>
+                        <div>
+                            <label class="reg-label">Configuración del servicio</label>
+                            <textarea id="urban-edit-config" class="reg-input min-h-[90px] resize-none" placeholder="Configuración del servicio"></textarea>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <button onclick="cancelarEdicionServicioUrbano()" class="bg-gray-200 text-gray-700 py-3 rounded-xl font-black text-[10px] uppercase italic active:scale-95 transition-all">Cancelar</button>
+                            <button onclick="guardarEdicionServicioUrbano()" class="bg-red-600 text-white py-3 rounded-xl font-black text-[10px] uppercase italic active:scale-95 transition-all">Guardar</button>
                         </div>
                     </div>
                 </div>
@@ -1165,9 +1143,174 @@
         lucide.createIcons();
     }
 
+
+    let selectedUrbanServiceId = null;
+    let urbanEditPhotoBase64 = null;
+
+    function getServiciosUrbanosAdminData() {
+        const defaults = {
+            'taxi-expres': { nombre: 'Taxi Express', imagen: null, config: '', deleted: false },
+            'motocicleta': { nombre: 'Motocicleta', imagen: null, config: '', deleted: false },
+            'paqueteria': { nombre: 'Paquetería', imagen: null, config: '', deleted: false },
+            'taxi-xl': { nombre: 'Taxi XL<br><span class="text-[8px] text-gray-400">10 personas</span>', imagen: null, config: '', deleted: false }
+        };
+        const saved = JSON.parse(localStorage.getItem('admin_servicios_viajes_urbanos') || '{}');
+        return { ...defaults, ...saved };
+    }
+
+    function saveServiciosUrbanosAdminData(data) {
+        localStorage.setItem('admin_servicios_viajes_urbanos', JSON.stringify(data));
+    }
+
+    function inicializarServiciosUrbanosAdmin() {
+        const data = getServiciosUrbanosAdminData();
+        Object.keys(data).forEach(id => {
+            const card = document.getElementById(`service-card-${id}`);
+            if (!card) return;
+            const img = document.getElementById(`service-image-${id}`);
+            const name = document.getElementById(`service-name-${id}`);
+
+            card.dataset.urbanServiceId = id;
+            card.setAttribute('onclick', `seleccionarServicioUrbano('${id}')`);
+            card.classList.add('cursor-pointer');
+
+            if (data[id].deleted) {
+                card.classList.add('hidden');
+                return;
+            }
+
+            card.classList.remove('hidden');
+            card.dataset.config = data[id].config || '';
+            if (img && data[id].imagen) img.src = data[id].imagen;
+            if (name && data[id].nombre) name.innerHTML = data[id].nombre;
+        });
+        limpiarSeleccionServicioUrbano();
+        cancelarEdicionServicioUrbano();
+    }
+
+    function seleccionarServicioUrbano(id) {
+        if (currentAdminView !== 'urban-trips') return;
+        document.querySelectorAll('[data-urban-service-id]').forEach(card => {
+            card.classList.remove('card-selected','ring-2','ring-red-500');
+        });
+        const card = document.getElementById(`service-card-${id}`);
+        if (!card || card.classList.contains('hidden')) return;
+        selectedUrbanServiceId = id;
+        card.classList.add('card-selected','ring-2','ring-red-500');
+    }
+
+    function limpiarSeleccionServicioUrbano() {
+        selectedUrbanServiceId = null;
+        document.querySelectorAll('[data-urban-service-id]').forEach(card => {
+            card.classList.remove('card-selected','ring-2','ring-red-500');
+        });
+    }
+
+    function eliminarServicioUrbanoSeleccionado() {
+        if (currentAdminView !== 'urban-trips' || !selectedUrbanServiceId) return;
+
+        const data = getServiciosUrbanosAdminData();
+        if (!data[selectedUrbanServiceId]) return;
+
+        data[selectedUrbanServiceId].deleted = true;
+        saveServiciosUrbanosAdminData(data);
+
+        const card = document.getElementById(`service-card-${selectedUrbanServiceId}`);
+        if (card) card.remove();
+
+        selectedUrbanServiceId = null;
+        cancelarEdicionServicioUrbano();
+        lucide.createIcons();
+    }
+
+    function editarServicioSeleccionado() {
+        if (currentAdminView !== 'urban-trips' || !selectedUrbanServiceId) return;
+
+        const card = document.getElementById(`service-card-${selectedUrbanServiceId}`);
+        if (!card) return;
+
+        const name = document.getElementById(`service-name-${selectedUrbanServiceId}`);
+        const img = document.getElementById(`service-image-${selectedUrbanServiceId}`);
+        const panel = document.getElementById('urban-service-edit-panel');
+        const inputName = document.getElementById('urban-edit-name');
+        const inputConfig = document.getElementById('urban-edit-config');
+        const preview = document.getElementById('urban-edit-preview');
+
+        urbanEditPhotoBase64 = null;
+        if (inputName && name) inputName.value = name.innerText.replace(/\s+/g, ' ').trim();
+        if (inputConfig) inputConfig.value = card.dataset.config || '';
+        if (preview && img) {
+            preview.src = img.src;
+            preview.classList.remove('hidden');
+        }
+        if (panel) panel.classList.remove('hidden');
+        lucide.createIcons();
+    }
+
+    function previsualizarFotoServicioUrbano(input) {
+        if (!input.files || !input.files[0]) return;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            urbanEditPhotoBase64 = e.target.result;
+            const preview = document.getElementById('urban-edit-preview');
+            if (preview) {
+                preview.src = urbanEditPhotoBase64;
+                preview.classList.remove('hidden');
+            }
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+
+    function guardarEdicionServicioUrbano() {
+        if (currentAdminView !== 'urban-trips' || !selectedUrbanServiceId) return;
+
+        const data = getServiciosUrbanosAdminData();
+        const card = document.getElementById(`service-card-${selectedUrbanServiceId}`);
+        const name = document.getElementById(`service-name-${selectedUrbanServiceId}`);
+        const img = document.getElementById(`service-image-${selectedUrbanServiceId}`);
+        const inputName = document.getElementById('urban-edit-name');
+        const inputConfig = document.getElementById('urban-edit-config');
+
+        if (!data[selectedUrbanServiceId]) data[selectedUrbanServiceId] = { nombre: '', imagen: null, config: '', deleted: false };
+
+        if (inputName && inputName.value.trim()) {
+            data[selectedUrbanServiceId].nombre = inputName.value.trim();
+            if (name) name.innerHTML = inputName.value.trim();
+        }
+
+        if (urbanEditPhotoBase64) {
+            data[selectedUrbanServiceId].imagen = urbanEditPhotoBase64;
+            if (img) img.src = urbanEditPhotoBase64;
+        }
+
+        data[selectedUrbanServiceId].config = inputConfig ? inputConfig.value : '';
+        if (card) card.dataset.config = data[selectedUrbanServiceId].config;
+
+        saveServiciosUrbanosAdminData(data);
+        cancelarEdicionServicioUrbano();
+        lucide.createIcons();
+    }
+
+    function cancelarEdicionServicioUrbano() {
+        const panel = document.getElementById('urban-service-edit-panel');
+        const photo = document.getElementById('urban-edit-photo');
+        const preview = document.getElementById('urban-edit-preview');
+        if (panel) panel.classList.add('hidden');
+        if (photo) photo.value = '';
+        if (preview) preview.classList.add('hidden');
+        urbanEditPhotoBase64 = null;
+    }
+
     function resetAdminTopDeleteButton() {
         const deleteBtnText = document.getElementById('admin-delete-btn-text');
+        const editBtn = document.getElementById('admin-edit-btn');
         if (deleteBtnText) deleteBtnText.innerText = 'Eliminar Selección';
+        if (editBtn) {
+            editBtn.classList.add('hidden');
+            editBtn.classList.remove('inline-flex');
+        }
+        limpiarSeleccionServicioUrbano();
+        cancelarEdicionServicioUrbano();
     }
 
     function openUrbanTripsView() {
@@ -1188,8 +1331,14 @@
         if (menuBtn) menuBtn.classList.remove('hidden');
         if (backBtn) backBtn.classList.add('hidden');
         if (deleteBtnText) deleteBtnText.innerText = 'Borrar';
+        const editBtn = document.getElementById('admin-edit-btn');
+        if (editBtn) {
+            editBtn.classList.remove('hidden');
+            editBtn.classList.add('inline-flex');
+        }
 
         document.getElementById('admin-title').innerHTML = 'VIAJES <span class="text-red-600 text-lg">URBANOS</span>';
+        inicializarServiciosUrbanosAdmin();
         lucide.createIcons();
     }
 
@@ -1284,7 +1433,10 @@
     }
 
     function eliminarSeleccionados() {
-        if (currentAdminView === 'urban-trips') return;
+        if (currentAdminView === 'urban-trips') {
+            eliminarServicioUrbanoSeleccionado();
+            return;
+        }
         if (selectedIds.length === 0) { alert("Selecciona registros para eliminar"); return; }
 
         const idsToDelete = selectedIds.map(String);

@@ -814,6 +814,7 @@
     }
 
     function resetPassengerTransientState() {
+        stopRealtimeTaximeterUrbanTrip();
         ['p-header', 'p-banners', 'p-wallet'].forEach(id => {
             const el = document.getElementById(id);
             if (el) el.classList.remove('hidden-view');
@@ -2345,6 +2346,205 @@
 
     let activeTripData = null;
 
+    let realtimeTaximeterUrbanTrip = {
+        active: false,
+        watchId: null,
+        timerId: null,
+        startedAt: null,
+        lastPosition: null,
+        km: 0,
+        minutes: 0,
+        total: 0,
+        config: null,
+        schedule: null,
+        serviceId: 'taxi-expres'
+    };
+
+    function getPassengerUrbanServiceForTrip() {
+        return appState.selectedUrbanServiceId || localStorage.getItem('drive_mx_selected_urban_service') || 'taxi-expres';
+    }
+
+    function getActiveTaximeterScheduleForService(serviceId) {
+        const schedules = getTaximeterSchedulesUrbanTripsData()[serviceId] || [];
+        return schedules.find(schedule => isNowInsideTaximeterSchedule(schedule)) || null;
+    }
+
+    function getActiveTaximeterConfigForService(serviceId) {
+        const schedule = getActiveTaximeterScheduleForService(serviceId);
+        if (!schedule) return null;
+        const config = getTaximeterUrbanConfigForContext(serviceId, schedule.id);
+        if (!config) return null;
+        return { schedule, config };
+    }
+
+    function getFallbackTaximeterConfig(serviceId) {
+        return {
+            serviceId,
+            serviceName: getUrbanServiceDisplayName(serviceId),
+            scheduleId: 'fallback',
+            scheduleName: 'Tarifa base de prueba',
+            horario: { desde: '00:00', hasta: '23:59' },
+            kilometros: { desde: 0, hasta: 999 },
+            costos: {
+                precioInicial: Number(appState.precioViaje || 120),
+                precioPorMinuto: 0,
+                precioPorKilometro: 0
+            },
+            isFallback: true
+        };
+    }
+
+    function ensureActiveTripTaximeterUI() {
+        const grid = document.querySelector('#active-trip-sheet .grid.grid-cols-2.gap-3.mb-4');
+        if (!grid || document.getElementById('trip-taximeter-live-details')) return;
+        grid.insertAdjacentHTML('afterend', `
+            <div id="trip-taximeter-live-details" class="bg-gray-50 rounded-2xl p-3 border border-gray-100 mb-4">
+                <div class="flex items-center justify-between gap-3 mb-2">
+                    <p class="text-[8px] font-black text-gray-400 uppercase italic">Taxímetro en tiempo real</p>
+                    <span id="trip-taximeter-status" class="text-[8px] font-black uppercase italic text-red-600">Iniciando GPS</span>
+                </div>
+                <div class="grid grid-cols-3 gap-2 text-center">
+                    <div class="bg-white rounded-xl p-2 border border-gray-100">
+                        <p class="text-[8px] font-black text-gray-400 uppercase italic">Km</p>
+                        <h4 id="trip-taximeter-km" class="text-[10px] font-black uppercase italic text-gray-900">0.00</h4>
+                    </div>
+                    <div class="bg-white rounded-xl p-2 border border-gray-100">
+                        <p class="text-[8px] font-black text-gray-400 uppercase italic">Min</p>
+                        <h4 id="trip-taximeter-min" class="text-[10px] font-black uppercase italic text-gray-900">0</h4>
+                    </div>
+                    <div class="bg-white rounded-xl p-2 border border-gray-100">
+                        <p class="text-[8px] font-black text-gray-400 uppercase italic">Horario</p>
+                        <h4 id="trip-taximeter-schedule" class="text-[10px] font-black uppercase italic text-gray-900 truncate">--</h4>
+                    </div>
+                </div>
+            </div>`);
+    }
+
+    function updateRealtimeTaximeterUI() {
+        const state = realtimeTaximeterUrbanTrip;
+        const config = state.config || getFallbackTaximeterConfig(state.serviceId || 'taxi-expres');
+        const kmFrom = Number(config.kilometros?.desde || 0);
+        const kmLimit = Number(config.kilometros?.hasta || 999);
+        const billableKm = Math.max(0, Math.min(state.km, kmLimit) - kmFrom);
+        const initial = Number(config.costos?.precioInicial || 0);
+        const perMinute = Number(config.costos?.precioPorMinuto || 0);
+        const perKm = Number(config.costos?.precioPorKilometro || 0);
+        const total = initial + (billableKm * perKm) + (state.minutes * perMinute);
+
+        state.total = Number(total.toFixed(2));
+        appState.precioViaje = state.total;
+
+        const tripCost = document.getElementById('trip-cost');
+        const kmEl = document.getElementById('trip-taximeter-km');
+        const minEl = document.getElementById('trip-taximeter-min');
+        const scheduleEl = document.getElementById('trip-taximeter-schedule');
+        const statusEl = document.getElementById('trip-taximeter-status');
+
+        if (tripCost) tripCost.innerText = `$${state.total.toFixed(2)} MXN`;
+        if (kmEl) kmEl.innerText = state.km.toFixed(2);
+        if (minEl) minEl.innerText = String(state.minutes);
+        if (scheduleEl) scheduleEl.innerText = config.scheduleName || state.schedule?.nombre || 'Activo';
+        if (statusEl) {
+            statusEl.innerText = state.active ? 'GPS activo' : 'GPS detenido';
+            statusEl.className = `text-[8px] font-black uppercase italic ${state.active ? 'text-green-600' : 'text-red-600'}`;
+        }
+    }
+
+    function startRealtimeTaximeterUrbanTrip() {
+        stopRealtimeTaximeterUrbanTrip(false);
+        ensureActiveTripTaximeterUI();
+
+        const serviceId = getPassengerUrbanServiceForTrip();
+        const activeConfig = getActiveTaximeterConfigForService(serviceId);
+        const fallbackConfig = getFallbackTaximeterConfig(serviceId);
+        const config = activeConfig?.config || fallbackConfig;
+        const schedule = activeConfig?.schedule || null;
+
+        realtimeTaximeterUrbanTrip = {
+            active: true,
+            watchId: null,
+            timerId: null,
+            startedAt: Date.now(),
+            lastPosition: null,
+            km: 0,
+            minutes: 0,
+            total: 0,
+            config,
+            schedule,
+            serviceId
+        };
+
+        updateRealtimeTaximeterUI();
+
+        realtimeTaximeterUrbanTrip.timerId = setInterval(() => {
+            if (!realtimeTaximeterUrbanTrip.active) return;
+            realtimeTaximeterUrbanTrip.minutes = Math.floor((Date.now() - realtimeTaximeterUrbanTrip.startedAt) / 60000);
+            updateRealtimeTaximeterUI();
+        }, 1000);
+
+        if (!navigator.geolocation) {
+            const statusEl = document.getElementById('trip-taximeter-status');
+            if (statusEl) statusEl.innerText = 'GPS no disponible';
+            return;
+        }
+
+        realtimeTaximeterUrbanTrip.watchId = navigator.geolocation.watchPosition((pos) => {
+            if (!realtimeTaximeterUrbanTrip.active) return;
+            const currentPosition = {
+                lat: pos.coords.latitude,
+                lng: pos.coords.longitude,
+                accuracy: pos.coords.accuracy,
+                timestamp: pos.timestamp || Date.now()
+            };
+
+            localStorage.setItem('drive_mx_active_trip_location', JSON.stringify({
+                ...currentPosition,
+                km: realtimeTaximeterUrbanTrip.km,
+                total: realtimeTaximeterUrbanTrip.total,
+                updatedAt: new Date().toISOString()
+            }));
+
+            if (realtimeTaximeterUrbanTrip.lastPosition) {
+                const distance = getDistanceKm(
+                    realtimeTaximeterUrbanTrip.lastPosition.lat,
+                    realtimeTaximeterUrbanTrip.lastPosition.lng,
+                    currentPosition.lat,
+                    currentPosition.lng
+                );
+
+                if (Number.isFinite(distance) && distance > 0.005 && distance < 2) {
+                    realtimeTaximeterUrbanTrip.km += distance;
+                }
+            }
+
+            realtimeTaximeterUrbanTrip.lastPosition = currentPosition;
+            updateRealtimeTaximeterUI();
+        }, () => {
+            const statusEl = document.getElementById('trip-taximeter-status');
+            if (statusEl) {
+                statusEl.innerText = 'Permiso GPS pendiente';
+                statusEl.className = 'text-[8px] font-black uppercase italic text-yellow-600';
+            }
+        }, {
+            enableHighAccuracy: true,
+            maximumAge: 1000,
+            timeout: 10000
+        });
+    }
+
+    function stopRealtimeTaximeterUrbanTrip(reset = true) {
+        if (realtimeTaximeterUrbanTrip?.watchId !== null && realtimeTaximeterUrbanTrip?.watchId !== undefined && navigator.geolocation) {
+            navigator.geolocation.clearWatch(realtimeTaximeterUrbanTrip.watchId);
+        }
+        if (realtimeTaximeterUrbanTrip?.timerId) {
+            clearInterval(realtimeTaximeterUrbanTrip.timerId);
+        }
+        if (realtimeTaximeterUrbanTrip) realtimeTaximeterUrbanTrip.active = false;
+        if (reset) {
+            localStorage.removeItem('drive_mx_active_trip_location');
+        }
+    }
+
     function getPaymentLabel(method) {
         const labels = { efectivo: 'Efectivo', spei: 'SPEI', cartera: 'Cartera' };
         return labels[method] || 'Efectivo';
@@ -2369,6 +2569,7 @@
         populateActiveTripSheet(driver);
         initActiveTripSheetDrag();
         document.getElementById('fixed-cancel-trip-btn').classList.remove('hidden');
+        startRealtimeTaximeterUrbanTrip();
 
         lucide.createIcons();
     }
@@ -2515,6 +2716,7 @@
 
     function cancelPassengerTrip() {
         if (!confirm('¿Cancelar este viaje?')) return;
+        stopRealtimeTaximeterUrbanTrip();
         activeTripData = null;
         closePassengerMessageModal();
         document.getElementById('active-trip-passenger').classList.add('hidden');

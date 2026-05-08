@@ -188,6 +188,60 @@
             transform: translate(-50%, -50%);
         }
 
+
+        /* Lista compacta de servicios en panel pasajero */
+        .passenger-services-list { display: flex; flex-direction: column; gap: .65rem; }
+        .passenger-service-option {
+            width: 100%;
+            min-height: 70px;
+            background: #fff;
+            border: 1px solid #eef0f3;
+            border-radius: 1.25rem;
+            padding: .65rem .75rem;
+            display: flex;
+            align-items: center;
+            gap: .75rem;
+            box-shadow: 0 8px 22px rgba(15, 23, 42, .055);
+            transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease, background .18s ease;
+        }
+        .passenger-service-option:active { transform: scale(.985); }
+        .passenger-service-option.selected {
+            border-color: #ef4444;
+            background: linear-gradient(180deg, #fff 0%, #fff7f7 100%);
+            box-shadow: 0 12px 28px rgba(239, 68, 68, .12);
+        }
+        .passenger-service-photo-wrap {
+            width: 58px;
+            height: 48px;
+            flex: 0 0 58px;
+            border-radius: 1rem;
+            background: transparent;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        .passenger-service-photo {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            background: transparent !important;
+            mix-blend-mode: normal;
+        }
+        .passenger-service-info { min-width: 0; flex: 1; text-align: left; }
+        .passenger-service-title { font-size: 12px; line-height: 1; font-weight: 900; font-style: italic; text-transform: uppercase; color: #111827; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .passenger-service-meta { margin-top: .32rem; display: flex; flex-wrap: wrap; align-items: center; gap: .35rem .55rem; font-size: 8px; line-height: 1; font-weight: 900; text-transform: uppercase; font-style: italic; color: #6b7280; }
+        .passenger-service-meta span { display: inline-flex; align-items: center; gap: .2rem; white-space: nowrap; }
+        .passenger-service-price { flex: 0 0 auto; text-align: right; }
+        .passenger-service-price strong { display: block; font-size: 13px; line-height: 1; font-weight: 900; font-style: italic; color: #111827; }
+        .passenger-service-price small { display: block; margin-top: .25rem; font-size: 7px; line-height: 1; font-weight: 900; text-transform: uppercase; font-style: italic; color: #9ca3af; }
+        .compact-payment-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .5rem; }
+        .compact-payment-row .payment-opt { padding: .7rem .45rem; border-radius: 1rem; }
+        @media (min-width: 768px) {
+            #cost-sheet { max-width: 480px; left: 50% !important; right: auto !important; transform: translate(-50%, 100%); border-radius: 2rem 2rem 0 0; }
+            #cost-sheet.active { transform: translate(-50%, 0); }
+        }
+
 </style>
 </head>
 <body>
@@ -566,18 +620,28 @@
             </div>
         </main>
         <!-- Bottom Sheet Pagos -->
-        <div id="cost-sheet" class="absolute bottom-0 left-0 right-0 bg-white z-[120] rounded-t-[2.5rem] shadow-[0_-10px_40px_rgba(0,0,0,0.15)] p-8 pt-6 space-y-5">
-            <div class="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-2"></div>
-            <h3 class="text-lg font-black italic uppercase text-center tracking-tighter">FORMA DE <span class="text-red-600">PAGO</span></h3>
-            <div class="grid grid-cols-3 gap-3">
-                <button onclick="setPay(this, 'efectivo')" class="payment-opt selected p-4 rounded-2xl border flex flex-col items-center gap-2 transition-all"><i data-lucide="banknote" class="w-5 h-5"></i><span class="text-[9px] font-black uppercase italic">Efectivo</span></button>
-                <button onclick="setPay(this, 'spei')" class="payment-opt p-4 rounded-2xl border flex flex-col items-center gap-2 transition-all"><i data-lucide="send" class="w-5 h-5"></i><span class="text-[9px] font-black uppercase italic">SPEI</span></button>
-                <button onclick="setPay(this, 'cartera')" class="payment-opt p-4 rounded-2xl border flex flex-col items-center gap-2 transition-all"><i data-lucide="wallet" class="w-5 h-5"></i><span class="text-[9px] font-black uppercase italic">Cartera</span></button>
+        <div id="cost-sheet" class="absolute bottom-0 left-0 right-0 bg-white z-[120] rounded-t-[2.5rem] shadow-[0_-10px_40px_rgba(0,0,0,0.15)] p-4 pt-4 space-y-3 max-h-[88dvh] overflow-y-auto">
+            <div class="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-1"></div>
+            <div class="flex items-center justify-between px-1">
+                <div>
+                    <p class="text-[8px] font-black text-gray-400 uppercase italic tracking-widest">Opciones de viaje</p>
+                    <h3 class="text-base font-black italic uppercase tracking-tighter text-gray-900">Servicios y <span class="text-red-600">tarifas</span></h3>
+                </div>
+                <span id="passenger-selected-price" class="bg-gray-900 text-white px-3 py-2 rounded-2xl text-[11px] font-black italic shadow-lg">$120.00</span>
             </div>
-            <div class="text-center py-1">
-                <p class="text-[9px] font-black text-gray-400 uppercase italic tracking-widest">Costo Estimado: <span class="text-gray-900">$120.00 MXN</span></p>
+
+            <div id="passenger-services-list" class="passenger-services-list"></div>
+
+            <div class="pt-1">
+                <p class="text-[8px] font-black text-gray-400 uppercase italic tracking-widest mb-2 ml-1">Forma de pago</p>
+                <div class="compact-payment-row">
+                    <button onclick="setPay(this, 'efectivo')" class="payment-opt selected border flex flex-col items-center gap-1 transition-all"><i data-lucide="banknote" class="w-4 h-4"></i><span class="text-[8px] font-black uppercase italic">Efectivo</span></button>
+                    <button onclick="setPay(this, 'spei')" class="payment-opt border flex flex-col items-center gap-1 transition-all"><i data-lucide="send" class="w-4 h-4"></i><span class="text-[8px] font-black uppercase italic">SPEI</span></button>
+                    <button onclick="setPay(this, 'cartera')" class="payment-opt border flex flex-col items-center gap-1 transition-all"><i data-lucide="wallet" class="w-4 h-4"></i><span class="text-[8px] font-black uppercase italic">Cartera</span></button>
+                </div>
             </div>
-            <button id="btn-confirmar" onclick="handleRequest()" class="w-full bg-red-600 text-white py-4 rounded-2xl font-black text-[12px] uppercase italic shadow-xl shadow-red-600/30 active:scale-95 transition-all mb-4">CONFIRMAR SOLICITUD</button>
+
+            <button id="btn-confirmar" onclick="handleRequest()" class="w-full bg-red-600 text-white py-4 rounded-2xl font-black text-[12px] uppercase italic shadow-xl shadow-red-600/30 active:scale-95 transition-all mb-2">CONFIRMAR SOLICITUD</button>
         </div>
     </div>
 
@@ -748,6 +812,7 @@
     let isAvailable = false; // Estado del conductor
     let appState = {
         selectedPayment: 'efectivo',
+        selectedServiceId: 'taxi-expres',
         precioViaje: 120.00
     };
 
@@ -1007,6 +1072,7 @@
         resetPassengerTransientState();
         document.getElementById('passenger-view').classList.remove('hidden');
         updateProfileUI();
+        renderPassengerUrbanServices();
         setTimeout(initPassengerMap, 150);
         lucide.createIcons();
     }
@@ -1298,6 +1364,7 @@
         });
         limpiarSeleccionServicioUrbano();
         cancelarEdicionServicioUrbano();
+        renderPassengerUrbanServices();
     }
 
     function seleccionarServicioUrbano(id) {
@@ -1399,6 +1466,7 @@
         if (card) card.dataset.config = data[selectedUrbanServiceId].config;
 
         saveServiciosUrbanosAdminData(data);
+        renderPassengerUrbanServices();
         cancelarEdicionServicioUrbano();
         lucide.createIcons();
     }
@@ -1559,6 +1627,106 @@
         if (name) return name.innerText.replace(/\s+/g, ' ').trim();
         const data = getServiciosUrbanosAdminData();
         return (data[serviceId]?.nombre || serviceId).replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+    }
+
+
+    const passengerUrbanServiceMeta = {
+        'taxi-expres': { fixedName: 'Taxi Express', capacity: 'Hasta 4 personas', fallbackEta: '3 min' },
+        'motocicleta': { fixedName: 'Motocicleta', capacity: '1 persona', fallbackEta: '2 min' },
+        'paqueteria': { fixedName: 'Paquetería', capacity: 'Hasta 35 kg', fallbackEta: '4 min' },
+        'taxi-xl': { fixedName: 'Taxi XL', capacity: 'Hasta 10 personas', fallbackEta: '6 min' }
+    };
+
+    function getPassengerUrbanServiceImage(serviceId) {
+        const data = getServiciosUrbanosAdminData();
+        if (data[serviceId]?.imagen) return data[serviceId].imagen;
+        const adminImage = document.getElementById(`service-image-${serviceId}`);
+        return adminImage ? adminImage.src : '';
+    }
+
+    function getActiveTaximeterConfigForPassenger(serviceId) {
+        const schedules = getTaximeterSchedulesUrbanTripsData()[serviceId] || [];
+        const activeSchedule = schedules.find(schedule => isNowInsideTaximeterSchedule(schedule));
+        if (!activeSchedule) return null;
+        return getTaximeterUrbanConfigForContext(serviceId, activeSchedule.id);
+    }
+
+    function calculatePassengerFinalPrice(serviceId) {
+        const config = getActiveTaximeterConfigForPassenger(serviceId);
+        const estimatedKm = 5;
+        const estimatedMinutes = 12;
+        if (!config || !config.costos) return 120;
+
+        const initial = Number(config.costos.precioInicial || 0);
+        const minute = Number(config.costos.precioPorMinuto || 0);
+        const km = Number(config.costos.precioPorKilometro || 0);
+        const minKm = Number(config.kilometros?.desde || 0);
+        const maxKm = Number(config.kilometros?.hasta || estimatedKm);
+        const billableKm = Math.min(Math.max(estimatedKm, minKm), maxKm);
+        const total = initial + (minute * estimatedMinutes) + (km * billableKm);
+        return total > 0 ? total : 120;
+    }
+
+    function getPassengerServiceEta(serviceId, index) {
+        const drivers = getRegisteredDriversForPassengerOffers();
+        if (drivers && drivers.length > 0) return drivers[0].time || passengerUrbanServiceMeta[serviceId].fallbackEta;
+        return passengerUrbanServiceMeta[serviceId].fallbackEta;
+    }
+
+    function renderPassengerUrbanServices() {
+        const container = document.getElementById('passenger-services-list');
+        if (!container) return;
+
+        const adminData = getServiciosUrbanosAdminData();
+        const orderedIds = ['taxi-expres', 'motocicleta', 'paqueteria', 'taxi-xl'];
+        container.innerHTML = orderedIds.map((serviceId, index) => {
+            if (adminData[serviceId]?.deleted) return '';
+            const meta = passengerUrbanServiceMeta[serviceId];
+            const image = getPassengerUrbanServiceImage(serviceId);
+            const eta = getPassengerServiceEta(serviceId, index);
+            const price = calculatePassengerFinalPrice(serviceId);
+            const selected = appState.selectedServiceId === serviceId;
+            return `
+                <button type="button" id="passenger-service-${serviceId}" onclick="selectPassengerUrbanService('${serviceId}')" class="passenger-service-option ${selected ? 'selected' : ''}">
+                    <span class="passenger-service-photo-wrap">
+                        <img src="${image}" alt="${meta.fixedName}" class="passenger-service-photo">
+                    </span>
+                    <span class="passenger-service-info">
+                        <span class="passenger-service-title">${meta.fixedName}</span>
+                        <span class="passenger-service-meta">
+                            <span><i data-lucide="users" class="w-3 h-3"></i>${meta.capacity}</span>
+                            <span><i data-lucide="clock" class="w-3 h-3"></i>${eta}</span>
+                        </span>
+                    </span>
+                    <span class="passenger-service-price">
+                        <strong>$${price.toFixed(2)}</strong>
+                        <small>MXN</small>
+                    </span>
+                </button>`;
+        }).join('');
+
+        if (!orderedIds.includes(appState.selectedServiceId) || adminData[appState.selectedServiceId]?.deleted) {
+            const firstVisible = orderedIds.find(id => !adminData[id]?.deleted) || 'taxi-expres';
+            appState.selectedServiceId = firstVisible;
+        }
+        selectPassengerUrbanService(appState.selectedServiceId, true);
+        lucide.createIcons();
+    }
+
+    function selectPassengerUrbanService(serviceId, silent = false) {
+        const meta = passengerUrbanServiceMeta[serviceId];
+        if (!meta) return;
+        appState.selectedServiceId = serviceId;
+        appState.precioViaje = calculatePassengerFinalPrice(serviceId);
+
+        document.querySelectorAll('.passenger-service-option').forEach(card => card.classList.remove('selected'));
+        const selectedCard = document.getElementById(`passenger-service-${serviceId}`);
+        if (selectedCard) selectedCard.classList.add('selected');
+
+        const selectedPrice = document.getElementById('passenger-selected-price');
+        if (selectedPrice) selectedPrice.innerText = `$${appState.precioViaje.toFixed(2)}`;
+
+        if (!silent) lucide.createIcons();
     }
 
     function timeToMinutesTaximeter(value) {
@@ -2303,6 +2471,7 @@
     }
 
     function handleRequest() {
+        selectPassengerUrbanService(appState.selectedServiceId || 'taxi-expres', true);
         const wallet = getWalletData(currentUser.id);
         if (wallet.saldo < 0) { alert("Saldo negativo. Recarga para continuar."); return; }
         if (appState.selectedPayment === 'cartera' && wallet.saldo < appState.precioViaje) { 
@@ -2632,7 +2801,7 @@
     }
     function closeAll() { document.getElementById('sidebar').classList.remove('open'); document.getElementById('cost-sheet').classList.remove('active'); document.getElementById('overlay').classList.remove('opacity-100', 'pointer-events-auto'); }
     function toggleAccordion(id) { document.getElementById(id).classList.toggle('expanded'); }
-    function openCosts() { document.getElementById('cost-sheet').classList.add('active'); document.getElementById('overlay').classList.add('opacity-100', 'pointer-events-auto'); }
+    function openCosts() { renderPassengerUrbanServices(); document.getElementById('cost-sheet').classList.add('active'); document.getElementById('overlay').classList.add('opacity-100', 'pointer-events-auto'); }
     function setPay(btn, method) { document.querySelectorAll('.payment-opt').forEach(b => b.classList.remove('selected')); btn.classList.add('selected'); appState.selectedPayment = method; }
     
     function goToStep(n) {

@@ -154,6 +154,27 @@
             }
         }
 
+
+        /* Mapa real Google Maps panel pasajero */
+        #passenger-map {
+            position: absolute;
+            inset: 0;
+            z-index: 1;
+            width: 100%;
+            height: 100%;
+            background: #f3f4f6;
+        }
+        .passenger-map-layer {
+            position: absolute;
+            inset: 0;
+            z-index: 1;
+        }
+        #p-banners,
+        #p-wallet,
+        #active-trip-passenger {
+            z-index: 20;
+        }
+
 </style>
 </head>
 <body>
@@ -396,6 +417,8 @@
             </div>
         </header>
         <main class="flex-1 map-sim relative overflow-hidden flex flex-col">
+            <div id="passenger-map" class="passenger-map-layer"></div>
+
             <div id="p-banners" class="absolute top-4 left-4 right-4 z-20 space-y-3">
                 <div class="bg-white/90 backdrop-blur-md p-3 rounded-2xl shadow-xl border border-black/5 flex items-center gap-3">
                     <div class="relative flex h-2 w-2"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span></div>
@@ -715,6 +738,67 @@
         precioViaje: 120.00
     };
 
+    let passengerMap = null;
+    let passengerMapMarker = null;
+    let googleMapsReady = false;
+
+    function onGoogleMapsReady() {
+        googleMapsReady = true;
+        if (activePanel === 'passenger') {
+            initPassengerMap();
+        }
+    }
+
+    function initPassengerMap() {
+        const mapContainer = document.getElementById('passenger-map');
+        if (!mapContainer || typeof google === 'undefined' || !google.maps) return;
+
+        const defaultCenter = { lat: 19.432608, lng: -99.133209 };
+
+        function drawPassengerMap(center) {
+            if (!passengerMap) {
+                passengerMap = new google.maps.Map(mapContainer, {
+                    center: center,
+                    zoom: 16,
+                    disableDefaultUI: true,
+                    clickableIcons: false,
+                    gestureHandling: 'greedy',
+                    mapTypeControl: false,
+                    streetViewControl: false,
+                    fullscreenControl: false
+                });
+
+                passengerMapMarker = new google.maps.Marker({
+                    position: center,
+                    map: passengerMap,
+                    title: 'Tu ubicación actual'
+                });
+            } else {
+                passengerMap.setCenter(center);
+                if (passengerMapMarker) passengerMapMarker.setPosition(center);
+            }
+        }
+
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const center = {
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude
+                    };
+                    drawPassengerMap(center);
+                },
+                () => {
+                    drawPassengerMap(defaultCenter);
+                },
+                { enableHighAccuracy: true, maximumAge: 60000, timeout: 8000 }
+            );
+        } else {
+            drawPassengerMap(defaultCenter);
+        }
+    }
+
+
     setTimeout(() => { 
         const splash = document.getElementById('splash');
         if(splash) splash.style.opacity = '0'; 
@@ -910,6 +994,7 @@
         resetPassengerTransientState();
         document.getElementById('passenger-view').classList.remove('hidden');
         updateProfileUI();
+        setTimeout(initPassengerMap, 150);
         lucide.createIcons();
     }
 
@@ -2586,7 +2671,7 @@
 </script>
 
 <script async defer
-src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDIE4zI4nIoNtMY-VUGvm0mtDSm5r6cMMo&libraries=places">
+src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDIE4zI4nIoNtMY-VUGvm0mtDSm5r6cMMo&libraries=places&callback=onGoogleMapsReady">
 </script>
 
 </body>

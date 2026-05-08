@@ -242,6 +242,8 @@
             #cost-sheet.active { transform: translate(-50%, 0); }
         }
 
+        .passenger-map-searching #passenger-destination-banner { border-color: rgba(239,68,68,.35); }
+
 </style>
 </head>
 <body>
@@ -487,13 +489,19 @@
             <div id="passenger-map" class="passenger-map-layer"></div>
 
             <div id="p-banners" class="absolute top-4 left-4 right-4 z-20 space-y-3">
-                <div class="bg-white/90 backdrop-blur-md p-3 rounded-2xl shadow-xl border border-black/5 flex items-center gap-3">
-                    <div class="relative flex h-2 w-2"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span></div>
-                    <p class="text-[9px] font-black text-gray-800 uppercase italic tracking-tighter">Ubicación Actual Detectada</p>
+                <div id="passenger-current-location-banner" class="bg-white/90 backdrop-blur-md p-3 rounded-2xl shadow-xl border border-black/5 flex items-center gap-3">
+                    <div class="relative flex h-2 w-2 shrink-0"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span></div>
+                    <div class="min-w-0 flex-1">
+                        <p class="text-[8px] font-black text-gray-400 uppercase italic tracking-widest">Ubicación actual detectada</p>
+                        <p id="passenger-current-address" class="text-[9px] font-black text-gray-800 uppercase italic tracking-tighter truncate">Detectando ubicación real...</p>
+                    </div>
                 </div>
-                <div onclick="openCosts()" class="bg-white p-1 rounded-xl shadow-2xl flex items-center gap-2 cursor-pointer border border-black/5 active:scale-95 transition-transform">
-                    <div class="w-10 h-10 bg-red-600 rounded-lg flex items-center justify-center text-white shadow-lg shadow-red-600/30"><i data-lucide="search" class="w-5 h-5"></i></div>
-                    <span class="text-[11px] font-black text-gray-400 italic uppercase">¿A dónde vamos hoy?</span>
+                <div id="passenger-destination-banner" onclick="openDestinationSearch()" class="bg-white p-1 rounded-xl shadow-2xl flex items-center gap-2 cursor-pointer border border-black/5 active:scale-95 transition-transform">
+                    <div class="w-10 h-10 bg-red-600 rounded-lg flex items-center justify-center text-white shadow-lg shadow-red-600/30 shrink-0"><i data-lucide="search" class="w-5 h-5"></i></div>
+                    <div class="min-w-0 flex-1 pr-2">
+                        <input id="passenger-destination-input" onclick="event.stopPropagation()" onfocus="openDestinationSearch()" type="text" autocomplete="off" placeholder="¿A dónde vamos hoy?" class="w-full bg-transparent outline-none text-[11px] font-black text-gray-700 placeholder:text-gray-400 italic uppercase truncate">
+                        <p id="passenger-route-summary" class="hidden text-[8px] font-black text-red-600 uppercase italic truncate"></p>
+                    </div>
                 </div>
             </div>
             <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
@@ -813,11 +821,24 @@
     let appState = {
         selectedPayment: 'efectivo',
         selectedServiceId: 'taxi-expres',
-        precioViaje: 120.00
+        precioViaje: 120.00,
+        pickupAddress: '',
+        destinationAddress: '',
+        routeDistanceKm: 0,
+        routeDurationMin: 0,
+        driverEtaMin: 0
     };
 
     let passengerMap = null;
     let passengerMapMarker = null;
+    let passengerDestinationMarker = null;
+    let passengerDirectionsService = null;
+    let passengerDirectionsRenderer = null;
+    let passengerGeocoder = null;
+    let passengerAutocomplete = null;
+    let passengerLocationWatchId = null;
+    let passengerLastPosition = null;
+    let passengerSelectedDestination = null;
     let googleMapsReady = false;
 
     function onGoogleMapsReady() {
@@ -833,47 +854,152 @@
 
         const defaultCenter = { lat: 19.432608, lng: -99.133209 };
 
-        function drawPassengerMap(center) {
-            if (!passengerMap) {
-                passengerMap = new google.maps.Map(mapContainer, {
-                    center: center,
-                    zoom: 16,
-                    disableDefaultUI: true,
-                    clickableIcons: false,
-                    gestureHandling: 'greedy',
-                    mapTypeControl: false,
-                    streetViewControl: false,
-                    fullscreenControl: false
-                });
+        if (!passengerGeocoder) passengerGeocoder = new google.maps.Geocoder();
+        if (!passengerDirectionsService) passengerDirectionsService = new google.maps.DirectionsService();
 
-                passengerMapMarker = new google.maps.Marker({
-                    position: center,
-                    map: passengerMap,
-                    title: 'Tu ubicación actual'
-                });
-            } else {
-                passengerMap.setCenter(center);
+        if (!passengerMap) {
+            passengerMap = new google.maps.Map(mapContainer, {
+                center: defaultCenter,
+                zoom: 16,
+                disableDefaultUI: true,
+                clickableIcons: false,
+                gestureHandling: 'greedy',
+                mapTypeControl: false,
+                streetViewControl: false,
+                fullscreenControl: false
+            });
+
+            passengerMapMarker = new google.maps.Marker({
+                position: defaultCenter,
+                map: passengerMap,
+                title: 'Tu ubicación actual'
+            });
+
+            passengerDestinationMarker = new google.maps.Marker({
+                map: passengerMap,
+                title: 'Destino',
+                visible: false
+            });
+
+            passengerDirectionsRenderer = new google.maps.DirectionsRenderer({
+                map: passengerMap,
+                suppressMarkers: true,
+                preserveViewport: false,
+                polylineOptions: { strokeColor: '#ef4444', strokeWeight: 5, strokeOpacity: .9 }
+            });
+        }
+
+        initPassengerDestinationAutocomplete();
+        startPassengerLiveLocation();
+    }
+
+    function startPassengerLiveLocation() {
+        if (!navigator.geolocation) {
+            updatePassengerAddressBanner('GPS no disponible en este dispositivo');
+            return;
+        }
+
+        if (passengerLocationWatchId !== null) navigator.geolocation.clearWatch(passengerLocationWatchId);
+
+        passengerLocationWatchId = navigator.geolocation.watchPosition(
+            position => {
+                const center = { lat: position.coords.latitude, lng: position.coords.longitude };
+                passengerLastPosition = center;
+                localStorage.setItem('drive_mx_passenger_location', JSON.stringify({
+                    ...center,
+                    accuracy: position.coords.accuracy,
+                    updatedAt: new Date().toISOString()
+                }));
+
+                if (passengerMap) passengerMap.setCenter(center);
                 if (passengerMapMarker) passengerMapMarker.setPosition(center);
+                reverseGeocodePassengerLocation(center);
+                if (passengerSelectedDestination) calculatePassengerRouteAndFares();
+            },
+            () => updatePassengerAddressBanner('Permite el acceso a GPS para detectar tu ubicación'),
+            { enableHighAccuracy: true, maximumAge: 10000, timeout: 12000 }
+        );
+    }
+
+    function reverseGeocodePassengerLocation(latLng) {
+        if (!passengerGeocoder || !latLng) return;
+        passengerGeocoder.geocode({ location: latLng }, (results, status) => {
+            const address = status === 'OK' && results && results[0] ? results[0].formatted_address : 'Ubicación actual detectada';
+            appState.pickupAddress = address;
+            updatePassengerAddressBanner(address);
+            const tripPickup = document.getElementById('trip-pickup');
+            if (tripPickup) tripPickup.innerText = address;
+        });
+    }
+
+    function updatePassengerAddressBanner(address) {
+        const el = document.getElementById('passenger-current-address');
+        if (el) el.innerText = address;
+    }
+
+    function initPassengerDestinationAutocomplete() {
+        const input = document.getElementById('passenger-destination-input');
+        if (!input || passengerAutocomplete || !google.maps.places) return;
+        passengerAutocomplete = new google.maps.places.Autocomplete(input, {
+            fields: ['formatted_address', 'geometry', 'name'],
+            componentRestrictions: { country: 'mx' }
+        });
+        passengerAutocomplete.addListener('place_changed', () => {
+            const place = passengerAutocomplete.getPlace();
+            if (!place || !place.geometry || !place.geometry.location) return;
+            passengerSelectedDestination = {
+                lat: place.geometry.location.lat(),
+                lng: place.geometry.location.lng(),
+                address: place.formatted_address || place.name || input.value
+            };
+            appState.destinationAddress = passengerSelectedDestination.address;
+            input.value = appState.destinationAddress;
+            const tripDestination = document.getElementById('trip-destination');
+            if (tripDestination) tripDestination.innerText = appState.destinationAddress;
+            if (passengerDestinationMarker) {
+                passengerDestinationMarker.setPosition(passengerSelectedDestination);
+                passengerDestinationMarker.setVisible(true);
             }
+            openCosts();
+            calculatePassengerRouteAndFares();
+        });
+    }
+
+    function openDestinationSearch() {
+        initPassengerMap();
+        const input = document.getElementById('passenger-destination-input');
+        if (input) {
+            input.focus();
+            input.select();
+        }
+        const main = document.querySelector('#passenger-view main');
+        if (main) main.classList.add('passenger-map-searching');
+    }
+
+    function calculatePassengerRouteAndFares() {
+        if (!passengerDirectionsService || !passengerLastPosition || !passengerSelectedDestination) {
+            renderPassengerUrbanServices();
+            return;
         }
 
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    const center = {
-                        lat: position.coords.latitude,
-                        lng: position.coords.longitude
-                    };
-                    drawPassengerMap(center);
-                },
-                () => {
-                    drawPassengerMap(defaultCenter);
-                },
-                { enableHighAccuracy: true, maximumAge: 60000, timeout: 8000 }
-            );
-        } else {
-            drawPassengerMap(defaultCenter);
-        }
+        passengerDirectionsService.route({
+            origin: passengerLastPosition,
+            destination: passengerSelectedDestination,
+            travelMode: google.maps.TravelMode.DRIVING,
+            drivingOptions: { departureTime: new Date(), trafficModel: google.maps.TrafficModel.BEST_GUESS }
+        }, (response, status) => {
+            if (status !== 'OK' || !response || !response.routes || !response.routes[0]) return;
+            if (passengerDirectionsRenderer) passengerDirectionsRenderer.setDirections(response);
+            const leg = response.routes[0].legs[0];
+            appState.routeDistanceKm = (leg.distance?.value || 0) / 1000;
+            appState.routeDurationMin = Math.ceil((leg.duration_in_traffic?.value || leg.duration?.value || 0) / 60);
+            const summary = document.getElementById('passenger-route-summary');
+            if (summary) {
+                summary.classList.remove('hidden');
+                summary.innerText = `${appState.routeDistanceKm.toFixed(1)} km • ${appState.routeDurationMin} min aprox.`;
+            }
+            renderPassengerUrbanServices();
+        });
     }
 
 
@@ -1073,7 +1199,7 @@
         document.getElementById('passenger-view').classList.remove('hidden');
         updateProfileUI();
         renderPassengerUrbanServices();
-        setTimeout(initPassengerMap, 150);
+        setTimeout(() => { initPassengerMap(); calculatePassengerRouteAndFares(); }, 150);
         lucide.createIcons();
     }
 
@@ -1644,33 +1770,62 @@
         return adminImage ? adminImage.src : '';
     }
 
-    function getActiveTaximeterConfigForPassenger(serviceId) {
+    function getActiveTaximeterContextForPassenger(serviceId) {
         const schedules = getTaximeterSchedulesUrbanTripsData()[serviceId] || [];
         const activeSchedule = schedules.find(schedule => isNowInsideTaximeterSchedule(schedule));
-        if (!activeSchedule) return null;
-        return getTaximeterUrbanConfigForContext(serviceId, activeSchedule.id);
+        if (!activeSchedule) return { schedule: null, config: null };
+        return {
+            schedule: activeSchedule,
+            config: getTaximeterUrbanConfigForContext(serviceId, activeSchedule.id)
+        };
+    }
+
+    function getActiveTaximeterConfigForPassenger(serviceId) {
+        return getActiveTaximeterContextForPassenger(serviceId).config;
     }
 
     function calculatePassengerFinalPrice(serviceId) {
-        const config = getActiveTaximeterConfigForPassenger(serviceId);
-        const estimatedKm = 5;
-        const estimatedMinutes = 12;
+        const { config } = getActiveTaximeterContextForPassenger(serviceId);
+        const estimatedKm = Number(appState.routeDistanceKm || 0) > 0 ? Number(appState.routeDistanceKm) : 5;
+        const estimatedMinutes = Number(appState.routeDurationMin || 0) > 0 ? Number(appState.routeDurationMin) : 12;
         if (!config || !config.costos) return 120;
 
         const initial = Number(config.costos.precioInicial || 0);
         const minute = Number(config.costos.precioPorMinuto || 0);
-        const km = Number(config.costos.precioPorKilometro || 0);
+        const kmRate = Number(config.costos.precioPorKilometro || 0);
         const minKm = Number(config.kilometros?.desde || 0);
         const maxKm = Number(config.kilometros?.hasta || estimatedKm);
-        const billableKm = Math.min(Math.max(estimatedKm, minKm), maxKm);
-        const total = initial + (minute * estimatedMinutes) + (km * billableKm);
+        const billableKm = Math.min(Math.max(estimatedKm, minKm), maxKm || estimatedKm);
+        const total = initial + (minute * estimatedMinutes) + (kmRate * billableKm);
         return total > 0 ? total : 120;
     }
 
     function getPassengerServiceEta(serviceId, index) {
         const drivers = getRegisteredDriversForPassengerOffers();
-        if (drivers && drivers.length > 0) return drivers[0].time || passengerUrbanServiceMeta[serviceId].fallbackEta;
-        return passengerUrbanServiceMeta[serviceId].fallbackEta;
+        if (drivers && drivers.length > 0) {
+            const eta = drivers[0].time || passengerUrbanServiceMeta[serviceId]?.fallbackEta || `${3 + index} min`;
+            appState.driverEtaMin = parseInt(eta, 10) || appState.driverEtaMin || 0;
+            return eta;
+        }
+        return passengerUrbanServiceMeta[serviceId]?.fallbackEta || `${3 + index} min`;
+    }
+
+    function getPassengerUrbanServiceIds() {
+        const adminData = getServiciosUrbanosAdminData();
+        const fixed = ['taxi-expres', 'motocicleta', 'paqueteria', 'taxi-xl'];
+        const future = Object.keys(adminData).filter(id => !fixed.includes(id));
+        return [...fixed, ...future].filter(id => adminData[id] && !adminData[id].deleted);
+    }
+
+    function getPassengerUrbanMeta(serviceId) {
+        const adminData = getServiciosUrbanosAdminData();
+        const fixed = passengerUrbanServiceMeta[serviceId];
+        if (fixed) return fixed;
+        return {
+            fixedName: (adminData[serviceId]?.nombre || serviceId).replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim(),
+            capacity: adminData[serviceId]?.config || 'Servicio disponible',
+            fallbackEta: '5 min'
+        };
     }
 
     function renderPassengerUrbanServices() {
@@ -1678,13 +1833,13 @@
         if (!container) return;
 
         const adminData = getServiciosUrbanosAdminData();
-        const orderedIds = ['taxi-expres', 'motocicleta', 'paqueteria', 'taxi-xl'];
+        const orderedIds = getPassengerUrbanServiceIds();
         container.innerHTML = orderedIds.map((serviceId, index) => {
-            if (adminData[serviceId]?.deleted) return '';
-            const meta = passengerUrbanServiceMeta[serviceId];
+            const meta = getPassengerUrbanMeta(serviceId);
             const image = getPassengerUrbanServiceImage(serviceId);
             const eta = getPassengerServiceEta(serviceId, index);
             const price = calculatePassengerFinalPrice(serviceId);
+            const { schedule } = getActiveTaximeterContextForPassenger(serviceId);
             const selected = appState.selectedServiceId === serviceId;
             return `
                 <button type="button" id="passenger-service-${serviceId}" onclick="selectPassengerUrbanService('${serviceId}')" class="passenger-service-option ${selected ? 'selected' : ''}">
@@ -1696,6 +1851,7 @@
                         <span class="passenger-service-meta">
                             <span><i data-lucide="users" class="w-3 h-3"></i>${meta.capacity}</span>
                             <span><i data-lucide="clock" class="w-3 h-3"></i>${eta}</span>
+                            ${schedule ? `<span><i data-lucide="gauge" class="w-3 h-3"></i>${schedule.nombre}</span>` : ''}
                         </span>
                     </span>
                     <span class="passenger-service-price">
@@ -1706,15 +1862,14 @@
         }).join('');
 
         if (!orderedIds.includes(appState.selectedServiceId) || adminData[appState.selectedServiceId]?.deleted) {
-            const firstVisible = orderedIds.find(id => !adminData[id]?.deleted) || 'taxi-expres';
-            appState.selectedServiceId = firstVisible;
+            appState.selectedServiceId = orderedIds[0] || 'taxi-expres';
         }
         selectPassengerUrbanService(appState.selectedServiceId, true);
         lucide.createIcons();
     }
 
     function selectPassengerUrbanService(serviceId, silent = false) {
-        const meta = passengerUrbanServiceMeta[serviceId];
+        const meta = getPassengerUrbanMeta(serviceId);
         if (!meta) return;
         appState.selectedServiceId = serviceId;
         appState.precioViaje = calculatePassengerFinalPrice(serviceId);
@@ -1725,6 +1880,8 @@
 
         const selectedPrice = document.getElementById('passenger-selected-price');
         if (selectedPrice) selectedPrice.innerText = `$${appState.precioViaje.toFixed(2)}`;
+        const tripCost = document.getElementById('trip-cost');
+        if (tripCost) tripCost.innerText = `$${appState.precioViaje.toFixed(2)} MXN`;
 
         if (!silent) lucide.createIcons();
     }
@@ -2649,8 +2806,8 @@
         document.getElementById('trip-driver-plate').innerText = `Placa: ${driver.plate || 'N/A'}`;
         document.getElementById('trip-payment-method').innerText = getPaymentLabel(appState.selectedPayment);
         document.getElementById('trip-cost').innerText = `$${appState.precioViaje.toFixed(2)} MXN`;
-        document.getElementById('trip-pickup').innerText = 'Ubicación actual del pasajero';
-        document.getElementById('trip-destination').innerText = 'Destino del pasajero';
+        document.getElementById('trip-pickup').innerText = appState.pickupAddress || 'Ubicación actual del pasajero';
+        document.getElementById('trip-destination').innerText = appState.destinationAddress || 'Destino del pasajero';
 
         const photo = document.getElementById('trip-driver-photo');
         const fallback = document.getElementById('trip-driver-fallback');
@@ -2801,7 +2958,7 @@
     }
     function closeAll() { document.getElementById('sidebar').classList.remove('open'); document.getElementById('cost-sheet').classList.remove('active'); document.getElementById('overlay').classList.remove('opacity-100', 'pointer-events-auto'); }
     function toggleAccordion(id) { document.getElementById(id).classList.toggle('expanded'); }
-    function openCosts() { renderPassengerUrbanServices(); document.getElementById('cost-sheet').classList.add('active'); document.getElementById('overlay').classList.add('opacity-100', 'pointer-events-auto'); }
+    function openCosts() { initPassengerMap(); calculatePassengerRouteAndFares(); renderPassengerUrbanServices(); document.getElementById('cost-sheet').classList.add('active'); document.getElementById('overlay').classList.add('opacity-100', 'pointer-events-auto'); }
     function setPay(btn, method) { document.querySelectorAll('.payment-opt').forEach(b => b.classList.remove('selected')); btn.classList.add('selected'); appState.selectedPayment = method; }
     
     function goToStep(n) {
@@ -2850,6 +3007,21 @@
     }
 
     function handleDriverBack() { activePanel = null; document.getElementById('driver-registration-view').classList.add('hidden'); document.getElementById('login-screen').classList.remove('hidden'); }
+
+    window.addEventListener('storage', event => {
+        if (['admin_horarios_taximetro_viajes_urbanos', 'admin_config_taximetro_viajes_urbanos', 'admin_servicios_viajes_urbanos'].includes(event.key)) {
+            renderPassengerUrbanServices();
+            selectPassengerUrbanService(appState.selectedServiceId || 'taxi-expres', true);
+        }
+    });
+
+    setInterval(() => {
+        if (activePanel === 'passenger' || activePanel === 'passenger-trip' || activePanel === 'passenger-offers') {
+            renderPassengerUrbanServices();
+            if (passengerSelectedDestination && passengerLastPosition) calculatePassengerRouteAndFares();
+        }
+    }, 30000);
+
 </script>
 
 <script async defer

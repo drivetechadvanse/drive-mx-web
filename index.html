@@ -1548,6 +1548,62 @@
         lucide.createIcons();
     }
 
+
+    function getTaximeterFutureConfigUrbanTripsData() {
+        return JSON.parse(localStorage.getItem('admin_config_taximetro_viajes_urbanos') || '{}');
+    }
+
+    function saveTaximeterFutureConfigUrbanTripsData(data) {
+        localStorage.setItem('admin_config_taximetro_viajes_urbanos', JSON.stringify(data));
+    }
+
+    function prepararContextoTaximetroViajesUrbanos(schedule) {
+        if (!taximeterSelectedUrbanServiceId || !schedule) return null;
+
+        const context = {
+            serviceId: taximeterSelectedUrbanServiceId,
+            serviceName: getUrbanServiceDisplayName(taximeterSelectedUrbanServiceId),
+            scheduleId: schedule.id,
+            scheduleName: schedule.nombre,
+            desde: schedule.desde,
+            hasta: schedule.hasta,
+            active: isNowInsideTaximeterSchedule(schedule),
+            linkedAt: new Date().toISOString(),
+            preparedFor: {
+                sistemaTarifas: true,
+                calculoTaximetro: true,
+                tiempo: true,
+                distancia: true,
+                costosAutomaticos: true,
+                tarifasDinamicas: true
+            }
+        };
+
+        localStorage.setItem('admin_taximetro_contexto_viajes_urbanos', JSON.stringify(context));
+
+        const futureData = getTaximeterFutureConfigUrbanTripsData();
+        if (!futureData[context.serviceId]) futureData[context.serviceId] = {};
+        futureData[context.serviceId][context.scheduleId] = {
+            serviceId: context.serviceId,
+            serviceName: context.serviceName,
+            scheduleId: context.scheduleId,
+            scheduleName: context.scheduleName,
+            desde: context.desde,
+            hasta: context.hasta,
+            activoPorHorario: context.active,
+            tarifas: null,
+            calculo: null,
+            tiempo: null,
+            distancia: null,
+            costosAutomaticos: null,
+            tarifasDinamicas: null,
+            updatedAt: new Date().toISOString()
+        };
+        saveTaximeterFutureConfigUrbanTripsData(futureData);
+
+        return context;
+    }
+
     function seleccionarHorarioTaximetroViajesUrbanos(scheduleId) {
         if (currentAdminView !== 'urban-taximeter' || !taximeterSelectedUrbanServiceId || !scheduleId) return;
 
@@ -1556,16 +1612,7 @@
         if (!schedule) return;
 
         selectedTaximeterScheduleId = scheduleId;
-        currentTaximeterConfigContext = {
-            serviceId: taximeterSelectedUrbanServiceId,
-            scheduleId: schedule.id,
-            scheduleName: schedule.nombre,
-            desde: schedule.desde,
-            hasta: schedule.hasta,
-            active: isNowInsideTaximeterSchedule(schedule),
-            linkedAt: new Date().toISOString()
-        };
-        localStorage.setItem('admin_taximetro_contexto_viajes_urbanos', JSON.stringify(currentTaximeterConfigContext));
+        currentTaximeterConfigContext = prepararContextoTaximetroViajesUrbanos(schedule);
 
         document.querySelectorAll('[id^="taximeter-schedule-card-"]').forEach(card => {
             card.classList.remove('card-selected', 'ring-2', 'ring-red-500');
@@ -1577,23 +1624,24 @@
     }
 
     function abrirPantallaTaximetroViajesUrbanos() {
-        if (currentAdminView !== 'urban-taximeter' || !taximeterSelectedUrbanServiceId || !selectedTaximeterScheduleId) return;
+        if (currentAdminView !== 'urban-taximeter' || !taximeterSelectedUrbanServiceId) return;
+
+        if (!selectedTaximeterScheduleId) {
+            alert('Selecciona primero una tarjeta de horario del taxímetro.');
+            return;
+        }
 
         const data = getTaximeterSchedulesUrbanTripsData();
         const schedules = data[taximeterSelectedUrbanServiceId] || [];
         const schedule = schedules.find(item => item.id === selectedTaximeterScheduleId);
-        if (!schedule) return;
+        if (!schedule) {
+            alert('El horario seleccionado ya no existe.');
+            selectedTaximeterScheduleId = null;
+            currentTaximeterConfigContext = null;
+            return;
+        }
 
-        currentTaximeterConfigContext = {
-            serviceId: taximeterSelectedUrbanServiceId,
-            scheduleId: schedule.id,
-            scheduleName: schedule.nombre,
-            desde: schedule.desde,
-            hasta: schedule.hasta,
-            active: isNowInsideTaximeterSchedule(schedule),
-            linkedAt: new Date().toISOString()
-        };
-        localStorage.setItem('admin_taximetro_contexto_viajes_urbanos', JSON.stringify(currentTaximeterConfigContext));
+        currentTaximeterConfigContext = prepararContextoTaximetroViajesUrbanos(schedule);
         currentAdminView = 'urban-taximeter-config';
 
         const dashboard = document.getElementById('admin-dashboard');
@@ -1628,8 +1676,8 @@
             taximeterNewBtn.classList.remove('inline-flex');
         }
         if (taximeterConfigBtn) {
-            taximeterConfigBtn.classList.remove('hidden');
-            taximeterConfigBtn.classList.add('inline-flex');
+            taximeterConfigBtn.classList.add('hidden');
+            taximeterConfigBtn.classList.remove('inline-flex');
         }
 
         document.getElementById('admin-title').innerHTML = 'TAXÍMETRO <span class="text-red-600 text-lg">URBANO</span>';
@@ -2350,12 +2398,3 @@
 </body>
 </html>
 
-
-    
-   
-                
-      
-       
-       
-        
-                       

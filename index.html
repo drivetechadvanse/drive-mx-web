@@ -873,6 +873,9 @@
     let passengerDestinationMarker = null;
     let passengerDirectionsService = null;
     let passengerDirectionsRenderer = null;
+    let passengerRoutePolyline = null;
+    let passengerRouteAnimationFrame = null;
+    let passengerRouteAnimationToken = 0;
     let passengerGeocoder = null;
     let passengerAutocomplete = null;
     let passengerLocationWatchId = null;
@@ -920,8 +923,8 @@
             passengerDirectionsRenderer = new google.maps.DirectionsRenderer({
                 map: passengerMap,
                 suppressMarkers: true,
-                preserveViewport: false,
-                polylineOptions: { strokeColor: '#ef4444', strokeWeight: 5, strokeOpacity: 0.9 }
+                preserveViewport: true,
+                polylineOptions: { strokeColor: '#f97316', strokeWeight: 5, strokeOpacity: 0 }
             });
             passengerGeocoder = new google.maps.Geocoder();
         }
@@ -952,7 +955,7 @@
                     updatedAt: new Date().toISOString()
                 }));
 
-                if (passengerMap) passengerMap.setCenter(center);
+                if (passengerMap && !appState.destinationLocation) passengerMap.setCenter(center);
                 if (passengerMapMarker) passengerMapMarker.setPosition(center);
                 reverseGeocodePassengerLocation(center);
                 calculatePassengerRouteAndRefreshFares();
@@ -1021,8 +1024,93 @@
         appState.precioViaje = 0;
         const routeSummaryEl = document.getElementById('passenger-route-summary');
         if (routeSummaryEl) routeSummaryEl.innerText = message;
+        clearPassengerAnimatedRoute();
         if (passengerDirectionsRenderer) passengerDirectionsRenderer.set('directions', null);
         refreshPassengerServicePricesAndEta();
+    }
+
+    function clearPassengerAnimatedRoute() {
+        passengerRouteAnimationToken++;
+        if (passengerRouteAnimationFrame) {
+            cancelAnimationFrame(passengerRouteAnimationFrame);
+            passengerRouteAnimationFrame = null;
+        }
+        if (passengerRoutePolyline) {
+            passengerRoutePolyline.setMap(null);
+            passengerRoutePolyline = null;
+        }
+    }
+
+    function createPassengerRoutePolyline() {
+        clearPassengerAnimatedRoute();
+        passengerRoutePolyline = new google.maps.Polyline({
+            map: passengerMap,
+            path: [],
+            geodesic: true,
+            strokeColor: '#f97316',
+            strokeOpacity: 0.95,
+            strokeWeight: 6,
+            zIndex: 25,
+            icons: [{
+                icon: { path: google.maps.SymbolPath.CIRCLE, scale: 3, fillColor: '#f97316', fillOpacity: 1, strokeColor: '#ffffff', strokeWeight: 1 },
+                offset: '100%'
+            }]
+        });
+        return passengerRoutePolyline;
+    }
+
+    function interpolateLatLngPoint(start, end, progress) {
+        return new google.maps.LatLng(
+            start.lat() + ((end.lat() - start.lat()) * progress),
+            start.lng() + ((end.lng() - start.lng()) * progress)
+        );
+    }
+
+    function buildProgressiveRoutePath(points, progress) {
+        if (!points || points.length < 2) return points || [];
+        const totalSegments = points.length - 1;
+        const exactIndex = Math.min(totalSegments, Math.max(0, progress * totalSegments));
+        const completedSegments = Math.floor(exactIndex);
+        const segmentProgress = exactIndex - completedSegments;
+        const path = points.slice(0, completedSegments + 1);
+
+        if (completedSegments < totalSegments) {
+            path.push(interpolateLatLngPoint(points[completedSegments], points[completedSegments + 1], segmentProgress));
+        }
+
+        return path;
+    }
+
+    function animatePassengerRouteLine(route) {
+        if (!passengerMap || !route || !route.overview_path || route.overview_path.length < 2) return;
+
+        const polyline = createPassengerRoutePolyline();
+        const routePoints = route.overview_path;
+        const animationToken = passengerRouteAnimationToken;
+        const duration = Math.min(2600, Math.max(1200, routePoints.length * 18));
+        const startedAt = performance.now();
+
+        const drawFrame = (now) => {
+            if (animationToken !== passengerRouteAnimationToken || !passengerRoutePolyline) return;
+
+            const elapsed = now - startedAt;
+            const progress = Math.min(1, elapsed / duration);
+            const easedProgress = 1 - Math.pow(1 - progress, 3);
+            polyline.setPath(buildProgressiveRoutePath(routePoints, easedProgress));
+            polyline.set('icons', [{
+                icon: { path: google.maps.SymbolPath.CIRCLE, scale: 3, fillColor: '#f97316', fillOpacity: 1, strokeColor: '#ffffff', strokeWeight: 1 },
+                offset: '100%'
+            }]);
+
+            if (progress < 1) {
+                passengerRouteAnimationFrame = requestAnimationFrame(drawFrame);
+            } else {
+                polyline.setPath(routePoints);
+                passengerRouteAnimationFrame = null;
+            }
+        };
+
+        passengerRouteAnimationFrame = requestAnimationFrame(drawFrame);
     }
 
     function calculatePassengerRouteAndRefreshFares(fitRoute = false) {
@@ -1051,8 +1139,8 @@
                 const routeSummaryEl = document.getElementById('passenger-route-summary');
                 if (routeSummaryEl) routeSummaryEl.innerText = appState.routeSummary;
 
-                if (passengerDirectionsRenderer) passengerDirectionsRenderer.setDirections(result);
-                if (fitRoute && passengerMap) passengerMap.fitBounds(result.routes[0].bounds);
+                if (passengerDirectionsRenderer) passengerDirectionsRenderer.set('directions', null);
+                animatePassengerRouteLine(result.routes[0]);
                 refreshPassengerServicePricesAndEta();
             } else {
                 resetPassengerRoutePricing('No se pudo calcular la ruta');

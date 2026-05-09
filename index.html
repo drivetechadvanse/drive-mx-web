@@ -1077,19 +1077,88 @@
         }, 500); 
     }, 1500);
 
+    // --- SISTEMA DE CARTERA / SALDOS ---
+    function normalizeWalletData(data = {}) {
+        const saldo = Number(data.saldo || 0);
+        const historial = Array.isArray(data.historial) ? data.historial : [];
+        const trips = Number(data.trips || 0);
+        return { ...data, saldo, historial, trips };
+    }
+
+    function getWalletKey(userId) {
+        return `wallet_${userId}`;
+    }
+
     function getWalletData(userId) {
-        return JSON.parse(localStorage.getItem(`wallet_${userId}`)) || { saldo: 0.00, historial: [], trips: 0 };
+        if (!userId) return { saldo: 0.00, historial: [], trips: 0 };
+        try {
+            return normalizeWalletData(JSON.parse(localStorage.getItem(getWalletKey(userId)) || '{}'));
+        } catch (error) {
+            console.warn('Cartera dañada, se restauró una cartera limpia:', error);
+            return { saldo: 0.00, historial: [], trips: 0 };
+        }
     }
+
+    function notifyWalletUpdated(userId, wallet) {
+        window.dispatchEvent(new CustomEvent('drive_mx_wallet_updated', {
+            detail: { userId: String(userId), wallet }
+        }));
+    }
+
     function saveWalletData(userId, data) {
-        localStorage.setItem(`wallet_${userId}`, JSON.stringify(data));
-    }
-    function addMovement(userId, tipo, monto, descripcion) {
-        let wallet = getWalletData(userId);
-        if (tipo === 'sumar') wallet.saldo += monto;
-        else wallet.saldo -= monto;
-        wallet.historial.unshift({ fecha: new Date().toLocaleString(), tipo: tipo, monto: monto, desc: descripcion });
-        saveWalletData(userId, wallet);
+        if (!userId) return { saldo: 0.00, historial: [], trips: 0 };
+        const wallet = normalizeWalletData(data);
+        localStorage.setItem(getWalletKey(userId), JSON.stringify(wallet));
+        notifyWalletUpdated(userId, wallet);
         return wallet;
+    }
+
+    function addMovement(userId, tipo, monto, descripcion, extra = {}) {
+        const amount = Number(monto || 0);
+        if (!userId || !Number.isFinite(amount) || amount <= 0) return getWalletData(userId);
+
+        const wallet = getWalletData(userId);
+        wallet.saldo = tipo === 'sumar'
+            ? Number((wallet.saldo + amount).toFixed(2))
+            : Number((wallet.saldo - amount).toFixed(2));
+
+        wallet.historial.unshift({
+            id: `MOV_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+            fecha: new Date().toLocaleString('es-MX'),
+            tipo,
+            monto: amount,
+            desc: descripcion,
+            saldoFinal: wallet.saldo,
+            ...extra
+        });
+
+        return saveWalletData(userId, wallet);
+    }
+
+    function incrementWalletTrips(userId) {
+        const wallet = getWalletData(userId);
+        wallet.trips = Number(wallet.trips || 0) + 1;
+        return saveWalletData(userId, wallet);
+    }
+
+    function formatWalletBalance(saldo) {
+        const value = Number(saldo || 0);
+        const sign = value < 0 ? '-' : '';
+        return `${sign}$${Math.abs(value).toFixed(2)} MXN`;
+    }
+
+    function refreshWalletViews(userId = null) {
+        if (currentUser && (!userId || String(currentUser.id) === String(userId))) {
+            updateWalletDisplay();
+            const sideTrips = document.getElementById('side-user-trips');
+            if (sideTrips) sideTrips.innerText = getWalletData(currentUser.id).trips || 0;
+        }
+        if (userTargetAdmin && (!userId || String(userTargetAdmin.id) === String(userId))) {
+            const wallet = getWalletData(userTargetAdmin.id);
+            const adminSaldo = document.getElementById('admin-view-saldo');
+            if (adminSaldo) adminSaldo.innerText = formatWalletBalance(wallet.saldo);
+            renderHistorial(wallet.historial, document.getElementById('admin-movimientos-list'));
+        }
     }
 
 
@@ -2714,55 +2783,159 @@
         document.getElementById('admin-title').innerHTML = 'PANEL <span class="text-red-600 text-lg">ADMIN</span>';
     }
     function searchPassengerInWallet() {
-        const term = document.getElementById('admin-search-user').value.toLowerCase().trim();
+        const input = document.getElementById('admin-search-user');
+        const term = (input?.value || '').toLowerCase().trim();
         const pasajeros = saveUsersDb(getUsersDb()).filter(u => u.role === 'pasajero');
-        userTargetAdmin = pasajeros.find(u => (u.name || '').toLowerCase().includes(term) || (u.correo || '').toLowerCase().includes(term) || (u.usuario || '') === term);
+        userTargetAdmin = pasajeros.find(u =>
+            (u.name || '').toLowerCase().includes(term) ||
+            (u.correo || '').toLowerCase().includes(term) ||
+            (u.usuario || '').toLowerCase() === term ||
+            String(u.phone || u.telefono || '').replace(/\D/g, '').includes(term.replace(/\D/g, ''))
+        );
+
         const disp = document.getElementById('admin-view-saldo');
+        const status = document.getElementById('admin-search-status');
+        const list = document.getElementById('admin-movimientos-list');
+
         if (userTargetAdmin) {
             const wallet = getWalletData(userTargetAdmin.id);
-            disp.innerText = `$${wallet.saldo.toFixed(2)} MXN`;
-            document.getElementById('admin-search-status').innerText = `Pasajero: ${userTargetAdmin.name}`;
-            renderHistorial(wallet.historial, document.getElementById('admin-movimientos-list'));
-        } else { disp.innerText = "No encontrado"; }
+            if (disp) disp.innerText = formatWalletBalance(wallet.saldo);
+            if (status) status.innerText = `Pasajero: ${userTargetAdmin.name}`;
+            renderHistorial(wallet.historial, list);
+        } else {
+            if (disp) disp.innerText = term ? 'No encontrado' : '$0.00 MXN';
+            if (status) status.innerText = 'Saldo Actual del Pasajero';
+            if (list) list.innerHTML = '';
+        }
     }
+
     function renderHistorial(hist, container) {
-        container.innerHTML = hist.length === 0 ? '<p class="text-[8px] text-center uppercase py-4">Sin movimientos</p>' : '';
-        hist.forEach(m => {
+        if (!container) return;
+        const movimientos = Array.isArray(hist) ? hist : [];
+        container.innerHTML = movimientos.length === 0 ? '<p class="text-[8px] text-center uppercase py-4">Sin movimientos</p>' : '';
+        movimientos.forEach(m => {
+            const amount = Number(m.monto || 0);
             const color = m.tipo === 'sumar' ? 'text-green-600' : 'text-red-600';
-            container.innerHTML += `<div class="bg-white p-3 rounded-xl border flex justify-between items-center"><div><p class="text-[9px] uppercase italic font-black">${m.desc}</p></div><p class="text-[10px] font-black ${color}">$${m.monto.toFixed(2)}</p></div>`;
+            const sign = m.tipo === 'sumar' ? '+' : '-';
+            const saldoFinal = typeof m.saldoFinal === 'number' ? `<p class="text-[8px] font-black text-gray-400 uppercase italic">Saldo: ${formatWalletBalance(m.saldoFinal)}</p>` : '';
+            container.innerHTML += `<div class="bg-white p-3 rounded-xl border flex justify-between items-center"><div><p class="text-[9px] uppercase italic font-black">${m.desc || 'Movimiento'}</p>${saldoFinal}</div><p class="text-[10px] font-black ${color}">${sign}$${amount.toFixed(2)}</p></div>`;
         });
     }
+
     function adminModificarSaldo(tipo) {
-        if (!userTargetAdmin) return;
-        const monto = parseFloat(document.getElementById('admin-monto-input').value);
-        if (isNaN(monto) || monto <= 0) return;
-        addMovement(userTargetAdmin.id, tipo, monto, tipo === 'sumar' ? 'Recarga Admin' : 'Ajuste Admin');
-        document.getElementById('admin-monto-input').value = ''; searchPassengerInWallet();
+        if (!userTargetAdmin) { alert('Selecciona un pasajero válido.'); return; }
+        const input = document.getElementById('admin-monto-input');
+        const monto = parseFloat(input?.value || '0');
+        if (isNaN(monto) || monto <= 0) { alert('Ingresa un monto válido.'); return; }
+
+        addMovement(
+            userTargetAdmin.id,
+            tipo,
+            monto,
+            tipo === 'sumar' ? 'Recarga Admin' : 'Descuento Admin',
+            { origen: 'panel_admin' }
+        );
+
+        if (input) input.value = '';
+        refreshWalletViews(userTargetAdmin.id);
     }
 
     function updateWalletDisplay() {
         if (!currentUser) return;
         const wallet = getWalletData(currentUser.id);
-        document.getElementById('display-saldo').innerText = `$${wallet.saldo.toFixed(2)} MXN`;
+        const display = document.getElementById('display-saldo');
+        if (display) {
+            display.innerText = formatWalletBalance(wallet.saldo);
+            display.classList.toggle('text-red-400', Number(wallet.saldo) < 0);
+            display.classList.toggle('text-green-400', Number(wallet.saldo) > 0);
+        }
+    }
+
+    function getCurrentTripFinalCost() {
+        refreshPassengerServicePricesAndEta();
+        selectPassengerUrbanService(appState.selectedServiceId || 'taxi-expres', true);
+        return Number(appState.precioViaje || calculatePassengerFinalPrice(appState.selectedServiceId || 'taxi-expres') || 0);
+    }
+
+    function canPassengerUseWalletForTrip(cost) {
+        const wallet = getWalletData(currentUser.id);
+        if (wallet.saldo < 0) {
+            alert('Saldo negativo. Recarga para continuar.');
+            return false;
+        }
+        if (appState.selectedPayment === 'cartera' && wallet.saldo < cost) {
+            alert('Saldo insuficiente.');
+            return false;
+        }
+        return true;
     }
 
     function handleRequest() {
-        refreshPassengerServicePricesAndEta();
-        selectPassengerUrbanService(appState.selectedServiceId || 'taxi-expres', true);
+        const finalCost = getCurrentTripFinalCost();
         if (!hasPassengerActiveRoute()) { alert('Selecciona un destino real para calcular la ruta y las tarifas.'); return; }
-        if (!appState.precioViaje || appState.precioViaje <= 0) { alert('Este servicio no tiene un horario/tarifa activa configurada para este momento.'); return; }
-        const wallet = getWalletData(currentUser.id);
-        if (wallet.saldo < 0) { alert("Saldo negativo. Recarga para continuar."); return; }
-        if (appState.selectedPayment === 'cartera' && wallet.saldo < appState.precioViaje) { 
-            alert('Saldo insuficiente.'); return; 
-        }
-        if (appState.selectedPayment === 'cartera') { 
-            addMovement(currentUser.id, 'restar', appState.precioViaje, 'Pago Viaje'); 
-        }
-        wallet.trips = (wallet.trips || 0) + 1;
-        saveWalletData(currentUser.id, wallet);
-        updateProfileUI();
+        if (!finalCost || finalCost <= 0) { alert('Este servicio no tiene un horario/tarifa activa configurada para este momento.'); return; }
+        if (!canPassengerUseWalletForTrip(finalCost)) return;
+
+        appState.precioViaje = finalCost;
+        appState.pendingTrip = {
+            passengerId: currentUser.id,
+            serviceId: appState.selectedServiceId,
+            paymentMethod: appState.selectedPayment,
+            finalCost,
+            distanceKm: Number(appState.routeDistanceKm || 0),
+            durationMinutes: Number(appState.routeDurationMinutes || 0),
+            routeSummary: appState.routeSummary || '',
+            createdAt: new Date().toISOString(),
+            charged: false
+        };
+
+        refreshWalletViews(currentUser.id);
         startRadar();
+    }
+
+    function applyAutomaticTripWalletDiscount(tripData = null) {
+        const trip = tripData || appState.pendingTrip || {};
+        const passengerId = trip.passengerId || (currentUser && currentUser.id);
+        const finalCost = Number(trip.finalCost || appState.precioViaje || 0);
+        const paymentMethod = trip.paymentMethod || appState.selectedPayment;
+
+        if (!passengerId || !finalCost || finalCost <= 0) return getWalletData(passengerId);
+
+        let wallet = getWalletData(passengerId);
+        if (paymentMethod === 'cartera') {
+            wallet = addMovement(passengerId, 'restar', finalCost, 'Pago automático de viaje', {
+                origen: 'viaje_finalizado',
+                serviceId: trip.serviceId || appState.selectedServiceId,
+                distanciaKm: Number(trip.distanceKm || appState.routeDistanceKm || 0),
+                tiempoMinutos: Number(trip.durationMinutes || appState.routeDurationMinutes || 0),
+                ruta: trip.routeSummary || appState.routeSummary || ''
+            });
+        }
+
+        wallet.trips = Number(wallet.trips || 0) + 1;
+        wallet = saveWalletData(passengerId, wallet);
+        refreshWalletViews(passengerId);
+        return wallet;
+    }
+
+    function finalizePassengerTrip() {
+        if (!currentUser || currentUser.role !== 'pasajero') return;
+        if (appState.pendingTrip && appState.pendingTrip.charged) return;
+
+        applyAutomaticTripWalletDiscount(appState.pendingTrip);
+        if (appState.pendingTrip) appState.pendingTrip.charged = true;
+
+        activeTripData = null;
+        closePassengerMessageModal();
+        const activeTrip = document.getElementById('active-trip-passenger');
+        const fixedCancel = document.getElementById('fixed-cancel-trip-btn');
+        if (activeTrip) activeTrip.classList.add('hidden');
+        if (fixedCancel) fixedCancel.classList.add('hidden');
+        showPassengerPanel();
+    }
+
+    function completePassengerTrip() {
+        finalizePassengerTrip();
     }
 
     function startRadar() {
@@ -2913,6 +3086,11 @@
     function acceptDriverOffer(driver) {
         activePanel = 'passenger-trip';
         activeTripData = driver;
+        if (appState.pendingTrip) {
+            appState.pendingTrip.driverId = driver.id || '';
+            appState.pendingTrip.driverName = driver.name || 'Conductor';
+            appState.pendingTrip.acceptedAt = new Date().toISOString();
+        }
         removeDuplicatedPassengerServicesSections();
         const costSheet = document.getElementById('cost-sheet');
         if (costSheet) costSheet.classList.remove('active', 'minimized');
@@ -3197,6 +3375,14 @@
                 calculatePassengerRouteAndRefreshFares();
             }
         }
+        if (event.key && event.key.startsWith('wallet_')) {
+            const userId = event.key.replace('wallet_', '');
+            refreshWalletViews(userId);
+        }
+    });
+
+    window.addEventListener('drive_mx_wallet_updated', (event) => {
+        refreshWalletViews(event.detail?.userId || null);
     });
     
     function goToStep(n) {

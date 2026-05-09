@@ -608,6 +608,16 @@
                         </div>
                     </div>
 
+                    <div id="trip-driver-arrived-box" class="hidden bg-green-50 border border-green-100 rounded-2xl p-3 mb-4">
+                        <p id="trip-driver-arrived-message" class="text-[10px] font-black uppercase italic text-green-700 flex items-center gap-2">
+                            <i data-lucide="check-circle" class="w-4 h-4"></i> El conductor ha llegado
+                        </p>
+                        <button id="trip-one-moment-btn" onclick="sendPassengerOneMomentNotice()" class="mt-3 w-full bg-gray-900 text-white py-3 rounded-2xl font-black text-[10px] uppercase italic flex items-center justify-center gap-2 active:scale-95 transition-all">
+                            <i data-lucide="clock" class="w-4 h-4"></i> Un momento
+                        </button>
+                        <p id="trip-one-moment-status" class="hidden mt-2 text-[8px] font-black uppercase italic text-green-700">Aviso enviado al conductor.</p>
+                    </div>
+
                     <div class="bg-gray-900 text-white rounded-[1.7rem] p-4 mb-4">
                         <div class="flex items-center justify-between mb-3">
                             <h4 class="text-[10px] font-black uppercase italic tracking-tight">Viaje actual</h4>
@@ -734,6 +744,13 @@
     <h3 id="driver-main-msg" class="text-sm font-black italic uppercase text-gray-900 text-center">
         Buscando viajes cercanos
     </h3>
+    <div id="driver-trip-actions" class="hidden mt-5 w-full bg-white rounded-[2rem] border border-gray-200 shadow-sm p-4 space-y-3">
+        <p id="driver-trip-actions-title" class="text-[9px] font-black text-gray-400 uppercase italic text-center">Viaje activo</p>
+        <button onclick="notifyDriverArrivedAtPickup()" class="w-full bg-green-600 text-white py-3 rounded-2xl font-black text-[10px] uppercase italic flex items-center justify-center gap-2 active:scale-95 transition-all">
+            <i data-lucide="map-pin-check" class="w-4 h-4"></i> Ha llegado al punto de recogida
+        </button>
+        <div id="driver-passenger-notice" class="hidden bg-red-50 text-red-700 border border-red-100 rounded-2xl p-3 text-[9px] font-black uppercase italic text-center"></div>
+    </div>
 </div>
 
 
@@ -1404,6 +1421,7 @@
     function showDriverPanel() {
         activePanel = 'driver';
         hideAllMainPanels();
+        startDriverTripStatusSync();
         configureSharedSidebarFor('driver');
         resetPassengerTransientState();
         document.getElementById('driver-view-active').classList.remove('hidden');
@@ -1597,6 +1615,7 @@
             mainMsg.innerText = 'Buscando viajes cercanos';
 
             pulse.classList.remove('hidden');
+            refreshDriverTripActions();
 
             
 
@@ -3014,6 +3033,7 @@
         if (appState.pendingTrip) appState.pendingTrip.charged = true;
 
         activeTripData = null;
+        if (passengerTripStatusInterval) clearInterval(passengerTripStatusInterval);
         closePassengerMessageModal();
         const activeTrip = document.getElementById('active-trip-passenger');
         const fixedCancel = document.getElementById('fixed-cancel-trip-btn');
@@ -3179,6 +3199,15 @@
             appState.pendingTrip.driverName = driver.name || 'Conductor';
             appState.pendingTrip.acceptedAt = new Date().toISOString();
         }
+        saveDriveMxTripStatus({
+            driverId: driver.id || '',
+            driverName: driver.name || 'Conductor',
+            passengerId: currentUser?.id || '',
+            passengerName: currentUser?.name || 'Pasajero',
+            acceptedAt: new Date().toISOString(),
+            driverArrived: false,
+            passengerComingOut: false
+        });
         removeDuplicatedPassengerServicesSections();
         const costSheet = document.getElementById('cost-sheet');
         if (costSheet) costSheet.classList.remove('active', 'minimized');
@@ -3197,6 +3226,7 @@
         activeTrip.classList.remove('hidden');
         populateActiveTripSheet(driver);
         initActiveTripSheetDrag();
+        startPassengerTripStatusSync();
         document.getElementById('fixed-cancel-trip-btn').classList.remove('hidden');
 
         lucide.createIcons();
@@ -3213,6 +3243,10 @@
         document.getElementById('trip-cost').innerText = `$${appState.precioViaje.toFixed(2)} MXN`;
         document.getElementById('trip-pickup').innerText = 'Ubicación actual del pasajero';
         document.getElementById('trip-destination').innerText = 'Destino del pasajero';
+        const arrivedBox = document.getElementById('trip-driver-arrived-box');
+        const oneMomentStatus = document.getElementById('trip-one-moment-status');
+        if (arrivedBox) arrivedBox.classList.add('hidden');
+        if (oneMomentStatus) oneMomentStatus.classList.add('hidden');
 
         const photo = document.getElementById('trip-driver-photo');
         const fallback = document.getElementById('trip-driver-fallback');
@@ -3334,6 +3368,112 @@
             status.classList.remove('hidden');
         }
         if (input) input.value = '';
+    }
+
+    let passengerTripStatusInterval = null;
+    let driverTripStatusInterval = null;
+
+    function getDriveMxTripStatus() {
+        return JSON.parse(localStorage.getItem('drive_mx_active_trip_status') || '{}');
+    }
+
+    function saveDriveMxTripStatus(data) {
+        const current = getDriveMxTripStatus();
+        const next = { ...current, ...data, updatedAt: new Date().toISOString() };
+        localStorage.setItem('drive_mx_active_trip_status', JSON.stringify(next));
+        return next;
+    }
+
+    function startPassengerTripStatusSync() {
+        if (passengerTripStatusInterval) clearInterval(passengerTripStatusInterval);
+        refreshPassengerArrivalNotice();
+        passengerTripStatusInterval = setInterval(refreshPassengerArrivalNotice, 1200);
+    }
+
+    function refreshPassengerArrivalNotice() {
+        if (activePanel !== 'passenger-trip') return;
+        const driver = activeTripData || {};
+        const status = getDriveMxTripStatus();
+        const box = document.getElementById('trip-driver-arrived-box');
+        if (!box) return;
+        const sameDriver = !status.driverId || !driver.id || String(status.driverId) === String(driver.id);
+        const samePassenger = !status.passengerId || !currentUser?.id || String(status.passengerId) === String(currentUser.id);
+        if (status.driverArrived === true && sameDriver && samePassenger) {
+            box.classList.remove('hidden');
+            lucide.createIcons();
+        } else {
+            box.classList.add('hidden');
+        }
+    }
+
+    function sendPassengerOneMomentNotice() {
+        if (activePanel !== 'passenger-trip') return;
+        const driver = activeTripData || {};
+        const messages = JSON.parse(localStorage.getItem('drive_mx_trip_messages') || '[]');
+        messages.unshift({
+            id: 'MSG_' + Date.now(),
+            tripDriverId: driver.id || '',
+            driverName: driver.name || 'Conductor',
+            passengerId: currentUser?.id || '',
+            passengerName: currentUser?.name || 'Pasajero',
+            message: 'El pasajero está saliendo.',
+            type: 'passenger_coming_out',
+            createdAt: new Date().toLocaleString(),
+            panel: 'passenger'
+        });
+        localStorage.setItem('drive_mx_trip_messages', JSON.stringify(messages));
+        saveDriveMxTripStatus({
+            driverId: driver.id || '',
+            driverName: driver.name || 'Conductor',
+            passengerId: currentUser?.id || '',
+            passengerName: currentUser?.name || 'Pasajero',
+            passengerComingOut: true,
+            passengerComingOutAt: new Date().toISOString()
+        });
+        const status = document.getElementById('trip-one-moment-status');
+        if (status) status.classList.remove('hidden');
+    }
+
+    function startDriverTripStatusSync() {
+        if (driverTripStatusInterval) clearInterval(driverTripStatusInterval);
+        refreshDriverTripActions();
+        driverTripStatusInterval = setInterval(refreshDriverTripActions, 1200);
+    }
+
+    function refreshDriverTripActions() {
+        if (activePanel !== 'driver') return;
+        const status = getDriveMxTripStatus();
+        const actions = document.getElementById('driver-trip-actions');
+        const notice = document.getElementById('driver-passenger-notice');
+        if (!actions) return;
+        const sameDriver = !status.driverId || !currentUser?.id || String(status.driverId) === String(currentUser.id);
+        const hasActiveTrip = Boolean(status.passengerId || status.driverId || status.driverName || status.acceptedAt);
+        if (hasActiveTrip && sameDriver) actions.classList.remove('hidden');
+        else actions.classList.add('hidden');
+        if (notice) {
+            if (status.passengerComingOut && sameDriver) {
+                notice.innerText = 'El pasajero está saliendo.';
+                notice.classList.remove('hidden');
+            } else {
+                notice.classList.add('hidden');
+                notice.innerText = '';
+            }
+        }
+        lucide.createIcons();
+    }
+
+    function notifyDriverArrivedAtPickup() {
+        if (activePanel !== 'driver') return;
+        const status = saveDriveMxTripStatus({
+            driverId: currentUser?.id || getDriveMxTripStatus().driverId || '',
+            driverName: currentUser?.name || getDriveMxTripStatus().driverName || 'Conductor',
+            driverArrived: true,
+            driverArrivedAt: new Date().toISOString()
+        });
+        const mainMsg = document.getElementById('driver-main-msg');
+        if (mainMsg) mainMsg.innerText = 'Has notificado tu llegada al punto de recogida';
+        alert('Se notificó al pasajero que has llegado al punto de recogida.');
+        refreshDriverTripActions();
     }
 
     function shareTripWhatsApp() {

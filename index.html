@@ -608,21 +608,6 @@
                         </div>
                     </div>
 
-                    <div id="trip-driver-arrived-box" class="hidden bg-green-50 border border-green-200 rounded-2xl p-3 mb-4">
-                        <div class="flex items-center gap-2">
-                            <i data-lucide="check-circle" class="w-4 h-4 text-green-600"></i>
-                            <p class="text-[10px] font-black uppercase italic text-green-700">El conductor ha llegado</p>
-                        </div>
-                    </div>
-
-                    <button id="btn-one-moment" onclick="notifyPassengerComingOut()" class="hidden w-full bg-yellow-500 text-white py-3 rounded-2xl font-black text-[10px] uppercase italic items-center justify-center gap-2 active:scale-95 transition-all mb-4">
-                        <i data-lucide="clock-3" class="w-4 h-4"></i> Un momento
-                    </button>
-
-                    <div id="trip-one-moment-status" class="hidden bg-yellow-50 border border-yellow-200 rounded-2xl p-3 mb-4">
-                        <p class="text-[9px] font-black uppercase italic text-yellow-700">Aviso enviado al conductor. El pasajero está saliendo.</p>
-                    </div>
-
                     <div class="bg-gray-900 text-white rounded-[1.7rem] p-4 mb-4">
                         <div class="flex items-center justify-between mb-3">
                             <h4 class="text-[10px] font-black uppercase italic tracking-tight">Viaje actual</h4>
@@ -650,6 +635,13 @@
                     <button onclick="shareTripWhatsApp()" class="w-full bg-green-600 text-white py-3 rounded-2xl font-black text-[10px] uppercase italic flex items-center justify-center gap-2 active:scale-95 transition-all">
                         <i data-lucide="send" class="w-4 h-4"></i> Compartir viaje por WhatsApp
                     </button>
+                    <div id="driver-arrived-passenger-box" class="hidden mt-3 bg-red-50 border border-red-100 rounded-2xl p-3 text-center">
+                        <p class="text-[10px] font-black uppercase italic text-gray-900">El conductor ha llegado</p>
+                        <button onclick="notifyPassengerIsLeaving()" class="mt-3 w-full bg-gray-900 text-white py-3 rounded-2xl font-black text-[10px] uppercase italic active:scale-95 transition-all">
+                            Un momento
+                        </button>
+                        <p id="passenger-leaving-status" class="hidden mt-2 text-[8px] font-black uppercase italic text-green-700">El pasajero está saliendo</p>
+                    </div>
                     <div class="sheet-spacer-fixed-cancel"></div>
                 </div>
 
@@ -749,12 +741,6 @@
     <h3 id="driver-main-msg" class="text-sm font-black italic uppercase text-gray-900 text-center">
         Buscando viajes cercanos
     </h3>
-    <button id="driver-arrived-btn" onclick="driverNotifyArrivedAtPickup()" class="hidden mt-5 bg-green-600 text-white px-5 py-3 rounded-2xl font-black text-[10px] uppercase italic active:scale-95 transition-all shadow-lg">
-        Ha llegado al punto de recogida
-    </button>
-    <div id="driver-passenger-coming-out-box" class="hidden mt-4 bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded-2xl text-[9px] font-black uppercase italic text-center">
-        El pasajero está saliendo.
-    </div>
 </div>
 
 
@@ -1361,6 +1347,7 @@
         if (tripSheet) tripSheet.classList.add('minimized');
         const msgModal = document.getElementById('passenger-message-modal');
         if (msgModal) msgModal.classList.add('hidden');
+        hideDriverArrivedPassengerBox();
     }
 
     function resetDriverTransientState() {
@@ -1431,6 +1418,7 @@
         const activeDriverPhoto = document.getElementById('active-driver-photo');
         if (activeDriverPhoto) activeDriverPhoto.src = currentUser && currentUser.foto ? currentUser.foto : '';
         updateCurrentDriverLocation();
+        refreshDriverPassengerNotifications();
         lucide.createIcons();
     }
 
@@ -1619,9 +1607,6 @@
 
             pulse.classList.remove('hidden');
 
-            const arrivedBtn = document.getElementById('driver-arrived-btn');
-            if (arrivedBtn) arrivedBtn.classList.remove('hidden');
-
             
 
 
@@ -1639,9 +1624,6 @@
             statusText.innerText = 'No Disponible';
 
             pulse.classList.add('hidden');
-
-            const arrivedBtn = document.getElementById('driver-arrived-btn');
-            if (arrivedBtn) arrivedBtn.classList.add('hidden');
 
             
         }
@@ -3201,15 +3183,6 @@
     function acceptDriverOffer(driver) {
         activePanel = 'passenger-trip';
         activeTripData = driver;
-        saveActiveTripStatus({
-            driverId: driver.id || '',
-            driverName: driver.name || 'Conductor',
-            passengerId: currentUser?.id || '',
-            passengerName: currentUser?.name || 'Pasajero',
-            driverArrived: false,
-            passengerComingOut: false,
-            acceptedAt: new Date().toISOString()
-        });
         if (appState.pendingTrip) {
             appState.pendingTrip.driverId = driver.id || '';
             appState.pendingTrip.driverName = driver.name || 'Conductor';
@@ -3231,10 +3204,11 @@
 
         const activeTrip = document.getElementById('active-trip-passenger');
         activeTrip.classList.remove('hidden');
+        hideDriverArrivedPassengerBox();
         populateActiveTripSheet(driver);
         initActiveTripSheetDrag();
-        startPassengerTripStatusSync();
         document.getElementById('fixed-cancel-trip-btn').classList.remove('hidden');
+        scheduleDriverArrivedPassengerMessage();
 
         lucide.createIcons();
     }
@@ -3250,7 +3224,6 @@
         document.getElementById('trip-cost').innerText = `$${appState.precioViaje.toFixed(2)} MXN`;
         document.getElementById('trip-pickup').innerText = 'Ubicación actual del pasajero';
         document.getElementById('trip-destination').innerText = 'Destino del pasajero';
-        renderPassengerArrivalStatus(false, false);
 
         const photo = document.getElementById('trip-driver-photo');
         const fallback = document.getElementById('trip-driver-fallback');
@@ -3374,97 +3347,75 @@
         if (input) input.value = '';
     }
 
+    let driverArrivedPassengerTimer = null;
 
-    const DRIVE_MX_ACTIVE_TRIP_STATUS_KEY = 'drive_mx_active_trip_status';
-    let passengerTripStatusInterval = null;
-
-    function getActiveTripStatus() {
-        try {
-            return JSON.parse(localStorage.getItem(DRIVE_MX_ACTIVE_TRIP_STATUS_KEY) || '{}');
-        } catch (error) {
-            return {};
+    function hideDriverArrivedPassengerBox() {
+        if (driverArrivedPassengerTimer) {
+            clearTimeout(driverArrivedPassengerTimer);
+            driverArrivedPassengerTimer = null;
+        }
+        const box = document.getElementById('driver-arrived-passenger-box');
+        const status = document.getElementById('passenger-leaving-status');
+        if (box) box.classList.add('hidden');
+        if (status) {
+            status.classList.add('hidden');
+            status.innerText = 'El pasajero está saliendo';
         }
     }
 
-    function saveActiveTripStatus(status) {
-        localStorage.setItem(DRIVE_MX_ACTIVE_TRIP_STATUS_KEY, JSON.stringify({
-            ...getActiveTripStatus(),
-            ...status
-        }));
+    function scheduleDriverArrivedPassengerMessage() {
+        hideDriverArrivedPassengerBox();
+        driverArrivedPassengerTimer = setTimeout(() => {
+            if (activePanel !== 'passenger-trip' || !activeTripData) return;
+            const box = document.getElementById('driver-arrived-passenger-box');
+            if (box) box.classList.remove('hidden');
+            lucide.createIcons();
+        }, 5000);
     }
 
-    function renderPassengerArrivalStatus(driverArrived, passengerComingOut) {
-        const arrivedBox = document.getElementById('trip-driver-arrived-box');
-        const oneMomentBtn = document.getElementById('btn-one-moment');
-        const oneMomentStatus = document.getElementById('trip-one-moment-status');
-
-        if (arrivedBox) arrivedBox.classList.toggle('hidden', !driverArrived);
-
-        if (oneMomentBtn) {
-            oneMomentBtn.classList.toggle('hidden', !driverArrived);
-            oneMomentBtn.classList.toggle('flex', driverArrived);
-        }
-
-        if (oneMomentStatus) {
-            oneMomentStatus.classList.toggle('hidden', !passengerComingOut);
-        }
-
-        if (typeof lucide !== 'undefined') lucide.createIcons();
-    }
-
-    function startPassengerTripStatusSync() {
-        if (passengerTripStatusInterval) clearInterval(passengerTripStatusInterval);
-
-        const sync = () => {
-            if (activePanel !== 'passenger-trip') return;
-            const status = getActiveTripStatus();
-            renderPassengerArrivalStatus(!!status.driverArrived, !!status.passengerComingOut);
-        };
-
-        sync();
-        passengerTripStatusInterval = setInterval(sync, 1000);
-    }
-
-    function driverNotifyArrivedAtPickup() {
-        saveActiveTripStatus({
-            driverId: currentUser?.id || getActiveTripStatus().driverId || '',
-            driverName: currentUser?.name || getActiveTripStatus().driverName || 'Conductor',
-            driverArrived: true,
-            driverArrivedAt: new Date().toISOString()
-        });
-
-        const mainMsg = document.getElementById('driver-main-msg');
-        if (mainMsg) mainMsg.innerText = 'Has notificado tu llegada al punto de recogida';
-
-        alert('Se notificó al pasajero: El conductor ha llegado.');
-    }
-
-    function notifyPassengerComingOut() {
-        if (activePanel !== 'passenger-trip') return;
-
-        saveActiveTripStatus({
-            passengerComingOut: true,
-            passengerComingOutAt: new Date().toISOString()
-        });
-
-        const notifications = JSON.parse(localStorage.getItem('drive_mx_driver_notifications') || '[]');
-        notifications.unshift({
-            id: 'COMING_OUT_' + Date.now(),
-            driverId: activeTripData?.id || '',
+    function notifyPassengerIsLeaving() {
+        if (activePanel !== 'passenger-trip' || !activeTripData) return;
+        const driver = activeTripData || {};
+        const messages = JSON.parse(localStorage.getItem('drive_mx_trip_messages') || '[]');
+        messages.unshift({
+            id: 'MSG_' + Date.now(),
+            tripDriverId: driver.id || '',
+            driverName: driver.name || 'Conductor',
             passengerId: currentUser?.id || '',
             passengerName: currentUser?.name || 'Pasajero',
-            type: 'passenger-coming-out',
-            message: 'El pasajero está saliendo.',
-            createdAt: new Date().toISOString()
+            message: 'El pasajero está saliendo',
+            createdAt: new Date().toLocaleString(),
+            panel: 'passenger',
+            type: 'passenger_leaving'
         });
-        localStorage.setItem('drive_mx_driver_notifications', JSON.stringify(notifications));
+        localStorage.setItem('drive_mx_trip_messages', JSON.stringify(messages));
 
-        renderPassengerArrivalStatus(true, true);
+        const status = document.getElementById('passenger-leaving-status');
+        if (status) {
+            status.innerText = 'Notificación enviada al conductor: El pasajero está saliendo';
+            status.classList.remove('hidden');
+        }
 
-        const driverNotice = document.getElementById('driver-passenger-coming-out-box');
-        if (driverNotice) driverNotice.classList.remove('hidden');
+        if (typeof refreshDriverPassengerNotifications === 'function') {
+            refreshDriverPassengerNotifications();
+        }
     }
 
+    function refreshDriverPassengerNotifications() {
+        const mainMsg = document.getElementById('driver-main-msg');
+        if (!mainMsg || !currentUser || currentUser.role !== 'conductor') return;
+
+        const messages = JSON.parse(localStorage.getItem('drive_mx_trip_messages') || '[]');
+        const latestLeavingMessage = messages.find(msg =>
+            msg &&
+            msg.type === 'passenger_leaving' &&
+            (!msg.tripDriverId || msg.tripDriverId === currentUser.id)
+        );
+
+        if (latestLeavingMessage) {
+            mainMsg.innerText = latestLeavingMessage.message || 'El pasajero está saliendo';
+        }
+    }
 
     function shareTripWhatsApp() {
         const driver = activeTripData || {};
@@ -3478,9 +3429,6 @@
         closePassengerMessageModal();
         document.getElementById('active-trip-passenger').classList.add('hidden');
         document.getElementById('fixed-cancel-trip-btn').classList.add('hidden');
-        if (passengerTripStatusInterval) clearInterval(passengerTripStatusInterval);
-        saveActiveTripStatus({ driverArrived: false, passengerComingOut: false });
-        renderPassengerArrivalStatus(false, false);
         showPassengerPanel();
     }
 

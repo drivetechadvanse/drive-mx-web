@@ -779,8 +779,8 @@
                         <i id="placeholder-icon" data-lucide="user" class="w-12 h-12 text-gray-300"></i>
                         <img id="driver-photo-preview" class="hidden w-full h-full object-cover">
                     </div>
-                    <button onclick="document.getElementById('photo-input').click()" class="absolute bottom-1 right-1 bg-red-600 p-3 rounded-full text-white border-4 border-white shadow-lg"><i data-lucide="camera" class="w-5 h-5"></i></button>
-                    <input type="file" id="photo-input" accept="image/*" class="hidden" onchange="processImage(this)">
+                    <button onclick="openImagePicker('photo-input')" class="absolute bottom-1 right-1 bg-red-600 p-3 rounded-full text-white border-4 border-white shadow-lg"><i data-lucide="camera" class="w-5 h-5"></i></button>
+                    <input type="file" id="photo-input" accept="image/*" capture="environment" class="hidden" onchange="processImage(this)">
                 </div>
                 <button id="btn-photo-next" disabled onclick="goToStep(2)" class="w-full bg-gray-300 text-white py-4 rounded-xl font-black text-[10px] uppercase italic transition-all">Siguiente</button>
             </div>
@@ -795,14 +795,14 @@
             </div>
             <div id="step-ine-front" class="hidden w-full flex flex-col">
                 <h3 class="text-center font-black text-[10px] text-gray-400 uppercase mb-4 italic">INE Frontal</h3>
-                <div class="w-full aspect-video bg-gray-50 rounded-2xl border-4 border-dashed border-gray-200 flex items-center justify-center mb-6 overflow-hidden" onclick="document.getElementById('ine-f-input').click()"><img id="ine-f-preview" class="hidden w-full h-full object-cover"><i data-lucide="image" class="text-gray-300 w-10 h-10"></i></div>
-                <input type="file" id="ine-f-input" accept="image/*" class="hidden" onchange="processFile(this, 'ine-f-preview', 'btn-ine-f-next')">
+                <div class="w-full aspect-video bg-gray-50 rounded-2xl border-4 border-dashed border-gray-200 flex items-center justify-center mb-6 overflow-hidden" onclick="openImagePicker('ine-f-input')"><img id="ine-f-preview" class="hidden w-full h-full object-cover"><i data-lucide="image" class="text-gray-300 w-10 h-10"></i></div>
+                <input type="file" id="ine-f-input" accept="image/*" capture="environment" class="hidden" onchange="processFile(this, 'ine-f-preview', 'btn-ine-f-next')">
                 <button id="btn-ine-f-next" disabled onclick="goToStep(4)" class="w-full bg-gray-300 text-white py-4 rounded-xl font-black text-[10px] uppercase italic transition-all">Siguiente</button>
             </div>
             <div id="step-ine-back" class="hidden w-full flex flex-col">
                 <h3 class="text-center font-black text-[10px] text-gray-400 uppercase mb-4 italic">INE Trasera</h3>
-                <div class="w-full aspect-video bg-gray-50 rounded-2xl border-4 border-dashed border-gray-200 flex items-center justify-center mb-6 overflow-hidden" onclick="document.getElementById('ine-b-input').click()"><img id="ine-b-preview" class="hidden w-full h-full object-cover"><i data-lucide="image" class="text-gray-300 w-10 h-10"></i></div>
-                <input type="file" id="ine-b-input" accept="image/*" class="hidden" onchange="processFile(this, 'ine-b-preview', 'btn-ine-b-next')">
+                <div class="w-full aspect-video bg-gray-50 rounded-2xl border-4 border-dashed border-gray-200 flex items-center justify-center mb-6 overflow-hidden" onclick="openImagePicker('ine-b-input')"><img id="ine-b-preview" class="hidden w-full h-full object-cover"><i data-lucide="image" class="text-gray-300 w-10 h-10"></i></div>
+                <input type="file" id="ine-b-input" accept="image/*" capture="environment" class="hidden" onchange="processFile(this, 'ine-b-preview', 'btn-ine-b-next')">
                 <button id="btn-ine-b-next" disabled onclick="goToStep(5)" class="w-full bg-gray-300 text-white py-4 rounded-xl font-black text-[10px] uppercase italic transition-all">Siguiente</button>
             </div>
             <div id="step-vehicle" class="hidden w-full flex flex-col space-y-3">
@@ -816,14 +816,14 @@
             </div>
             <div id="step-circ" class="hidden w-full flex flex-col">
                 <h3 class="text-center font-black text-[10px] text-gray-400 uppercase mb-4 italic">Tarjeta de Circulación</h3>
-                <div class="w-full aspect-video bg-gray-50 rounded-2xl border-4 border-dashed border-gray-200 flex items-center justify-center mb-6 overflow-hidden" onclick="document.getElementById('circ-input').click()"><img id="circ-preview" class="hidden w-full h-full object-cover"><i data-lucide="file-text" class="text-gray-300 w-10 h-10"></i></div>
-                <input type="file" id="circ-input" accept="image/*" class="hidden" onchange="processFile(this, 'circ-preview', 'btn-circ-next')">
+                <div class="w-full aspect-video bg-gray-50 rounded-2xl border-4 border-dashed border-gray-200 flex items-center justify-center mb-6 overflow-hidden" onclick="openImagePicker('circ-input')"><img id="circ-preview" class="hidden w-full h-full object-cover"><i data-lucide="file-text" class="text-gray-300 w-10 h-10"></i></div>
+                <input type="file" id="circ-input" accept="image/*" capture="environment" class="hidden" onchange="processFile(this, 'circ-preview', 'btn-circ-next')">
                 <button id="btn-circ-next" disabled onclick="goToStep(7)" class="w-full bg-gray-300 text-white py-4 rounded-xl font-black text-[10px] uppercase italic transition-all">Siguiente</button>
             </div>
             <div id="step-v-photo" class="hidden w-full flex flex-col">
                 <h3 class="text-center font-black text-[10px] text-gray-400 uppercase mb-4 italic">Foto del Vehículo</h3>
-                <div class="w-full aspect-video bg-gray-50 rounded-2xl border-4 border-dashed border-gray-200 flex items-center justify-center mb-6 overflow-hidden" onclick="document.getElementById('v-photo-input').click()"><img id="v-photo-preview" class="hidden w-full h-full object-cover"><i data-lucide="car" class="text-gray-300 w-12 h-12"></i></div>
-                <input type="file" id="v-photo-input" accept="image/*" class="hidden" onchange="processFile(this, 'v-photo-preview', 'btn-v-photo-next')">
+                <div class="w-full aspect-video bg-gray-50 rounded-2xl border-4 border-dashed border-gray-200 flex items-center justify-center mb-6 overflow-hidden" onclick="openImagePicker('v-photo-input')"><img id="v-photo-preview" class="hidden w-full h-full object-cover"><i data-lucide="car" class="text-gray-300 w-12 h-12"></i></div>
+                <input type="file" id="v-photo-input" accept="image/*" capture="environment" class="hidden" onchange="processFile(this, 'v-photo-preview', 'btn-v-photo-next')">
                 <button id="btn-v-photo-next" disabled onclick="goToStep(8)" class="w-full bg-gray-300 text-white py-4 rounded-xl font-black text-[10px] uppercase italic transition-all">Siguiente</button>
             </div>
             <div id="step-phone" class="hidden w-full flex flex-col">
@@ -1533,6 +1533,7 @@
         activePanel = 'registration';
         registrationMode = 'passenger';
         tempBase64Photo = '';
+        registrationFiles = {};
         const stepsToHide = ['step-ine-front', 'step-ine-back', 'step-vehicle', 'step-circ', 'step-v-photo'];
         stepsToHide.forEach(s => document.getElementById(s).classList.add('hidden'));
         document.getElementById('login-screen').classList.add('hidden');
@@ -1544,20 +1545,58 @@
     }
 
     let tempBase64Photo = "";
+    let registrationFiles = {};
     let isSavingDriverRequest = false;
-    function processImage(i) { 
-        if (i.files[0]) { 
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                tempBase64Photo = e.target.result;
-                document.getElementById('driver-photo-preview').src = tempBase64Photo; 
-                document.getElementById('driver-photo-preview').classList.remove('hidden'); 
-                document.getElementById('placeholder-icon').classList.add('hidden'); 
-                document.getElementById('btn-photo-next').disabled = false; 
-                document.getElementById('btn-photo-next').classList.replace('bg-gray-300', 'bg-red-600'); 
-            };
-            reader.readAsDataURL(i.files[0]);
-        } 
+
+    function openImagePicker(inputId) {
+        const input = document.getElementById(inputId);
+        if (!input) return;
+        // Permite volver a tomar/subir una foto aunque el nombre del archivo sea igual.
+        input.value = '';
+        input.click();
+    }
+
+    function enableRegistrationNextButton(buttonId) {
+        const button = document.getElementById(buttonId);
+        if (!button) return;
+        button.disabled = false;
+        button.classList.remove('bg-gray-300');
+        button.classList.add('bg-red-600');
+    }
+
+    function readImageFileAsBase64(input, callback) {
+        const file = input && input.files ? input.files[0] : null;
+        if (!file) return;
+
+        if (!file.type || !file.type.startsWith('image/')) {
+            alert('Selecciona o toma una imagen válida.');
+            input.value = '';
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            callback(e.target.result, file);
+        };
+        reader.onerror = function() {
+            alert('No se pudo cargar la imagen. Intenta nuevamente.');
+            input.value = '';
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function processImage(i) {
+        readImageFileAsBase64(i, function(base64) {
+            tempBase64Photo = base64;
+            const preview = document.getElementById('driver-photo-preview');
+            const placeholder = document.getElementById('placeholder-icon');
+            if (preview) {
+                preview.src = tempBase64Photo;
+                preview.classList.remove('hidden');
+            }
+            if (placeholder) placeholder.classList.add('hidden');
+            enableRegistrationNextButton('btn-photo-next');
+        });
     }
 
     function savePassengerRequest() {
@@ -1645,6 +1684,12 @@
                     color: getCleanValue('v-color'),
                     year: getCleanValue('v-year'),
                     placa: plateValue
+                },
+                documentos: {
+                    ineFrontal: registrationFiles['ine-f-preview']?.data || '',
+                    ineTrasera: registrationFiles['ine-b-preview']?.data || '',
+                    tarjetaCirculacion: registrationFiles['circ-preview']?.data || '',
+                    fotoVehiculo: registrationFiles['v-photo-preview']?.data || ''
                 }
             };
 
@@ -3701,13 +3746,21 @@
         lucide.createIcons();
     }
 
-    function processFile(i, p, b) { 
-        if (i.files[0]) { 
-            document.getElementById(p).src = URL.createObjectURL(i.files[0]); 
-            document.getElementById(p).classList.remove('hidden'); 
-            document.getElementById(b).disabled = false; 
-            document.getElementById(b).classList.replace('bg-gray-300', 'bg-red-600'); 
-        } 
+    function processFile(i, p, b) {
+        readImageFileAsBase64(i, function(base64, file) {
+            registrationFiles[p] = {
+                name: file.name || p,
+                type: file.type || 'image/*',
+                data: base64
+            };
+
+            const preview = document.getElementById(p);
+            if (preview) {
+                preview.src = base64;
+                preview.classList.remove('hidden');
+            }
+            enableRegistrationNextButton(b);
+        });
     }
 
     function checkName(i) { const b = document.getElementById('btn-name-next'); if(i.value.length > 3) { b.disabled = false; b.classList.replace('bg-gray-300', 'bg-red-600'); } }
@@ -3761,6 +3814,7 @@
         activePanel = 'registration';
         registrationMode = 'driver';
         tempBase64Photo = '';
+        registrationFiles = {};
         closeAll();
         document.getElementById('passenger-view').classList.add('hidden');
         document.getElementById('driver-registration-view').classList.remove('hidden');

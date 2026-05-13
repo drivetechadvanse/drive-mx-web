@@ -284,22 +284,6 @@
 
     <div id="overlay" onclick="closeAll()" class="absolute inset-0 bg-black/60 z-[100] opacity-0 pointer-events-none transition-opacity"></div>
 
-    <div id="image-source-modal" class="hidden absolute inset-0 bg-black/50 z-[240] items-end justify-center p-4">
-        <div class="w-full bg-white rounded-[2rem] p-4 shadow-2xl space-y-3">
-            <div class="text-center pb-1">
-                <p class="text-[8px] font-black text-gray-400 uppercase italic tracking-widest">Subir imagen</p>
-                <h3 class="text-sm font-black italic uppercase text-gray-900">Selecciona el origen</h3>
-            </div>
-            <button type="button" onclick="chooseImageSource('camera')" class="w-full bg-red-600 text-white py-4 rounded-2xl font-black text-[10px] uppercase italic flex items-center justify-center gap-2 active:scale-95 transition-all">
-                <i data-lucide="camera" class="w-4 h-4"></i> Tomar foto con cámara
-            </button>
-            <button type="button" onclick="chooseImageSource('gallery')" class="w-full bg-gray-900 text-white py-4 rounded-2xl font-black text-[10px] uppercase italic flex items-center justify-center gap-2 active:scale-95 transition-all">
-                <i data-lucide="image" class="w-4 h-4"></i> Elegir desde galería del teléfono
-            </button>
-            <button type="button" onclick="closeImageSourceChooser()" class="w-full bg-gray-100 text-gray-600 py-3 rounded-2xl font-black text-[10px] uppercase italic active:scale-95 transition-all">Cancelar</button>
-        </div>
-    </div>
-
     <!-- Menú Lateral -->
     <div id="sidebar" class="absolute inset-y-0 left-0 w-64 bg-white z-[110] shadow-2xl flex flex-col">
         <div id="user-profile-header" class="hidden p-6 bg-gray-900 text-white flex flex-col items-center text-center">
@@ -497,7 +481,7 @@
                         <div>
                             <label class="reg-label">Foto del servicio</label>
                             <input type="file" id="urban-edit-photo" accept="image/*" class="hidden" onchange="previsualizarFotoServicioUrbano(this)">
-                            <button onclick="openImageSourceChooser('urban-edit-photo')" class="w-full bg-gray-900 text-white py-3 rounded-xl font-black text-[10px] uppercase italic flex items-center justify-center gap-2 active:scale-95 transition-all">
+                            <button onclick="document.getElementById('urban-edit-photo').click()" class="w-full bg-gray-900 text-white py-3 rounded-xl font-black text-[10px] uppercase italic flex items-center justify-center gap-2 active:scale-95 transition-all">
                                 <i data-lucide="image" class="w-4 h-4"></i> Cambiar foto
                             </button>
                             <img id="urban-edit-preview" src="" class="hidden mt-3 w-full h-28 object-cover rounded-2xl border border-gray-200" alt="Vista previa del servicio">
@@ -795,7 +779,7 @@
                         <i id="placeholder-icon" data-lucide="user" class="w-12 h-12 text-gray-300"></i>
                         <img id="driver-photo-preview" class="hidden w-full h-full object-cover">
                     </div>
-                    <button onclick="openImageSourceChooser('photo-input')" class="absolute bottom-1 right-1 bg-red-600 p-3 rounded-full text-white border-4 border-white shadow-lg"><i data-lucide="camera" class="w-5 h-5"></i></button>
+                    <button onclick="document.getElementById('photo-input').click()" class="absolute bottom-1 right-1 bg-red-600 p-3 rounded-full text-white border-4 border-white shadow-lg"><i data-lucide="camera" class="w-5 h-5"></i></button>
                     <input type="file" id="photo-input" accept="image/*" class="hidden" onchange="processImage(this)">
                 </div>
                 <button id="btn-photo-next" disabled onclick="goToStep(2)" class="w-full bg-gray-300 text-white py-4 rounded-xl font-black text-[10px] uppercase italic transition-all">Siguiente</button>
@@ -811,13 +795,13 @@
             </div>
             <div id="step-ine-front" class="hidden w-full flex flex-col">
                 <h3 class="text-center font-black text-[10px] text-gray-400 uppercase mb-4 italic">INE Frontal</h3>
-                <div class="w-full aspect-video bg-gray-50 rounded-2xl border-4 border-dashed border-gray-200 flex items-center justify-center mb-6 overflow-hidden" onclick="openImageSourceChooser('ine-f-input')"><img id="ine-f-preview" class="hidden w-full h-full object-cover"><i data-lucide="image" class="text-gray-300 w-10 h-10"></i></div>
+                <div class="w-full aspect-video bg-gray-50 rounded-2xl border-4 border-dashed border-gray-200 flex items-center justify-center mb-6 overflow-hidden" onclick="document.getElementById('ine-f-input').click()"><img id="ine-f-preview" class="hidden w-full h-full object-cover"><i data-lucide="image" class="text-gray-300 w-10 h-10"></i></div>
                 <input type="file" id="ine-f-input" accept="image/*" class="hidden" onchange="processFile(this, 'ine-f-preview', 'btn-ine-f-next')">
                 <button id="btn-ine-f-next" disabled onclick="goToStep(4)" class="w-full bg-gray-300 text-white py-4 rounded-xl font-black text-[10px] uppercase italic transition-all">Siguiente</button>
             </div>
             <div id="step-ine-back" class="hidden w-full flex flex-col">
                 <h3 class="text-center font-black text-[10px] text-gray-400 uppercase mb-4 italic">INE Trasera</h3>
-                <div class="w-full aspect-video bg-gray-50 rounded-2xl border-4 border-dashed border-gray-200 flex items-center justify-center mb-6 overflow-hidden" onclick="openImageSourceChooser('ine-b-input')"><img id="ine-b-preview" class="hidden w-full h-full object-cover"><i data-lucide="image" class="text-gray-300 w-10 h-10"></i></div>
+                <div class="w-full aspect-video bg-gray-50 rounded-2xl border-4 border-dashed border-gray-200 flex items-center justify-center mb-6 overflow-hidden" onclick="document.getElementById('ine-b-input').click()"><img id="ine-b-preview" class="hidden w-full h-full object-cover"><i data-lucide="image" class="text-gray-300 w-10 h-10"></i></div>
                 <input type="file" id="ine-b-input" accept="image/*" class="hidden" onchange="processFile(this, 'ine-b-preview', 'btn-ine-b-next')">
                 <button id="btn-ine-b-next" disabled onclick="goToStep(5)" class="w-full bg-gray-300 text-white py-4 rounded-xl font-black text-[10px] uppercase italic transition-all">Siguiente</button>
             </div>
@@ -832,13 +816,13 @@
             </div>
             <div id="step-circ" class="hidden w-full flex flex-col">
                 <h3 class="text-center font-black text-[10px] text-gray-400 uppercase mb-4 italic">Tarjeta de Circulación</h3>
-                <div class="w-full aspect-video bg-gray-50 rounded-2xl border-4 border-dashed border-gray-200 flex items-center justify-center mb-6 overflow-hidden" onclick="openImageSourceChooser('circ-input')"><img id="circ-preview" class="hidden w-full h-full object-cover"><i data-lucide="file-text" class="text-gray-300 w-10 h-10"></i></div>
+                <div class="w-full aspect-video bg-gray-50 rounded-2xl border-4 border-dashed border-gray-200 flex items-center justify-center mb-6 overflow-hidden" onclick="document.getElementById('circ-input').click()"><img id="circ-preview" class="hidden w-full h-full object-cover"><i data-lucide="file-text" class="text-gray-300 w-10 h-10"></i></div>
                 <input type="file" id="circ-input" accept="image/*" class="hidden" onchange="processFile(this, 'circ-preview', 'btn-circ-next')">
                 <button id="btn-circ-next" disabled onclick="goToStep(7)" class="w-full bg-gray-300 text-white py-4 rounded-xl font-black text-[10px] uppercase italic transition-all">Siguiente</button>
             </div>
             <div id="step-v-photo" class="hidden w-full flex flex-col">
                 <h3 class="text-center font-black text-[10px] text-gray-400 uppercase mb-4 italic">Foto del Vehículo</h3>
-                <div class="w-full aspect-video bg-gray-50 rounded-2xl border-4 border-dashed border-gray-200 flex items-center justify-center mb-6 overflow-hidden" onclick="openImageSourceChooser('v-photo-input')"><img id="v-photo-preview" class="hidden w-full h-full object-cover"><i data-lucide="car" class="text-gray-300 w-12 h-12"></i></div>
+                <div class="w-full aspect-video bg-gray-50 rounded-2xl border-4 border-dashed border-gray-200 flex items-center justify-center mb-6 overflow-hidden" onclick="document.getElementById('v-photo-input').click()"><img id="v-photo-preview" class="hidden w-full h-full object-cover"><i data-lucide="car" class="text-gray-300 w-12 h-12"></i></div>
                 <input type="file" id="v-photo-input" accept="image/*" class="hidden" onchange="processFile(this, 'v-photo-preview', 'btn-v-photo-next')">
                 <button id="btn-v-photo-next" disabled onclick="goToStep(8)" class="w-full bg-gray-300 text-white py-4 rounded-xl font-black text-[10px] uppercase italic transition-all">Siguiente</button>
             </div>
@@ -874,57 +858,6 @@
 </div>
 
 <script>
-    let pendingImageInputId = null;
-
-    function openImageSourceChooser(inputId) {
-        pendingImageInputId = inputId;
-        const modal = document.getElementById('image-source-modal');
-        if (modal) {
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-        }
-        if (window.lucide) lucide.createIcons();
-    }
-
-    function closeImageSourceChooser() {
-        const modal = document.getElementById('image-source-modal');
-        if (modal) {
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
-        }
-        pendingImageInputId = null;
-    }
-
-    function chooseImageSource(source) {
-        const input = pendingImageInputId ? document.getElementById(pendingImageInputId) : null;
-        const modal = document.getElementById('image-source-modal');
-        if (!input) {
-            closeImageSourceChooser();
-            return;
-        }
-
-        // Mantiene los inputs existentes y sus validaciones. Solo cambia el origen antes de abrir el selector nativo.
-        input.value = '';
-        input.setAttribute('accept', 'image/*');
-        if (source === 'camera') {
-            input.setAttribute('capture', 'environment');
-        } else {
-            input.removeAttribute('capture');
-        }
-
-        if (modal) {
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
-        }
-        const targetInputId = pendingImageInputId;
-        pendingImageInputId = null;
-
-        setTimeout(() => {
-            const targetInput = document.getElementById(targetInputId);
-            if (targetInput) targetInput.click();
-        }, 80);
-    }
-
     lucide.createIcons();
     let currentStep = 1;
     let registrationMode = 'driver'; 

@@ -867,6 +867,8 @@
     let selectedTaximeterScheduleId = null;
     let currentTaximeterConfigContext = null;
     let currentUser = null;
+    let activePassengerUser = null;
+    let activeDriverUser = null;
     let activePanel = null;
     let isAvailable = false; // Estado del conductor
     let appState = {
@@ -1416,7 +1418,85 @@
         }, () => {}, { enableHighAccuracy: true, maximumAge: 60000, timeout: 5000 });
     }
 
+
+    function persistPanelSession(user) {
+        if (!user || !user.role) return;
+        const session = JSON.stringify({ id: user.id, role: user.role });
+        localStorage.setItem('drive_mx_active_session', session);
+        if (user.role === 'pasajero') {
+            activePassengerUser = user;
+            localStorage.setItem('drive_mx_passenger_session', session);
+        }
+        if (user.role === 'conductor') {
+            activeDriverUser = user;
+            localStorage.setItem('drive_mx_driver_session', session);
+        }
+    }
+
+    function getStoredPanelUser(role) {
+        const sessionKey = role === 'conductor' ? 'drive_mx_driver_session' : 'drive_mx_passenger_session';
+        const cachedUser = role === 'conductor' ? activeDriverUser : activePassengerUser;
+        const db = getUsersDb();
+
+        if (cachedUser && cachedUser.role === role) {
+            return db.find(user => String(user.id) === String(cachedUser.id) && user.role === role) || cachedUser;
+        }
+
+        try {
+            const saved = JSON.parse(localStorage.getItem(sessionKey) || 'null');
+            if (saved && saved.role === role) {
+                return db.find(user => String(user.id) === String(saved.id) && user.role === role) || null;
+            }
+        } catch (error) {}
+
+        return null;
+    }
+
+    function getPassengerForDriver(driver) {
+        if (!driver || driver.role !== 'conductor') return null;
+        const db = getUsersDb();
+        const parentId = String(driver.parentPassengerId || '');
+        if (parentId) {
+            const parentPassenger = db.find(user => user.role === 'pasajero' && String(user.id) === parentId);
+            if (parentPassenger) return parentPassenger;
+        }
+
+        const driverCorreo = String(driver.correo || '').toLowerCase().trim();
+        const driverUsuario = String(driver.usuario || '').toLowerCase().trim();
+        const driverPhone = String(driver.phone || driver.telefono || '').replace(/\D/g, '');
+        return db.find(user => {
+            if (!user || user.role !== 'pasajero') return false;
+            const passengerCorreo = String(user.correo || '').toLowerCase().trim();
+            const passengerUsuario = String(user.usuario || '').toLowerCase().trim();
+            const passengerPhone = String(user.phone || user.telefono || '').replace(/\D/g, '');
+            return (driverCorreo && passengerCorreo && driverCorreo === passengerCorreo) ||
+                   (driverUsuario && passengerUsuario && driverUsuario === passengerUsuario) ||
+                   (driverPhone && passengerPhone && driverPhone === passengerPhone);
+        }) || null;
+    }
+
+    function setPassengerProfilePhoto(passenger) {
+        const sidePhoto = document.getElementById('side-user-photo');
+        const topPhoto = document.getElementById('top-user-photo');
+        const topIcon = document.getElementById('top-user-icon');
+        const passengerPhoto = passenger?.foto || passenger?.passengerFoto || passenger?.photo || '';
+
+        if (sidePhoto) sidePhoto.src = passengerPhoto;
+        if (topPhoto && topIcon) {
+            if (passengerPhoto) {
+                topPhoto.src = passengerPhoto;
+                topPhoto.classList.remove('hidden');
+                topIcon.classList.add('hidden');
+            } else {
+                topPhoto.src = '';
+                topPhoto.classList.add('hidden');
+                topIcon.classList.remove('hidden');
+            }
+        }
+    }
+
     function showDriverPanel() {
+        if (currentUser && currentUser.role === 'conductor') persistPanelSession(currentUser);
         activePanel = 'driver';
         hideAllMainPanels();
         configureSharedSidebarFor('driver');
@@ -1429,6 +1509,14 @@
     }
 
     function showPassengerPanel() {
+        let passengerUser = currentUser && currentUser.role === 'pasajero' ? currentUser : null;
+        if (!passengerUser && currentUser && currentUser.role === 'conductor') passengerUser = getPassengerForDriver(currentUser);
+        if (!passengerUser) passengerUser = getStoredPanelUser('pasajero');
+        if (passengerUser) {
+            currentUser = passengerUser;
+            persistPanelSession(passengerUser);
+        }
+
         activePanel = 'passenger';
         hideAllMainPanels();
         configureSharedSidebarFor('passenger');
@@ -1444,6 +1532,7 @@
     function startPassengerRegistration() {
         activePanel = 'registration';
         registrationMode = 'passenger';
+        tempBase64Photo = '';
         const stepsToHide = ['step-ine-front', 'step-ine-back', 'step-vehicle', 'step-circ', 'step-v-photo'];
         stepsToHide.forEach(s => document.getElementById(s).classList.add('hidden'));
         document.getElementById('login-screen').classList.add('hidden');
@@ -1481,7 +1570,8 @@
             pass: document.getElementById('reg-pass').value, 
             correo: document.getElementById('reg-email').value.toLowerCase().trim(),
             phone: document.getElementById('dr-phone').value, 
-            foto: tempBase64Photo, 
+            foto: tempBase64Photo,
+            passengerFoto: tempBase64Photo,
             status: 'activo', 
             role: 'pasajero',
             date: new Date().toLocaleDateString()
@@ -1543,6 +1633,7 @@
                 correo: getCleanValue('reg-email').toLowerCase(),
                 phone: phoneValue,
                 foto: tempBase64Photo || '',
+                driverFoto: tempBase64Photo || '',
                 status: 'activo',
                 role: 'conductor',
                 date: new Date().toLocaleDateString(),
@@ -1566,7 +1657,7 @@
 
             // Sesión independiente y entrada automática al panel de conductor.
             currentUser = newDriver;
-            localStorage.setItem('drive_mx_active_session', JSON.stringify({ id: driverId, role: 'conductor' }));
+            persistPanelSession(newDriver);
             showDriverPanel();
 
             alert('¡Bienvenido Driver! Tu cuenta ha sido activada automáticamente.');
@@ -1669,7 +1760,7 @@
         const rating = document.getElementById('driver-menu-rating');
         const trips = document.getElementById('driver-menu-trips');
 
-        const driverPhoto = currentUser.foto || currentUser.photo || '';
+        const driverPhoto = currentUser.driverFoto || currentUser.foto || currentUser.photo || '';
         if (photo && fallback) {
             if (driverPhoto) {
                 photo.src = driverPhoto;
@@ -1689,13 +1780,12 @@
     }
 
     function goToPassengerPanelFromDriver() {
-        // Navegación Driver -> Pasajero sin cerrar ni perder la sesión del conductor.
-        // currentUser se conserva para poder volver directo al panel Driver.
-        const existingDriver = getExistingDriverForCurrentUser();
-        if (existingDriver) {
-            currentUser = existingDriver;
-            localStorage.setItem('drive_mx_active_session', JSON.stringify({ id: existingDriver.id, role: 'conductor' }));
-        }
+        // Guardar sesión de conductor y restaurar la sesión/foto propia del pasajero.
+        const existingDriver = currentUser && currentUser.role === 'conductor' ? currentUser : getExistingDriverForCurrentUser();
+        if (existingDriver) persistPanelSession(existingDriver);
+
+        const passengerUser = getPassengerForDriver(existingDriver) || getStoredPanelUser('pasajero');
+        if (passengerUser) currentUser = passengerUser;
         showPassengerPanel();
     }
 
@@ -1727,23 +1817,16 @@
     }
 
     function updateProfileUI() {
-        if (!currentUser) return;
-        const sidePhoto = document.getElementById('side-user-photo');
+        if (!currentUser || currentUser.role !== 'pasajero') return;
+        persistPanelSession(currentUser);
         const sideName = document.getElementById('side-user-name');
         const sideTrips = document.getElementById('side-user-trips');
-        const topPhoto = document.getElementById('top-user-photo');
-        const topIcon = document.getElementById('top-user-icon');
 
-        sideName.innerText = currentUser.name;
-        if (currentUser.foto) {
-            sidePhoto.src = currentUser.foto;
-            topPhoto.src = currentUser.foto;
-            topPhoto.classList.remove('hidden');
-            topIcon.classList.add('hidden');
-        }
+        if (sideName) sideName.innerText = currentUser.name || 'Pasajero';
+        setPassengerProfilePhoto(currentUser);
 
         const wallet = getWalletData(currentUser.id);
-        sideTrips.innerText = wallet.trips || 0;
+        if (sideTrips) sideTrips.innerText = wallet.trips || 0;
         updateWalletDisplay();
     }
 
@@ -1760,7 +1843,7 @@
             
             if (user) { 
                 currentUser = user;
-                localStorage.setItem('drive_mx_active_session', JSON.stringify({ id: user.id, role: user.role }));
+                persistPanelSession(user);
                 if (user.role === 'conductor') {
                     showDriverPanel();
                 } else {
@@ -3126,7 +3209,7 @@
                 plate,
                 time: calculateDriverEta(driver, index),
                 phone: driver.phone || driver.telefono || '',
-                photo: driver.foto || driver.photo || '',
+                photo: driver.driverFoto || driver.foto || driver.photo || '',
                 ubicacion: driver.ubicacion || null
             };
         });
@@ -3669,14 +3752,16 @@
         // Entrar directo al panel existente y conservar datos guardados.
         if (existingDriver) {
             currentUser = existingDriver;
-            localStorage.setItem('drive_mx_active_session', JSON.stringify({ id: existingDriver.id, role: 'conductor' }));
+            persistPanelSession(existingDriver);
             closeAll();
             showDriverPanel();
             return;
         }
 
         activePanel = 'registration';
-        registrationMode = 'driver'; closeAll();
+        registrationMode = 'driver';
+        tempBase64Photo = '';
+        closeAll();
         document.getElementById('passenger-view').classList.add('hidden');
         document.getElementById('driver-registration-view').classList.remove('hidden');
         document.getElementById('reg-main-title').innerHTML = 'REGISTRO <span class="text-red-600 uppercase">DRIVER</span>';

@@ -4,17 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Drive MX | Pro System</title>
-    <script src="https://cdn.tailwindcss.com">function openDriverSidebar() {
-        document.getElementById('driver-sidebar').classList.remove('-translate-x-full');
-        document.getElementById('driver-sidebar-overlay').classList.remove('hidden');
-    }
-
-    function closeDriverSidebar() {
-        document.getElementById('driver-sidebar').classList.add('-translate-x-full');
-        document.getElementById('driver-sidebar-overlay').classList.add('hidden');
-    }
-
-</script>
+    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
@@ -707,6 +697,26 @@
                     <i data-lucide="x" class="w-4 h-4"></i>
                 </button>
             </div>
+
+            <div id="driver-sidebar-profile" class="p-5 bg-gray-900 text-white flex flex-col items-center text-center">
+                <div class="relative mb-3">
+                    <img id="driver-menu-photo" src="" class="hidden w-24 h-24 rounded-full object-cover border-4 border-red-600 shadow-xl bg-gray-800" alt="Foto del conductor">
+                    <div id="driver-menu-photo-fallback" class="w-24 h-24 rounded-full bg-red-600 text-white flex items-center justify-center font-black text-2xl italic border-4 border-red-600 shadow-xl">D</div>
+                    <div class="absolute -bottom-1 -right-1 bg-green-500 w-5 h-5 rounded-full border-4 border-gray-900"></div>
+                </div>
+                <h3 id="driver-menu-name" class="text-sm font-black uppercase italic tracking-tighter">Conductor</h3>
+                <div class="w-full grid grid-cols-2 gap-3 mt-4">
+                    <div class="bg-white/10 rounded-2xl p-3">
+                        <span class="block text-[8px] text-gray-400 font-black uppercase italic">Calificación</span>
+                        <span id="driver-menu-rating" class="block text-[11px] font-black text-yellow-400 italic mt-1">★ 5.0</span>
+                    </div>
+                    <div class="bg-white/10 rounded-2xl p-3">
+                        <span class="block text-[8px] text-gray-400 font-black uppercase italic">Viajes realizados</span>
+                        <span id="driver-menu-trips" class="block text-[11px] font-black text-white italic mt-1">0</span>
+                    </div>
+                </div>
+            </div>
+
             <div class="p-4 space-y-2">
                 <button onclick="goToPassengerPanelFromDriver()" class="w-full flex items-center gap-3 p-3 text-gray-700 font-black hover:bg-gray-50 rounded-xl uppercase text-[10px] italic">
                     <i data-lucide="user" class="text-red-600 w-4 h-4"></i><span>Pasajero</span>
@@ -720,9 +730,6 @@
                 <button onclick="openDriverSidebar()" class="p-2 rounded-lg bg-white/10">
                     <i data-lucide="menu" class="w-5 h-5"></i>
                 </button>
-                <div class="w-8 h-8 rounded-full border-2 border-red-600 overflow-hidden bg-gray-800">
-                    <img id="active-driver-photo" src="" class="w-full h-full object-cover">
-                </div>
                 <h2 class="text-xs font-black italic uppercase">Panel <span class="text-red-600">Driver</span></h2>
             </div>
             <button onclick="toggleDriverAvailability()" id="status-badge" class="flex items-center gap-2 bg-red-600/20 px-3 py-1 rounded-full border border-red-600/30">
@@ -1415,8 +1422,7 @@
         configureSharedSidebarFor('driver');
         resetPassengerTransientState();
         document.getElementById('driver-view-active').classList.remove('hidden');
-        const activeDriverPhoto = document.getElementById('active-driver-photo');
-        if (activeDriverPhoto) activeDriverPhoto.src = currentUser && currentUser.foto ? currentUser.foto : '';
+        updateDriverSidebarProfile();
         updateCurrentDriverLocation();
         refreshDriverPassengerNotifications();
         lucide.createIcons();
@@ -1632,6 +1638,7 @@
     }
 
     function openDriverSidebar() {
+        updateDriverSidebarProfile();
         document.getElementById('driver-sidebar').classList.remove('-translate-x-full');
         document.getElementById('driver-sidebar-overlay').classList.remove('hidden');
     }
@@ -1639,6 +1646,46 @@
     function closeDriverSidebar() {
         document.getElementById('driver-sidebar').classList.add('-translate-x-full');
         document.getElementById('driver-sidebar-overlay').classList.add('hidden');
+    }
+
+    function getDriverProfileRating(driver) {
+        const rawRating = driver?.calificacion || driver?.rating || driver?.driverRating || driver?.score || '5.0';
+        const ratingNumber = Number(rawRating);
+        return Number.isFinite(ratingNumber) ? ratingNumber.toFixed(1) : String(rawRating || '5.0');
+    }
+
+    function getDriverCompletedTrips(driver) {
+        const walletTrips = driver?.id ? Number(getWalletData(driver.id).trips || 0) : 0;
+        const driverTrips = Number(driver?.viajesRealizados || driver?.viajes || driver?.trips || 0);
+        return Number.isFinite(driverTrips) && driverTrips > 0 ? driverTrips : walletTrips;
+    }
+
+    function updateDriverSidebarProfile() {
+        if (!currentUser || currentUser.role !== 'conductor') return;
+
+        const photo = document.getElementById('driver-menu-photo');
+        const fallback = document.getElementById('driver-menu-photo-fallback');
+        const name = document.getElementById('driver-menu-name');
+        const rating = document.getElementById('driver-menu-rating');
+        const trips = document.getElementById('driver-menu-trips');
+
+        const driverPhoto = currentUser.foto || currentUser.photo || '';
+        if (photo && fallback) {
+            if (driverPhoto) {
+                photo.src = driverPhoto;
+                photo.classList.remove('hidden');
+                fallback.classList.add('hidden');
+            } else {
+                photo.src = '';
+                photo.classList.add('hidden');
+                fallback.classList.remove('hidden');
+                fallback.innerText = (currentUser.name || 'D').trim().charAt(0).toUpperCase() || 'D';
+            }
+        }
+
+        if (name) name.innerText = currentUser.name || 'Conductor';
+        if (rating) rating.innerText = `★ ${getDriverProfileRating(currentUser)}`;
+        if (trips) trips.innerText = getDriverCompletedTrips(currentUser);
     }
 
     function goToPassengerPanelFromDriver() {
@@ -3559,6 +3606,7 @@
 
     window.addEventListener('drive_mx_wallet_updated', (event) => {
         refreshWalletViews(event.detail?.userId || null);
+        if (activePanel === 'driver') updateDriverSidebarProfile();
     });
     
     function goToStep(n) {

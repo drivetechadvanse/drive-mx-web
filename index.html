@@ -1642,6 +1642,13 @@
     }
 
     function goToPassengerPanelFromDriver() {
+        // Navegación Driver -> Pasajero sin cerrar ni perder la sesión del conductor.
+        // currentUser se conserva para poder volver directo al panel Driver.
+        const existingDriver = getExistingDriverForCurrentUser();
+        if (existingDriver) {
+            currentUser = existingDriver;
+            localStorage.setItem('drive_mx_active_session', JSON.stringify({ id: existingDriver.id, role: 'conductor' }));
+        }
         showPassengerPanel();
     }
 
@@ -3576,7 +3583,50 @@
     function checkVehicle() { document.getElementById('btn-v-next').disabled = false; document.getElementById('btn-v-next').classList.replace('bg-gray-300', 'bg-red-600'); }
     function checkPhone(i) { const b = document.getElementById('btn-phone-next'); if(i.value.length >= 10) { b.disabled = false; b.classList.replace('bg-gray-300', 'bg-red-600'); } }
     
+    function getExistingDriverForCurrentUser() {
+        const db = getUsersDb();
+        if (!currentUser) return null;
+
+        // Si la sesión activa ya es de conductor, regresar ese mismo registro guardado.
+        if (currentUser.role === 'conductor') {
+            return db.find(user =>
+                user.role === 'conductor' && String(user.id) === String(currentUser.id)
+            ) || currentUser;
+        }
+
+        // Si la sesión activa es pasajero, buscar el conductor creado desde esa cuenta.
+        const currentId = String(currentUser.id || '');
+        const currentUsuario = String(currentUser.usuario || '').toLowerCase().trim();
+        const currentCorreo = String(currentUser.correo || '').toLowerCase().trim();
+        const currentPhone = String(currentUser.phone || currentUser.telefono || '').replace(/\D/g, '');
+
+        return db.find(user => {
+            if (!user || user.role !== 'conductor') return false;
+            const driverParentId = String(user.parentPassengerId || '');
+            const driverUsuario = String(user.usuario || '').toLowerCase().trim();
+            const driverCorreo = String(user.correo || '').toLowerCase().trim();
+            const driverPhone = String(user.phone || user.telefono || '').replace(/\D/g, '');
+
+            return (currentId && driverParentId === currentId) ||
+                   (currentCorreo && driverCorreo && driverCorreo === currentCorreo) ||
+                   (currentUsuario && driverUsuario && driverUsuario === currentUsuario) ||
+                   (currentPhone && driverPhone && driverPhone === currentPhone);
+        }) || null;
+    }
+
     function applyToBeDriver() {
+        const existingDriver = getExistingDriverForCurrentUser();
+
+        // Si el conductor ya fue creado, NO abrir registro otra vez.
+        // Entrar directo al panel existente y conservar datos guardados.
+        if (existingDriver) {
+            currentUser = existingDriver;
+            localStorage.setItem('drive_mx_active_session', JSON.stringify({ id: existingDriver.id, role: 'conductor' }));
+            closeAll();
+            showDriverPanel();
+            return;
+        }
+
         activePanel = 'registration';
         registrationMode = 'driver'; closeAll();
         document.getElementById('passenger-view').classList.add('hidden');

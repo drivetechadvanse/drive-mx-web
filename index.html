@@ -1489,11 +1489,15 @@
         const sidePhoto = document.getElementById('side-user-photo');
         const topPhoto = document.getElementById('top-user-photo');
         const topIcon = document.getElementById('top-user-icon');
-        const passengerPhoto = passenger?.foto || passenger?.passengerFoto || passenger?.photo || '';
+        const passengerPhoto = getUserPhotoSource(passenger);
 
-        if (sidePhoto) sidePhoto.src = passengerPhoto;
+        if (sidePhoto) {
+            sidePhoto.onerror = function() { this.src = ''; };
+            sidePhoto.src = passengerPhoto || '';
+        }
         if (topPhoto && topIcon) {
-            if (passengerPhoto) {
+            if (isValidImageSource(passengerPhoto)) {
+                topPhoto.onerror = function() { topPhoto.src = ''; topPhoto.classList.add('hidden'); topIcon.classList.remove('hidden'); };
                 topPhoto.src = passengerPhoto;
                 topPhoto.classList.remove('hidden');
                 topIcon.classList.add('hidden');
@@ -1678,6 +1682,68 @@
         return el ? String(el.value || '').trim() : '';
     }
 
+
+    // Corrección: manejo seguro de imágenes en Admin, Pasajero y Conductor.
+    function isValidImageSource(src) {
+        const value = String(src || '').trim();
+        return !!value && /^(data:image\/|https?:\/\/|blob:|file:\/\/)/i.test(value);
+    }
+
+    function getInitialServiceImage(serviceId) {
+        const img = document.getElementById(`service-image-${serviceId}`);
+        if (img && isValidImageSource(img.getAttribute('src') || img.src)) return img.getAttribute('src') || img.src;
+        const labels = {
+            'taxi-expres': 'TX',
+            'motocicleta': 'MT',
+            'paqueteria': 'PK',
+            'taxi-xl': 'XL'
+        };
+        const label = labels[serviceId] || 'DMX';
+        return `data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22320%22%20height%3D%22220%22%20viewBox%3D%220%200%20320%20220%22%3E%3Crect%20width%3D%22320%22%20height%3D%22220%22%20rx%3D%2228%22%20fill%3D%22%23111827%22/%3E%3Ccircle%20cx%3D%22160%22%20cy%3D%2288%22%20r%3D%2248%22%20fill%3D%22%23ef4444%22/%3E%3Ctext%20x%3D%22160%22%20y%3D%22105%22%20text-anchor%3D%22middle%22%20font-size%3D%2242%22%20font-family%3D%22Arial%22%20font-weight%3D%22900%22%20fill%3D%22%23ffffff%22%3E${encodeURIComponent(label)}%3C/text%3E%3C/svg%3E`;
+    }
+
+    function getUserPhotoSource(user) {
+        const candidates = [
+            user?.driverFoto,
+            user?.passengerFoto,
+            user?.foto,
+            user?.photo,
+            user?.profilePhoto,
+            user?.avatar
+        ];
+        return candidates.find(isValidImageSource) || '';
+    }
+
+    function renderUserAvatar(user, sizeClasses, fallbackBgClass = 'bg-gray-900') {
+        const name = String(user?.name || user?.nombre || 'U').trim();
+        const initial = (name.charAt(0) || 'U').toUpperCase();
+        const photo = getUserPhotoSource(user);
+        if (photo) {
+            return `<img src="${photo}" onerror="this.outerHTML='<div class=&quot;${sizeClasses} ${fallbackBgClass} text-white rounded-2xl flex items-center justify-center font-black italic shadow-lg&quot;>${initial}</div>'" class="${sizeClasses} rounded-2xl object-cover shadow-lg">`;
+        }
+        return `<div class="${sizeClasses} ${fallbackBgClass} text-white rounded-2xl flex items-center justify-center font-black italic shadow-lg">${initial}</div>`;
+    }
+
+    function setImageOrFallback(img, fallback, src, initial = 'D') {
+        if (!img || !fallback) return;
+        if (isValidImageSource(src)) {
+            img.onerror = function() {
+                img.src = '';
+                img.classList.add('hidden');
+                fallback.classList.remove('hidden');
+                fallback.innerText = initial;
+            };
+            img.src = src;
+            img.classList.remove('hidden');
+            fallback.classList.add('hidden');
+        } else {
+            img.src = '';
+            img.classList.add('hidden');
+            fallback.classList.remove('hidden');
+            fallback.innerText = initial;
+        }
+    }
+
     function createDriverLoginValue(driverId) {
         const typedUser = getCleanValue('reg-user').toLowerCase();
         if (typedUser) return typedUser;
@@ -1842,18 +1908,9 @@
         const rating = document.getElementById('driver-menu-rating');
         const trips = document.getElementById('driver-menu-trips');
 
-        const driverPhoto = currentUser.driverFoto || currentUser.foto || currentUser.photo || '';
+        const driverPhoto = getUserPhotoSource(currentUser);
         if (photo && fallback) {
-            if (driverPhoto) {
-                photo.src = driverPhoto;
-                photo.classList.remove('hidden');
-                fallback.classList.add('hidden');
-            } else {
-                photo.src = '';
-                photo.classList.add('hidden');
-                fallback.classList.remove('hidden');
-                fallback.innerText = (currentUser.name || 'D').trim().charAt(0).toUpperCase() || 'D';
-            }
+            setImageOrFallback(photo, fallback, driverPhoto, (currentUser.name || 'D').trim().charAt(0).toUpperCase() || 'D');
         }
 
         if (name) name.innerText = currentUser.name || 'Conductor';
@@ -1948,7 +2005,12 @@
             'taxi-xl': { nombre: 'Taxi XL<br><span class="text-[8px] text-gray-400">10 personas</span>', imagen: null, config: '', deleted: false }
         };
         const saved = JSON.parse(localStorage.getItem('admin_servicios_viajes_urbanos') || '{}');
-        return { ...defaults, ...saved };
+        const merged = { ...defaults };
+        Object.keys(saved).forEach(id => {
+            merged[id] = { ...(defaults[id] || { nombre: '', imagen: null, config: '', deleted: false }), ...saved[id] };
+            if (!isValidImageSource(merged[id].imagen)) merged[id].imagen = null;
+        });
+        return merged;
     }
 
     function saveServiciosUrbanosAdminData(data) {
@@ -1974,7 +2036,11 @@
 
             card.classList.remove('hidden');
             card.dataset.config = data[id].config || '';
-            if (img && data[id].imagen) img.src = data[id].imagen;
+            if (img) {
+                const fallbackImage = getInitialServiceImage(id);
+                img.onerror = function() { this.onerror = null; this.src = fallbackImage; };
+                img.src = isValidImageSource(data[id].imagen) ? data[id].imagen : fallbackImage;
+            }
             if (name && data[id].nombre) name.innerHTML = data[id].nombre;
         });
         limpiarSeleccionServicioUrbano();
@@ -2254,9 +2320,10 @@
 
     function getPassengerUrbanServiceImage(serviceId) {
         const data = getServiciosUrbanosAdminData();
-        if (data[serviceId]?.imagen) return data[serviceId].imagen;
+        if (isValidImageSource(data[serviceId]?.imagen)) return data[serviceId].imagen;
         const adminImage = document.getElementById(`service-image-${serviceId}`);
-        return adminImage ? adminImage.src : '';
+        const currentAdminSrc = adminImage ? (adminImage.getAttribute('src') || adminImage.src) : '';
+        return isValidImageSource(currentAdminSrc) ? currentAdminSrc : getInitialServiceImage(serviceId);
     }
 
     function getActiveTaximeterConfigForPassenger(serviceId) {
@@ -2333,7 +2400,7 @@
             return `
                 <button type="button" id="passenger-service-${serviceId}" data-service-id="${serviceId}" onclick="selectPassengerUrbanService('${serviceId}')" class="passenger-service-option ${selected ? 'selected' : ''}">
                     <span class="passenger-service-photo-wrap">
-                        <img src="${image}" alt="${meta.fixedName}" class="passenger-service-photo">
+                        <img src="${image}" alt="${meta.fixedName}" onerror="this.onerror=null;this.src=getInitialServiceImage('${serviceId}')" class="passenger-service-photo">
                     </span>
                     <span class="passenger-service-info">
                         <span class="passenger-service-title">${meta.fixedName}</span>
@@ -2980,7 +3047,7 @@
                 <div id="card-${req.id}" onclick="toggleCardSelection('${req.id}')" class="bg-white p-5 rounded-[2rem] shadow-sm border border-gray-100 flex flex-col gap-4 cursor-pointer relative transition-all">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-3">
-                            <img src="${req.foto || ''}" class="w-12 h-12 bg-gray-900 rounded-2xl object-cover shadow-lg">
+                            ${renderUserAvatar(req, 'w-12 h-12', 'bg-gray-900')}
                             <div>
                                 <h4 class="text-[12px] font-black uppercase italic text-gray-900 leading-none">${req.name}</h4>
                                 <p class="text-[8px] font-bold text-gray-400 mt-1">ID: ${req.id} | TEL: ${req.phone || 'N/A'}</p>
@@ -3023,7 +3090,7 @@
                 <div id="card-${req.id}" onclick="toggleCardSelection('${req.id}')" class="bg-white p-5 rounded-[2rem] shadow-sm border border-gray-100 flex flex-col gap-4 cursor-pointer relative transition-all">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-3">
-                            <img src="${req.foto || ''}" class="w-12 h-12 bg-red-600 rounded-2xl flex items-center justify-center object-cover shadow-lg">
+                            ${renderUserAvatar(req, 'w-12 h-12', 'bg-red-600')}
                             <div>
                                 <h4 class="text-[12px] font-black uppercase italic text-gray-900 leading-none">${req.name}</h4>
                                 <p class="text-[8px] font-bold text-gray-400 mt-1">TEL: ${req.phone || 'NO REGISTRADO'}</p>
@@ -3293,7 +3360,7 @@
                 plate,
                 time: calculateDriverEta(driver, index),
                 phone: driver.phone || driver.telefono || '',
-                photo: driver.driverFoto || driver.foto || driver.photo || '',
+                photo: getUserPhotoSource(driver),
                 ubicacion: driver.ubicacion || null
             };
         });
@@ -3346,9 +3413,10 @@
             container.innerHTML = '';
             drivers.forEach(dr => {
                 const encodedDriver = encodeURIComponent(JSON.stringify(dr));
-                const avatar = dr.photo
-                    ? `<img src="${dr.photo}" class="w-14 h-14 bg-red-600 rounded-full object-cover border-2 border-white shadow-lg">`
-                    : `<div class="w-14 h-14 bg-red-600 rounded-full flex items-center justify-center text-white font-black italic border-2 border-white">${dr.name.charAt(0)}</div>`;
+                const driverInitial = (dr.name || 'D').charAt(0).toUpperCase();
+                const avatar = isValidImageSource(dr.photo)
+                    ? `<img src="${dr.photo}" onerror="this.outerHTML='<div class=&quot;w-14 h-14 bg-red-600 rounded-full flex items-center justify-center text-white font-black italic border-2 border-white shadow-lg&quot;>${driverInitial}</div>'" class="w-14 h-14 bg-red-600 rounded-full object-cover border-2 border-white shadow-lg">`
+                    : `<div class="w-14 h-14 bg-red-600 rounded-full flex items-center justify-center text-white font-black italic border-2 border-white shadow-lg">${driverInitial}</div>`;
                 container.innerHTML += `
                     <div class="bg-white p-5 rounded-[2rem] shadow-lg border flex flex-col space-y-4">
                         <div class="flex items-center gap-4">
@@ -3448,15 +3516,7 @@
 
         const photo = document.getElementById('trip-driver-photo');
         const fallback = document.getElementById('trip-driver-fallback');
-        if (driver.photo) {
-            photo.src = driver.photo;
-            photo.classList.remove('hidden');
-            fallback.classList.add('hidden');
-        } else {
-            photo.classList.add('hidden');
-            fallback.classList.remove('hidden');
-            fallback.innerText = (driver.name || 'D').charAt(0).toUpperCase();
-        }
+        setImageOrFallback(photo, fallback, driver.photo, (driver.name || 'D').charAt(0).toUpperCase());
     }
 
     function initActiveTripSheetDrag() {

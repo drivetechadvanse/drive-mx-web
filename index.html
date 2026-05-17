@@ -267,6 +267,12 @@
             opacity: 1;
             transform: none;
         }
+        #passenger-view.passenger-destination-searching #cost-sheet {
+            display: none !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+            transform: translateY(100%) !important;
+        }
         @media (min-width: 768px) {
             #cost-sheet { max-width: 480px; left: 50% !important; right: auto !important; transform: translate(-50%, 100%); border-radius: 2rem 2rem 0 0; }
             #cost-sheet.active { transform: translate(-50%, 0); }
@@ -528,7 +534,7 @@
                 <div id="passenger-destination-banner" class="bg-white p-1 rounded-xl shadow-2xl flex items-center gap-2 cursor-pointer border border-black/5 active:scale-95 transition-transform">
                     <div class="w-10 h-10 bg-red-600 rounded-lg flex items-center justify-center text-white shadow-lg shadow-red-600/30 shrink-0"><i data-lucide="search" class="w-5 h-5"></i></div>
                     <div class="flex-1 min-w-0 pr-2">
-                        <input id="passenger-destination-input" class="passenger-destination-input" type="text" placeholder="¿A dónde vamos hoy?" autocomplete="off" onclick="event.stopPropagation(); openCosts();">
+                        <input id="passenger-destination-input" class="passenger-destination-input" type="text" placeholder="¿A dónde vamos hoy?" autocomplete="off" onclick="event.stopPropagation(); beginPassengerDestinationSearch();" onfocus="beginPassengerDestinationSearch();" oninput="handlePassengerDestinationTyping();" onkeydown="handlePassengerDestinationKeydown(event);" onblur="restorePassengerSearchIfNoValidDestination();">
                         <p id="passenger-route-summary" class="passenger-route-status">Selecciona destino para calcular tarifas</p>
                     </div>
                 </div>
@@ -904,6 +910,8 @@
     let passengerLocationWatchId = null;
     let passengerRealtimeFareTimer = null;
     let googleMapsReady = false;
+    let passengerDestinationSearchActive = false;
+    let passengerDestinationLastValidValue = '';
 
     function onGoogleMapsReady() {
         googleMapsReady = true;
@@ -1006,6 +1014,99 @@
         });
     }
 
+    function beginPassengerDestinationSearch() {
+        const passengerView = document.getElementById('passenger-view');
+        const costSheet = document.getElementById('cost-sheet');
+        const overlay = document.getElementById('overlay');
+
+        passengerDestinationSearchActive = true;
+        if (passengerView) passengerView.classList.add('passenger-destination-searching');
+        if (costSheet) {
+            costSheet.classList.remove('active', 'minimized', 'sheet-dragging');
+            costSheet.style.transform = '';
+        }
+        if (overlay) overlay.classList.remove('opacity-100', 'pointer-events-auto');
+    }
+
+    function hidePassengerCostsDuringDestinationSearch() {
+        const passengerView = document.getElementById('passenger-view');
+        const costSheet = document.getElementById('cost-sheet');
+        const overlay = document.getElementById('overlay');
+
+        if (passengerView) passengerView.classList.add('passenger-destination-searching');
+        if (costSheet) {
+            costSheet.classList.remove('active', 'minimized', 'sheet-dragging');
+            costSheet.style.transform = '';
+        }
+        if (overlay) overlay.classList.remove('opacity-100', 'pointer-events-auto');
+    }
+
+    function restorePassengerDestinationSearchState(showCosts = false) {
+        const passengerView = document.getElementById('passenger-view');
+        const costSheet = document.getElementById('cost-sheet');
+        const overlay = document.getElementById('overlay');
+
+        passengerDestinationSearchActive = false;
+        if (passengerView) passengerView.classList.remove('passenger-destination-searching');
+        if (!showCosts && costSheet) {
+            costSheet.classList.remove('active', 'minimized', 'sheet-dragging');
+            costSheet.style.transform = '';
+        }
+        if (overlay) overlay.classList.remove('opacity-100', 'pointer-events-auto');
+    }
+
+    function clearPassengerDestinationSelection(message = 'Selecciona destino para calcular tarifas') {
+        appState.destinationLocation = null;
+        appState.destinationAddress = '';
+        passengerDestinationLastValidValue = '';
+        if (passengerDestinationMarker) passengerDestinationMarker.setVisible(false);
+        const destinationEl = document.getElementById('trip-destination');
+        if (destinationEl) destinationEl.innerText = 'Destino del pasajero';
+        resetPassengerRoutePricing(message);
+    }
+
+    function handlePassengerDestinationTyping() {
+        const input = document.getElementById('passenger-destination-input');
+        beginPassengerDestinationSearch();
+
+        if (!input) return;
+        const currentValue = input.value.trim();
+        if (!currentValue) {
+            clearPassengerDestinationSelection('Selecciona destino para calcular tarifas');
+            return;
+        }
+
+        if (passengerDestinationLastValidValue && currentValue !== passengerDestinationLastValidValue) {
+            clearPassengerDestinationSelection('Selecciona una sugerencia válida para calcular tarifas');
+        }
+    }
+
+    function handlePassengerDestinationKeydown(event) {
+        if (!event) return;
+        if (event.key === 'Escape') {
+            const input = document.getElementById('passenger-destination-input');
+            if (input) input.blur();
+            if (!appState.destinationLocation) restorePassengerDestinationSearchState(false);
+        }
+    }
+
+    function restorePassengerSearchIfNoValidDestination() {
+        window.setTimeout(() => {
+            const input = document.getElementById('passenger-destination-input');
+            if (document.activeElement === input) return;
+
+            if (!appState.destinationLocation) {
+                restorePassengerDestinationSearchState(false);
+                return;
+            }
+
+            if (input && passengerDestinationLastValidValue && input.value.trim() !== passengerDestinationLastValidValue) {
+                clearPassengerDestinationSelection('Selecciona destino para calcular tarifas');
+                restorePassengerDestinationSearchState(false);
+            }
+        }, 250);
+    }
+
     function initPassengerDestinationAutocomplete() {
         const input = document.getElementById('passenger-destination-input');
         if (!input || passengerAutocomplete || !google.maps.places) return;
@@ -1032,7 +1133,10 @@
             }
             const destinationEl = document.getElementById('trip-destination');
             if (destinationEl) destinationEl.innerText = appState.destinationAddress;
+            passengerDestinationLastValidValue = (appState.destinationAddress || input.value || '').trim();
+            if (input) input.value = passengerDestinationLastValidValue;
             calculatePassengerRouteAndRefreshFares(true);
+            restorePassengerDestinationSearchState(true);
             openCosts();
         });
     }
@@ -3879,6 +3983,11 @@
     }
     function toggleAccordion(id) { document.getElementById(id).classList.toggle('expanded'); }
     function openCosts() {
+        if (!appState.destinationLocation) {
+            hidePassengerCostsDuringDestinationSearch();
+            return;
+        }
+        restorePassengerDestinationSearchState(false);
         renderPassengerUrbanServices();
         calculatePassengerRouteAndRefreshFares();
         const costSheet = document.getElementById('cost-sheet');

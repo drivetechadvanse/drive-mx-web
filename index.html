@@ -37,7 +37,9 @@
 
 
         /* Bottom sheet de viaje activo pasajero */
-        #active-trip-passenger { background-color: #f3f4f6; background-image: radial-gradient(#d1d5db 1px, transparent 1px); background-size: 25px 25px; }
+        #active-trip-passenger { background: transparent; pointer-events: none; }
+        #active-trip-passenger.google-active .active-trip-map-fallback { display: none; }
+        #active-trip-sheet, #fixed-cancel-trip-btn, #passenger-message-modal { pointer-events: auto; }
         #active-trip-sheet {
             position: absolute;
             left: 0;
@@ -547,7 +549,7 @@
                 </div>
             </div>
             <div id="active-trip-passenger" class="hidden absolute inset-0 z-40 map-sim">
-                <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div class="active-trip-map-fallback absolute inset-0 flex items-center justify-center pointer-events-none">
                     <div class="trip-route-line"></div>
                     <div class="absolute left-[22%] top-[56%] flex flex-col items-center">
                         <div class="w-11 h-11 bg-red-600 rounded-full flex items-center justify-center text-white shadow-xl border-4 border-white animate-pulse">
@@ -892,6 +894,11 @@
     let passengerRoutePolyline = null;
     let passengerRouteAnimationFrame = null;
     let passengerRouteAnimationToken = 0;
+    let activeTripDriverMarker = null;
+    let activeTripDirectionsRenderer = null;
+    let activeTripTrackingTimer = null;
+    let activeTripDriverPosition = null;
+    let activeTripArrived = false;
     let passengerGeocoder = null;
     let passengerAutocomplete = null;
     let passengerLocationWatchId = null;
@@ -900,8 +907,9 @@
 
     function onGoogleMapsReady() {
         googleMapsReady = true;
-        if (activePanel === 'passenger') {
+        if (activePanel === 'passenger' || activePanel === 'passenger-trip') {
             initPassengerMap();
+            if (activePanel === 'passenger-trip') startActiveTripDriverTracking();
         }
     }
 
@@ -1411,6 +1419,8 @@
                 updatedAt: new Date().toISOString()
             };
             currentUser.ubicacion = ubicacion;
+            localStorage.setItem('drive_mx_driver_location_' + currentUser.id, JSON.stringify(ubicacion));
+            localStorage.setItem('drive_mx_last_driver_location', JSON.stringify({ ...ubicacion, driverId: currentUser.id }));
             if (idx > -1) {
                 db[idx].ubicacion = ubicacion;
                 saveUsersDb(db);
@@ -1504,6 +1514,8 @@
         document.getElementById('driver-view-active').classList.remove('hidden');
         updateDriverSidebarProfile();
         updateCurrentDriverLocation();
+        if (window.driveMxDriverLocationInterval) clearInterval(window.driveMxDriverLocationInterval);
+        window.driveMxDriverLocationInterval = setInterval(updateCurrentDriverLocation, 5000);
         refreshDriverPassengerNotifications();
         lucide.createIcons();
     }
@@ -3229,6 +3241,8 @@
         applyAutomaticTripWalletDiscount(appState.pendingTrip);
         if (appState.pendingTrip) appState.pendingTrip.charged = true;
 
+        clearActiveTripDriverTracking();
+        clearActiveTripDriverTracking();
         activeTripData = null;
         closePassengerMessageModal();
         const activeTrip = document.getElementById('active-trip-passenger');
@@ -3415,7 +3429,7 @@
         populateActiveTripSheet(driver);
         initActiveTripSheetDrag();
         document.getElementById('fixed-cancel-trip-btn').classList.remove('hidden');
-        scheduleDriverArrivedPassengerMessage();
+        startActiveTripDriverTracking();
 
         lucide.createIcons();
     }
@@ -3429,8 +3443,8 @@
         document.getElementById('trip-driver-plate').innerText = `Placa: ${driver.plate || 'N/A'}`;
         document.getElementById('trip-payment-method').innerText = getPaymentLabel(appState.selectedPayment);
         document.getElementById('trip-cost').innerText = `$${appState.precioViaje.toFixed(2)} MXN`;
-        document.getElementById('trip-pickup').innerText = 'Ubicación actual del pasajero';
-        document.getElementById('trip-destination').innerText = 'Destino del pasajero';
+        document.getElementById('trip-pickup').innerText = appState.passengerAddress || 'Ubicación actual del pasajero';
+        document.getElementById('trip-destination').innerText = appState.destinationAddress || 'Destino del pasajero';
 
         const photo = document.getElementById('trip-driver-photo');
         const fallback = document.getElementById('trip-driver-fallback');
@@ -3554,6 +3568,157 @@
         if (input) input.value = '';
     }
 
+
+    function getStoredDriverLiveLocation(driver = activeTripData || {}) {
+        if (!driver) return null;
+        const driverId = driver.id || '';
+        const direct = driverId ? JSON.parse(localStorage.getItem('drive_mx_driver_location_' + driverId) || 'null') : null;
+        if (direct && direct.lat && direct.lng) return direct;
+        const dbDriver = saveUsersDb(getUsersDb()).find(u => String(u.id) === String(driverId));
+        if (dbDriver && dbDriver.ubicacion && dbDriver.ubicacion.lat && dbDriver.ubicacion.lng) return dbDriver.ubicacion;
+        if (driver.ubicacion && driver.ubicacion.lat && driver.ubicacion.lng) return driver.ubicacion;
+        return null;
+    }
+
+    function createSimulatedDriverStart(passengerPosition) {
+        if (!passengerPosition) return null;
+        return {
+            lat: passengerPosition.lat - 0.012,
+            lng: passengerPosition.lng - 0.010,
+            simulated: true,
+            updatedAt: new Date().toISOString()
+        };
+    }
+
+    function moveDriverPositionTowardPickup(currentPosition, pickupPosition) {
+        if (!currentPosition || !pickupPosition) return currentPosition;
+        const distance = getDistanceKm(currentPosition.lat, currentPosition.lng, pickupPosition.lat, pickupPosition.lng);
+        if (distance <= 0.035) return { ...pickupPosition, arrived: true, updatedAt: new Date().toISOString() };
+        const stepRatio = Math.min(0.22, Math.max(0.05, 0.045 / Math.max(distance, 0.001)));
+        return {
+            lat: currentPosition.lat + ((pickupPosition.lat - currentPosition.lat) * stepRatio),
+            lng: currentPosition.lng + ((pickupPosition.lng - currentPosition.lng) * stepRatio),
+            simulated: currentPosition.simulated || false,
+            updatedAt: new Date().toISOString()
+        };
+    }
+
+    function ensureActiveTripMapObjects() {
+        if (!passengerMap || typeof google === 'undefined' || !google.maps) return false;
+        if (!activeTripDriverMarker) {
+            activeTripDriverMarker = new google.maps.Marker({
+                map: passengerMap,
+                title: 'Conductor en camino',
+                icon: {
+                    path: google.maps.SymbolPath.CIRCLE,
+                    scale: 9,
+                    fillColor: '#ef4444',
+                    fillOpacity: 1,
+                    strokeColor: '#ffffff',
+                    strokeWeight: 4
+                }
+            });
+        }
+        if (!activeTripDirectionsRenderer) {
+            activeTripDirectionsRenderer = new google.maps.DirectionsRenderer({
+                map: passengerMap,
+                suppressMarkers: true,
+                preserveViewport: false,
+                polylineOptions: { strokeColor: '#ef4444', strokeWeight: 6, strokeOpacity: 0.95 }
+            });
+        }
+        const activeTrip = document.getElementById('active-trip-passenger');
+        if (activeTrip) activeTrip.classList.add('google-active');
+        return true;
+    }
+
+    function clearActiveTripDriverTracking() {
+        if (activeTripTrackingTimer) {
+            clearInterval(activeTripTrackingTimer);
+            activeTripTrackingTimer = null;
+        }
+        if (activeTripDriverMarker) {
+            activeTripDriverMarker.setMap(null);
+            activeTripDriverMarker = null;
+        }
+        if (activeTripDirectionsRenderer) {
+            activeTripDirectionsRenderer.setMap(null);
+            activeTripDirectionsRenderer = null;
+        }
+        activeTripDriverPosition = null;
+        activeTripArrived = false;
+        const activeTrip = document.getElementById('active-trip-passenger');
+        if (activeTrip) activeTrip.classList.remove('google-active');
+    }
+
+    function updateActiveTripDriverTracking() {
+        if (activePanel !== 'passenger-trip' || !activeTripData) return;
+        if (!appState.passengerLocation) {
+            const storedPassenger = JSON.parse(localStorage.getItem('drive_mx_passenger_location') || 'null');
+            if (storedPassenger && storedPassenger.lat && storedPassenger.lng) appState.passengerLocation = { lat: storedPassenger.lat, lng: storedPassenger.lng };
+        }
+        const pickupPosition = appState.passengerLocation;
+        if (!pickupPosition) return;
+
+        let liveDriverPosition = getStoredDriverLiveLocation(activeTripData);
+        if (!activeTripDriverPosition) activeTripDriverPosition = liveDriverPosition || createSimulatedDriverStart(pickupPosition);
+        else if (liveDriverPosition && !liveDriverPosition.simulated) activeTripDriverPosition = liveDriverPosition;
+        else activeTripDriverPosition = moveDriverPositionTowardPickup(activeTripDriverPosition, pickupPosition);
+
+        if (!activeTripDriverPosition) return;
+        if (ensureActiveTripMapObjects()) {
+            const driverLatLng = new google.maps.LatLng(activeTripDriverPosition.lat, activeTripDriverPosition.lng);
+            const pickupLatLng = new google.maps.LatLng(pickupPosition.lat, pickupPosition.lng);
+            activeTripDriverMarker.setPosition(driverLatLng);
+            if (passengerMapMarker) passengerMapMarker.setPosition(pickupLatLng);
+            if (passengerDirectionsService && activeTripDirectionsRenderer) {
+                passengerDirectionsService.route({
+                    origin: driverLatLng,
+                    destination: pickupLatLng,
+                    travelMode: google.maps.TravelMode.DRIVING,
+                    drivingOptions: { departureTime: new Date(), trafficModel: google.maps.TrafficModel.BEST_GUESS }
+                }, (result, status) => {
+                    if (activePanel !== 'passenger-trip' || !activeTripDirectionsRenderer) return;
+                    if (status === 'OK') activeTripDirectionsRenderer.setDirections(result);
+                });
+            }
+        }
+
+        const distanceToPickup = getDistanceKm(activeTripDriverPosition.lat, activeTripDriverPosition.lng, pickupPosition.lat, pickupPosition.lng);
+        if (!activeTripArrived && distanceToPickup <= 0.05) {
+            activeTripArrived = true;
+            showDriverArrivedPassengerBox();
+            const messages = JSON.parse(localStorage.getItem('drive_mx_trip_messages') || '[]');
+            messages.unshift({
+                id: 'MSG_' + Date.now(),
+                tripDriverId: activeTripData.id || '',
+                driverName: activeTripData.name || 'Conductor',
+                passengerId: currentUser?.id || '',
+                passengerName: currentUser?.name || 'Pasajero',
+                message: 'El conductor ha llegado',
+                createdAt: new Date().toLocaleString(),
+                panel: 'system',
+                type: 'driver_arrived_pickup'
+            });
+            localStorage.setItem('drive_mx_trip_messages', JSON.stringify(messages));
+        }
+    }
+
+    function startActiveTripDriverTracking() {
+        hideDriverArrivedPassengerBox();
+        clearActiveTripDriverTracking();
+        activeTripArrived = false;
+        if (googleMapsReady) initPassengerMap();
+        updateActiveTripDriverTracking();
+        activeTripTrackingTimer = setInterval(updateActiveTripDriverTracking, 3000);
+    }
+
+    function showDriverArrivedPassengerBox() {
+        const box = document.getElementById('driver-arrived-passenger-box');
+        if (box) box.classList.remove('hidden');
+        lucide.createIcons();
+    }
+
     let driverArrivedPassengerTimer = null;
 
     function hideDriverArrivedPassengerBox() {
@@ -3571,13 +3736,8 @@
     }
 
     function scheduleDriverArrivedPassengerMessage() {
-        hideDriverArrivedPassengerBox();
-        driverArrivedPassengerTimer = setTimeout(() => {
-            if (activePanel !== 'passenger-trip' || !activeTripData) return;
-            const box = document.getElementById('driver-arrived-passenger-box');
-            if (box) box.classList.remove('hidden');
-            lucide.createIcons();
-        }, 5000);
+        // Compatibilidad: ya no se muestra por tiempo; se activa únicamente al llegar al punto de recogida.
+        startActiveTripDriverTracking();
     }
 
     function notifyPassengerIsLeaving() {
@@ -3626,7 +3786,7 @@
 
     function shareTripWhatsApp() {
         const driver = activeTripData || {};
-        const msg = `Estoy en un viaje de Drive MX. Conductor: ${driver.name || 'Conductor'}, vehículo: ${driver.color || ''} ${driver.vehicle || ''}, placa: ${driver.plate || 'N/A'}. Recogida: Ubicación actual del pasajero. Destino: Destino del pasajero.`;
+        const msg = `Estoy en un viaje de Drive MX. Conductor: ${driver.name || 'Conductor'}, vehículo: ${driver.color || ''} ${driver.vehicle || ''}, placa: ${driver.plate || 'N/A'}. Recogida: ${appState.passengerAddress || 'Ubicación actual del pasajero'}. Destino: ${appState.destinationAddress || 'Destino del pasajero'}.`;
         window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
     }
 

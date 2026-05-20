@@ -1681,6 +1681,11 @@
         tempIneBackPhoto = '';
         tempCirculationPhoto = '';
         tempVehiclePhoto = '';
+        window.tempBase64Photo = '';
+        window.tempIneFrontPhoto = '';
+        window.tempIneBackPhoto = '';
+        window.tempCirculationPhoto = '';
+        window.tempVehiclePhoto = '';
         const stepsToHide = ['step-ine-front', 'step-ine-back', 'step-vehicle', 'step-circ', 'step-v-photo'];
         stepsToHide.forEach(s => document.getElementById(s).classList.add('hidden'));
         document.getElementById('login-screen').classList.add('hidden');
@@ -1743,10 +1748,22 @@
     }
 
     function saveTempDocument(inputId, base64) {
-        if (inputId === 'ine-f-input') tempIneFrontPhoto = base64;
-        if (inputId === 'ine-b-input') tempIneBackPhoto = base64;
-        if (inputId === 'circ-input') tempCirculationPhoto = base64;
-        if (inputId === 'v-photo-input') tempVehiclePhoto = base64;
+        if (inputId === 'ine-f-input') {
+            tempIneFrontPhoto = base64;
+            window.tempIneFrontPhoto = base64;
+        }
+        if (inputId === 'ine-b-input') {
+            tempIneBackPhoto = base64;
+            window.tempIneBackPhoto = base64;
+        }
+        if (inputId === 'circ-input') {
+            tempCirculationPhoto = base64;
+            window.tempCirculationPhoto = base64;
+        }
+        if (inputId === 'v-photo-input') {
+            tempVehiclePhoto = base64;
+            window.tempVehiclePhoto = base64;
+        }
     }
 
     async function processImage(input) {
@@ -1754,6 +1771,7 @@
         if (!file) return;
         try {
             tempBase64Photo = await compressImageFile(file, 900, 0.82);
+            window.tempBase64Photo = tempBase64Photo;
             const preview = document.getElementById('driver-photo-preview');
             const placeholder = document.getElementById('placeholder-icon');
             if (preview) {
@@ -4416,6 +4434,11 @@
         tempIneBackPhoto = '';
         tempCirculationPhoto = '';
         tempVehiclePhoto = '';
+        window.tempBase64Photo = '';
+        window.tempIneFrontPhoto = '';
+        window.tempIneBackPhoto = '';
+        window.tempCirculationPhoto = '';
+        window.tempVehiclePhoto = '';
         closeAll();
         document.getElementById('passenger-view').classList.add('hidden');
         document.getElementById('driver-registration-view').classList.remove('hidden');
@@ -4805,6 +4828,36 @@
     }, () => {}, { enableHighAccuracy: true, maximumAge: 20000, timeout: 8000 });
   }
 
+  function getTempImageValue(key, previewId = '') {
+    const direct = window[key];
+    if (isDataImage(direct)) return direct;
+    if (previewId) {
+      const previewValue = document.getElementById(previewId)?.src || '';
+      if (isDataImage(previewValue)) return previewValue;
+    }
+    try {
+      const globalValue = Function(`try { return typeof ${key} !== "undefined" ? ${key} : ""; } catch (_) { return ""; }`)();
+      return isDataImage(globalValue) ? globalValue : '';
+    } catch (_) {
+      return '';
+    }
+  }
+
+  async function saveServiceToFirebase(id, service) {
+    const copy = { ...(service || {}), id, updatedAt: new Date().toISOString(), updatedAtServer: serverTimestamp() };
+    if (isDataImage(copy.imagen)) {
+      const url = await uploadDataImage(`admins/panel-control/servicios-urbanos/${safeStorageSegment(id)}/imagenes/servicio_${Date.now()}.jpg`, copy.imagen);
+      copy.imagen = url;
+      copy.storagePath = `admins/panel-control/servicios-urbanos/${safeStorageSegment(id)}/imagenes/`;
+      copy.storageStatus = 'guardada';
+    }
+    copy.ownerRole = 'admin';
+    copy.panel = 'panel-control';
+    await setDoc(doc(db, 'admins', 'panelControl', 'serviciosUrbanos', id), copy, { merge: true });
+    await setDoc(doc(db, 'serviciosUrbanos', id), copy, { merge: true });
+    return copy;
+  }
+
   function installOverrides() {
     if (window.driveMxFirebaseOverridesInstalled) return;
     window.driveMxFirebaseOverridesInstalled = true;
@@ -4828,8 +4881,8 @@
         pass: document.getElementById('reg-pass')?.value || '',
         correo: (document.getElementById('reg-email')?.value || '').toLowerCase().trim(),
         phone: document.getElementById('dr-phone')?.value || '',
-        foto: window.tempBase64Photo || '',
-        passengerFoto: window.tempBase64Photo || '',
+        foto: getTempImageValue('tempBase64Photo', 'driver-photo-preview'),
+        passengerFoto: getTempImageValue('tempBase64Photo', 'driver-photo-preview'),
         status: 'activo',
         role: 'pasajero',
         date: new Date().toLocaleDateString(),
@@ -4873,12 +4926,12 @@
           pass: get('reg-pass') || `DRV${String(driverId).slice(-6)}`,
           correo: get('reg-email').toLowerCase(),
           phone: phoneValue,
-          foto: window.tempBase64Photo || '',
-          driverFoto: window.tempBase64Photo || '',
-          ineFrontal: window.tempIneFrontPhoto || '',
-          ineTrasera: window.tempIneBackPhoto || '',
-          tarjetaCirculacion: window.tempCirculationPhoto || '',
-          fotoVehiculo: window.tempVehiclePhoto || '',
+          foto: getTempImageValue('tempBase64Photo', 'driver-photo-preview'),
+          driverFoto: getTempImageValue('tempBase64Photo', 'driver-photo-preview'),
+          ineFrontal: getTempImageValue('tempIneFrontPhoto', 'ine-f-preview'),
+          ineTrasera: getTempImageValue('tempIneBackPhoto', 'ine-b-preview'),
+          tarjetaCirculacion: getTempImageValue('tempCirculationPhoto', 'circ-preview'),
+          fotoVehiculo: getTempImageValue('tempVehiclePhoto', 'v-photo-preview'),
           status: 'activo',
           role: 'conductor',
           disponible: false,
@@ -5033,11 +5086,19 @@
       originalSaveServices?.apply(this, arguments);
       Object.entries(data || {}).forEach(async ([id, service]) => {
         try {
-          const copy = { ...service, id, updatedAt: new Date().toISOString(), updatedAtServer: serverTimestamp() };
-          if (isDataImage(copy.imagen)) copy.imagen = await uploadDataImage(`admins/serviciosUrbanos/${safeStorageSegment(id)}/imagenes/servicio.jpg`, copy.imagen);
-          copy.videoPathPreparado = `servicios/videos/${id}/`;
-          await setDoc(doc(db, 'serviciosUrbanos', id), copy, { merge: true });
-        } catch (e) { console.warn('Servicio Firebase:', e.message); }
+          const saved = await saveServiceToFirebase(id, service);
+          if (saved?.imagen && !isDataImage(saved.imagen)) {
+            const current = JSON.parse(localStorage.getItem('admin_servicios_viajes_urbanos') || '{}');
+            current[id] = { ...(current[id] || {}), ...(service || {}), imagen: saved.imagen, storageStatus: 'guardada' };
+            localStorage.setItem('admin_servicios_viajes_urbanos', JSON.stringify(current));
+            const img = document.getElementById(`service-image-${id}`);
+            if (img) img.src = saved.imagen;
+          }
+          console.info('Servicio urbano guardado en Firebase/Storage:', id);
+        } catch (e) {
+          console.error('Servicio Firebase/Storage no guardó imagen:', id, e.code || e.message || e);
+          alert('Firebase no guardó la foto del servicio: ' + (e.code || e.message || e) + '. Revisa reglas de Storage/Firestore. La imagen local no se eliminó.');
+        }
       });
     };
   }
@@ -5050,7 +5111,9 @@
     saveUserGlobal,
     loadUsersGlobal,
     saveDriverAvailability,
-    saveDriverLocation
+    saveDriverLocation,
+    uploadDataImage,
+    saveServiceToFirebase
   };
 
   installOverrides();

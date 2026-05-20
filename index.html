@@ -886,30 +886,116 @@
 </div>
 
 
-    <!-- Firebase Drive MX - configuración separada -->
-    <script type="module" id="drive-mx-firebase-config">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
-        import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-analytics.js";
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
+    import { getAnalytics, isSupported as analyticsIsSupported } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-analytics.js";
+    import {
+        getAuth,
+        setPersistence,
+        browserLocalPersistence,
+        onAuthStateChanged,
+        createUserWithEmailAndPassword,
+        signInWithEmailAndPassword,
+        signOut
+    } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
+    import {
+        getFirestore,
+        collection,
+        doc,
+        setDoc,
+        addDoc,
+        getDocs,
+        getDoc,
+        updateDoc,
+        deleteDoc,
+        onSnapshot,
+        query,
+        where,
+        serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
+    import {
+        getStorage,
+        ref,
+        uploadBytes,
+        getDownloadURL
+    } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-storage.js";
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyCnKO3sGvEvmbcwOr7vWVpvZj_1f1TbVH8",
-            authDomain: "drivemx-app.firebaseapp.com",
-            projectId: "drivemx-app",
-            storageBucket: "drivemx-app.firebasestorage.app",
-            messagingSenderId: "488734017418",
-            appId: "1:488734017418:web:a175638b14637bfa78ea73",
-            measurementId: "G-FKFZ5TTV52"
-        };
+    const firebaseConfig = {
+        apiKey: "AIzaSyCnKO3sGvEvmbcwOr7vWVpvZj_1f1TbVH8",
+        authDomain: "drivemx-app.firebaseapp.com",
+        projectId: "drivemx-app",
+        storageBucket: "drivemx-app.firebasestorage.app",
+        messagingSenderId: "488734017418",
+        appId: "1:488734017418:web:a175638b14637bfa78ea73",
+        measurementId: "G-FKFZ5TTV52"
+    };
 
-        const firebaseApp = initializeApp(firebaseConfig);
-        const firebaseAnalytics = getAnalytics(firebaseApp);
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const storage = getStorage(app);
 
-        window.DriveMXFirebase = {
-            config: firebaseConfig,
-            app: firebaseApp,
-            analytics: firebaseAnalytics
-        };
-    </script>
+    setPersistence(auth, browserLocalPersistence).catch(console.warn);
+
+    let analytics = null;
+    analyticsIsSupported()
+        .then((supported) => { if (supported) analytics = getAnalytics(app); })
+        .catch(console.warn);
+
+    window.DriveMXFirebase = {
+        app,
+        auth,
+        db,
+        storage,
+        analytics,
+        authFns: {
+            onAuthStateChanged,
+            createUserWithEmailAndPassword,
+            signInWithEmailAndPassword,
+            signOut
+        },
+        fs: {
+            collection,
+            doc,
+            setDoc,
+            addDoc,
+            getDocs,
+            getDoc,
+            updateDoc,
+            deleteDoc,
+            onSnapshot,
+            query,
+            where,
+            serverTimestamp
+        },
+        st: {
+            ref,
+            uploadBytes,
+            getDownloadURL
+        },
+        collections: {
+            pasajeros: "pasajeros",
+            conductores: "conductores",
+            viajes: "viajes",
+            solicitudes: "solicitudes",
+            serviciosUrbanos: "serviciosUrbanos",
+            cartera: "cartera",
+            tarifas: "tarifas",
+            chats: "chats",
+            ubicaciones: "ubicaciones"
+        },
+        storagePaths: {
+            perfilesPasajeros: "perfiles/pasajeros",
+            perfilesConductores: "perfiles/conductores",
+            documentosConductores: "documentos/conductores",
+            vehiculosFotos: "vehiculos/fotos",
+            serviciosImagenes: "servicios/imagenes",
+            serviciosVideos: "servicios/videos"
+        }
+    };
+
+    window.dispatchEvent(new CustomEvent("drive_mx_firebase_ready"));
+</script>
 
 <script>
     lucide.createIcons();
@@ -4464,6 +4550,627 @@
     }
 
     function handleDriverBack() { activePanel = null; document.getElementById('driver-registration-view').classList.add('hidden'); document.getElementById('login-screen').classList.remove('hidden'); }
+
+
+    /* =========================================================
+       DRIVE MX - INTEGRACIÓN GLOBAL FIREBASE
+       Mantiene localStorage como caché de compatibilidad y sincroniza
+       Auth + Firestore + Storage en tiempo real entre teléfonos.
+       ========================================================= */
+
+    const DRIVE_MX_CLOUD_ENABLED_KEY = 'drive_mx_cloud_enabled';
+
+    function driveMxFirebaseApi() {
+        return window.DriveMXFirebase || null;
+    }
+
+    function waitForDriveMxFirebase() {
+        return new Promise((resolve) => {
+            if (driveMxFirebaseApi()) return resolve(driveMxFirebaseApi());
+            window.addEventListener('drive_mx_firebase_ready', () => resolve(driveMxFirebaseApi()), { once: true });
+        });
+    }
+
+    function driveMxCleanForFirestore(value) {
+        if (Array.isArray(value)) return value.map(driveMxCleanForFirestore).filter(v => v !== undefined);
+        if (value && typeof value === 'object') {
+            const out = {};
+            Object.keys(value).forEach(key => {
+                const clean = driveMxCleanForFirestore(value[key]);
+                if (clean !== undefined) out[key] = clean;
+            });
+            return out;
+        }
+        return value === undefined ? null : value;
+    }
+
+    function driveMxDataUrlToBlob(dataUrl) {
+        if (!dataUrl || !String(dataUrl).startsWith('data:')) return null;
+        const [header, data] = String(dataUrl).split(',');
+        const mime = (header.match(/data:(.*?);base64/) || [])[1] || 'application/octet-stream';
+        const binary = atob(data || '');
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+        return new Blob([bytes], { type: mime });
+    }
+
+    async function driveMxUploadBase64IfNeeded(dataUrl, storagePath) {
+        const api = await waitForDriveMxFirebase();
+        if (!api || !dataUrl || !String(dataUrl).startsWith('data:')) return dataUrl || '';
+        const blob = driveMxDataUrlToBlob(dataUrl);
+        if (!blob) return dataUrl || '';
+        const safePath = storagePath.replace(/\/+/g, '/');
+        const fileRef = api.st.ref(api.storage, safePath);
+        await api.st.uploadBytes(fileRef, blob, { contentType: blob.type });
+        return await api.st.getDownloadURL(fileRef);
+    }
+
+    async function driveMxUploadUserFiles(user) {
+        if (!user || !user.id) return user;
+        const role = user.role;
+        const now = Date.now();
+        const updated = { ...user };
+        try {
+            if (role === 'pasajero') {
+                updated.foto = await driveMxUploadBase64IfNeeded(user.foto || user.passengerFoto, `perfiles/pasajeros/${user.id}/perfil_${now}.jpg`);
+                updated.passengerFoto = updated.foto;
+            }
+            if (role === 'conductor') {
+                updated.foto = await driveMxUploadBase64IfNeeded(user.foto || user.driverFoto, `perfiles/conductores/${user.id}/perfil_${now}.jpg`);
+                updated.driverFoto = updated.foto;
+                updated.ineFrontal = await driveMxUploadBase64IfNeeded(user.ineFrontal, `documentos/conductores/${user.id}/ine_frontal_${now}.jpg`);
+                updated.ineTrasera = await driveMxUploadBase64IfNeeded(user.ineTrasera, `documentos/conductores/${user.id}/ine_trasera_${now}.jpg`);
+                updated.tarjetaCirculacion = await driveMxUploadBase64IfNeeded(user.tarjetaCirculacion, `documentos/conductores/${user.id}/tarjeta_circulacion_${now}.jpg`);
+                updated.fotoVehiculo = await driveMxUploadBase64IfNeeded(user.fotoVehiculo, `vehiculos/fotos/${user.id}/vehiculo_${now}.jpg`);
+            }
+        } catch (error) {
+            console.warn('No se pudo subir una imagen a Storage. Se conserva la copia local:', error);
+        }
+        return updated;
+    }
+
+    async function driveMxEnsureFirebaseAuth(user) {
+        const api = await waitForDriveMxFirebase();
+        if (!api || !user || !user.correo || !user.pass) return null;
+        try {
+            const credential = await api.authFns.createUserWithEmailAndPassword(api.auth, user.correo, user.pass);
+            return credential.user;
+        } catch (error) {
+            if (error && error.code === 'auth/email-already-in-use') return null;
+            console.warn('Firebase Auth no pudo crear la cuenta:', error);
+            return null;
+        }
+    }
+
+    async function driveMxSaveUserCloud(user) {
+        const api = await waitForDriveMxFirebase();
+        if (!api || !user || !user.id || !user.role) return user;
+        const collectionName = user.role === 'conductor' ? 'conductores' : 'pasajeros';
+        const uploaded = await driveMxUploadUserFiles(user);
+        const payload = driveMxCleanForFirestore({
+            ...uploaded,
+            updatedAt: new Date().toISOString(),
+            firebaseSynced: true
+        });
+        await api.fs.setDoc(api.fs.doc(api.db, collectionName, String(uploaded.id)), payload, { merge: true });
+        return uploaded;
+    }
+
+    async function driveMxSaveWalletCloud(userId, wallet) {
+        const api = await waitForDriveMxFirebase();
+        if (!api || !userId) return;
+        await api.fs.setDoc(api.fs.doc(api.db, 'cartera', String(userId)), driveMxCleanForFirestore({
+            userId: String(userId),
+            ...normalizeWalletData(wallet),
+            updatedAt: new Date().toISOString()
+        }), { merge: true });
+    }
+
+    async function driveMxFetchCloudUsers() {
+        const api = await waitForDriveMxFirebase();
+        if (!api) return [];
+        const all = [];
+        for (const col of ['pasajeros', 'conductores']) {
+            try {
+                const snap = await api.fs.getDocs(api.fs.collection(api.db, col));
+                snap.forEach(d => all.push({ id: d.id, ...d.data() }));
+            } catch (error) {
+                console.warn('No se pudo leer colección Firebase:', col, error);
+            }
+        }
+        return saveUsersDb(all.concat(getUsersDb()));
+    }
+
+    function driveMxMergeUsersIntoLocal(users) {
+        if (!Array.isArray(users)) return;
+        const db = getUsersDb();
+        users.forEach(user => {
+            if (!user || !user.id) return;
+            const idx = db.findIndex(u => String(u.id) === String(user.id) && u.role === user.role);
+            if (idx >= 0) db[idx] = { ...db[idx], ...user };
+            else db.push(user);
+        });
+        saveUsersDb(db);
+    }
+
+    function driveMxStartCollectionMirror(collectionName, handler) {
+        waitForDriveMxFirebase().then(api => {
+            if (!api) return;
+            try {
+                api.fs.onSnapshot(
+                    api.fs.collection(api.db, collectionName),
+                    (snapshot) => {
+                        const rows = [];
+                        snapshot.forEach(docSnap => rows.push({ id: docSnap.id, ...docSnap.data() }));
+                        handler(rows);
+                    },
+                    (error) => console.warn(`Listener Firestore ${collectionName}:`, error)
+                );
+            } catch (error) {
+                console.warn(`No se pudo iniciar listener ${collectionName}:`, error);
+            }
+        });
+    }
+
+    function driveMxInitRealtimeSync() {
+        if (window.driveMxRealtimeSyncStarted) return;
+        window.driveMxRealtimeSyncStarted = true;
+
+        driveMxStartCollectionMirror('pasajeros', rows => {
+            driveMxMergeUsersIntoLocal(rows.map(r => ({ ...r, role: 'pasajero' })));
+            if (activePanel === 'admin' && currentAdminView === 'passengers') renderAdminPassengers();
+            if (activePanel === 'passenger') updateProfileUI();
+        });
+
+        driveMxStartCollectionMirror('conductores', rows => {
+            driveMxMergeUsersIntoLocal(rows.map(r => ({ ...r, role: 'conductor' })));
+            if (activePanel === 'admin' && currentAdminView === 'requests') renderAdminRequests();
+            if (activePanel === 'driver') updateDriverSidebarProfile();
+            if (activePanel === 'passenger') renderPassengerUrbanServices();
+        });
+
+        driveMxStartCollectionMirror('solicitudes', rows => {
+            const syncedRequests = rows
+                .filter(r => r && r.id)
+                .sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
+            localStorage.setItem(getTripRequestsStorageKey(), JSON.stringify(syncedRequests));
+            window.dispatchEvent(new CustomEvent('drive_mx_trip_requests_updated'));
+        });
+
+        driveMxStartCollectionMirror('cartera', rows => {
+            rows.forEach(wallet => {
+                if (wallet && wallet.userId) localStorage.setItem(getWalletKey(wallet.userId), JSON.stringify(normalizeWalletData(wallet)));
+            });
+            refreshWalletViews();
+        });
+
+        driveMxStartCollectionMirror('serviciosUrbanos', rows => {
+            const data = {};
+            rows.forEach(row => { if (row && row.id) data[row.id] = row; });
+            if (Object.keys(data).length) {
+                localStorage.setItem('admin_servicios_viajes_urbanos', JSON.stringify(data));
+                inicializarServiciosUrbanosAdmin();
+                renderPassengerUrbanServices();
+            }
+        });
+
+        driveMxStartCollectionMirror('tarifas', rows => {
+            if (rows.length) {
+                localStorage.setItem('drive_mx_tarifas_cloud_cache', JSON.stringify(rows));
+                refreshPassengerServicePricesAndEta();
+            }
+        });
+
+        driveMxStartCollectionMirror('chats', rows => {
+            localStorage.setItem('drive_mx_trip_messages', JSON.stringify(rows.sort((a,b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')))));
+        });
+
+        driveMxStartCollectionMirror('ubicaciones', rows => {
+            rows.forEach(row => {
+                if (row && row.driverId) localStorage.setItem('drive_mx_driver_location_' + row.driverId, JSON.stringify(row));
+            });
+        });
+
+        waitForDriveMxFirebase().then(api => {
+            if (!api) return;
+            api.authFns.onAuthStateChanged(api.auth, async (fbUser) => {
+                if (!fbUser || currentUser) return;
+                await driveMxFetchCloudUsers();
+                const user = getUsersDb().find(u => String(u.correo || '').toLowerCase() === String(fbUser.email || '').toLowerCase());
+                if (user) {
+                    currentUser = user;
+                    persistPanelSession(user);
+                    user.role === 'conductor' ? showDriverPanel() : showPassengerPanel();
+                }
+            });
+        });
+
+        driveMxFetchCloudUsers();
+    }
+
+    driveMxInitRealtimeSync();
+
+    const driveMxOriginalSaveWalletData = saveWalletData;
+    saveWalletData = function(userId, data) {
+        const wallet = driveMxOriginalSaveWalletData(userId, data);
+        driveMxSaveWalletCloud(userId, wallet);
+        return wallet;
+    };
+
+    const driveMxOriginalUpsertUser = upsertUser;
+    upsertUser = function(userData) {
+        const saved = driveMxOriginalUpsertUser(userData);
+        driveMxSaveUserCloud(userData).then(cloudUser => {
+            if (cloudUser) driveMxOriginalUpsertUser(cloudUser);
+        }).catch(console.warn);
+        return saved;
+    };
+
+    async function handleAuth() {
+        const userIn = document.getElementById('login-email').value.trim();
+        const passIn = document.getElementById('login-pass').value.trim();
+
+        if (userIn === 'admincentral' && passIn === '9271@') {
+            currentUser = null;
+            showAdminPanel();
+            return;
+        }
+
+        let db = saveUsersDb(getUsersDb());
+        let user = db.find(u => (u.usuario === userIn.toLowerCase() || u.correo === userIn.toLowerCase()) && u.pass === passIn);
+
+        if (!user) {
+            try {
+                const api = await waitForDriveMxFirebase();
+                if (api && userIn.includes('@')) {
+                    await api.authFns.signInWithEmailAndPassword(api.auth, userIn, passIn);
+                }
+                db = await driveMxFetchCloudUsers();
+                user = db.find(u => (u.usuario === userIn.toLowerCase() || u.correo === userIn.toLowerCase()) && u.pass === passIn);
+            } catch (error) {
+                console.warn('Inicio Firebase no disponible o credenciales no válidas:', error);
+            }
+        }
+
+        if (user) {
+            currentUser = user;
+            persistPanelSession(user);
+            user.role === 'conductor' ? showDriverPanel() : showPassengerPanel();
+        } else {
+            alert('Usuario o contraseña incorrectos');
+        }
+        lucide.createIcons();
+    }
+
+    async function savePassengerRequest() {
+        const userId = String(Date.now());
+        const userValue = document.getElementById('reg-user').value.toLowerCase().trim();
+        const passValue = document.getElementById('reg-pass').value;
+        const emailValue = document.getElementById('reg-email').value.toLowerCase().trim();
+
+        const newRequest = {
+            id: userId,
+            name: document.getElementById('dr-name').value,
+            usuario: userValue,
+            pass: passValue,
+            correo: emailValue,
+            phone: document.getElementById('dr-phone').value,
+            foto: tempBase64Photo,
+            passengerFoto: tempBase64Photo,
+            status: 'activo',
+            role: 'pasajero',
+            date: new Date().toLocaleDateString(),
+            createdAt: new Date().toISOString()
+        };
+
+        try {
+            await driveMxEnsureFirebaseAuth(newRequest);
+            const cloudUser = await driveMxSaveUserCloud(newRequest);
+            upsertUser(cloudUser);
+            await driveMxSaveWalletCloud(userId, { saldo: 0.00, historial: [], trips: 0 });
+            saveWalletData(userId, { saldo: 0.00, historial: [], trips: 0 });
+            alert('Cuenta creada correctamente y sincronizada con Firebase.');
+            location.reload();
+        } catch (error) {
+            console.error('Error registrando pasajero en Firebase:', error);
+            upsertUser(newRequest);
+            saveWalletData(userId, { saldo: 0.00, historial: [], trips: 0 });
+            alert('Cuenta creada localmente. Revisa reglas/configuración de Firebase para sincronizar.');
+            location.reload();
+        }
+    }
+
+    async function saveDriverRequest() {
+        if (isSavingDriverRequest) return;
+        isSavingDriverRequest = true;
+
+        try {
+            const db = getUsersDb();
+            const driverId = buildUniqueDriverId(db);
+            const driverName = getCleanValue('dr-name');
+            const phoneValue = getCleanValue('dr-phone');
+            const plateValue = getCleanValue('v-plate').toUpperCase();
+            const userValue = createDriverLoginValue(driverId);
+            const passValue = getCleanValue('reg-pass') || `DRV${String(driverId).slice(-6)}`;
+
+            if (!driverName || !phoneValue || !plateValue) {
+                alert('Completa nombre, teléfono y placa para finalizar el registro del conductor.');
+                isSavingDriverRequest = false;
+                return;
+            }
+
+            const newDriver = {
+                id: driverId,
+                name: driverName,
+                usuario: userValue,
+                pass: passValue,
+                correo: getCleanValue('reg-email').toLowerCase(),
+                phone: phoneValue,
+                foto: tempBase64Photo || '',
+                driverFoto: tempBase64Photo || '',
+                ineFrontal: tempIneFrontPhoto || '',
+                ineTrasera: tempIneBackPhoto || '',
+                tarjetaCirculacion: tempCirculationPhoto || '',
+                fotoVehiculo: tempVehiclePhoto || '',
+                status: 'activo',
+                estadoDisponibilidad: 'no_disponible',
+                disponible: false,
+                activoTiempoReal: false,
+                role: 'conductor',
+                date: new Date().toLocaleDateString(),
+                createdAt: new Date().toISOString(),
+                parentPassengerId: currentUser && currentUser.role === 'pasajero' ? currentUser.id : null,
+                vehiculo: {
+                    marca: getCleanValue('v-brand'),
+                    modelo: getCleanValue('v-model'),
+                    color: getCleanValue('v-color'),
+                    year: getCleanValue('v-year'),
+                    placa: plateValue
+                }
+            };
+
+            await driveMxEnsureFirebaseAuth(newDriver);
+            const cloudDriver = await driveMxSaveUserCloud(newDriver);
+            upsertUser(cloudDriver);
+            saveWalletData(driverId, { saldo: 0.00, historial: [], trips: 0 });
+
+            currentUser = cloudDriver;
+            activeDriverUser = cloudDriver;
+            persistPanelSession(cloudDriver);
+
+            alert(`Registro DRIVER completado y sincronizado.\nUsuario: ${userValue}\nContraseña: ${passValue}`);
+            document.getElementById('driver-registration-view').classList.add('hidden');
+            showDriverPanel();
+        } catch (error) {
+            console.error('Error al guardar conductor:', error);
+            alert('No se pudo sincronizar con Firebase. Revisa conexión, Authentication, Firestore y Storage.');
+        } finally {
+            isSavingDriverRequest = false;
+            lucide.createIcons();
+        }
+    }
+
+    async function updateCurrentDriverLocation() {
+        if (!currentUser || currentUser.role !== 'conductor' || !navigator.geolocation) return;
+        navigator.geolocation.getCurrentPosition(async pos => {
+            const db = getUsersDb();
+            const idx = db.findIndex(u => String(u.id) === String(currentUser.id) && u.role === 'conductor');
+            const ubicacion = {
+                driverId: String(currentUser.id),
+                lat: pos.coords.latitude,
+                lng: pos.coords.longitude,
+                accuracy: pos.coords.accuracy,
+                disponible: !!isAvailable,
+                estadoDisponibilidad: isAvailable ? 'disponible' : 'no_disponible',
+                updatedAt: new Date().toISOString()
+            };
+            currentUser.ubicacion = ubicacion;
+            localStorage.setItem('drive_mx_driver_location_' + currentUser.id, JSON.stringify(ubicacion));
+            localStorage.setItem('drive_mx_last_driver_location', JSON.stringify({ ...ubicacion, driverId: currentUser.id }));
+            if (idx > -1) {
+                db[idx].ubicacion = ubicacion;
+                db[idx].disponible = !!isAvailable;
+                db[idx].estadoDisponibilidad = isAvailable ? 'disponible' : 'no_disponible';
+                saveUsersDb(db);
+            }
+            try {
+                const api = await waitForDriveMxFirebase();
+                if (!api) return;
+                await api.fs.setDoc(api.fs.doc(api.db, 'ubicaciones', String(currentUser.id)), driveMxCleanForFirestore(ubicacion), { merge: true });
+                await api.fs.setDoc(api.fs.doc(api.db, 'conductores', String(currentUser.id)), driveMxCleanForFirestore({
+                    ubicacion,
+                    disponible: !!isAvailable,
+                    activoTiempoReal: !!isAvailable,
+                    estadoDisponibilidad: isAvailable ? 'disponible' : 'no_disponible',
+                    updatedAt: new Date().toISOString()
+                }), { merge: true });
+            } catch (error) {
+                console.warn('No se pudo sincronizar ubicación:', error);
+            }
+        }, () => {}, { enableHighAccuracy: true, maximumAge: 15000, timeout: 8000 });
+    }
+
+    const driveMxOriginalToggleDriverAvailability = toggleDriverAvailability;
+    toggleDriverAvailability = function() {
+        driveMxOriginalToggleDriverAvailability();
+        if (currentUser && currentUser.role === 'conductor') {
+            currentUser.disponible = !!isAvailable;
+            currentUser.estadoDisponibilidad = isAvailable ? 'disponible' : 'no_disponible';
+            currentUser.activoTiempoReal = !!isAvailable;
+            upsertUser(currentUser);
+            updateCurrentDriverLocation();
+            if (!isAvailable) {
+                waitForDriveMxFirebase().then(async api => {
+                    if (!api) return;
+                    await api.fs.setDoc(api.fs.doc(api.db, 'conductores', String(currentUser.id)), driveMxCleanForFirestore({
+                        disponible: false,
+                        activoTiempoReal: false,
+                        estadoDisponibilidad: 'no_disponible',
+                        updatedAt: new Date().toISOString()
+                    }), { merge: true });
+                    await api.fs.setDoc(api.fs.doc(api.db, 'ubicaciones', String(currentUser.id)), driveMxCleanForFirestore({
+                        driverId: String(currentUser.id),
+                        disponible: false,
+                        estadoDisponibilidad: 'no_disponible',
+                        updatedAt: new Date().toISOString()
+                    }), { merge: true });
+                }).catch(console.warn);
+            }
+        }
+    };
+
+    const driveMxOriginalPublishPassengerTripRequest = publishPassengerTripRequest;
+    publishPassengerTripRequest = function(trip) {
+        driveMxOriginalPublishPassengerTripRequest(trip);
+        if (!currentUser || currentUser.role !== 'pasajero') return;
+
+        const localReq = getStoredTripRequests()[0];
+        const request = localReq && String(localReq.passengerId) === String(currentUser.id)
+            ? localReq
+            : { ...trip, id: `REQ_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`, status: 'pending' };
+
+        waitForDriveMxFirebase().then(async api => {
+            if (!api) return;
+            await api.fs.setDoc(api.fs.doc(api.db, 'solicitudes', String(request.id)), driveMxCleanForFirestore({
+                ...request,
+                passengerId: String(currentUser.id),
+                status: 'pending',
+                createdAt: request.createdAt || new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            }), { merge: true });
+        }).catch(console.warn);
+    };
+
+    const driveMxOriginalGetLatestPendingTripRequestForCurrentDriver = getLatestPendingTripRequestForCurrentDriver;
+    getLatestPendingTripRequestForCurrentDriver = function() {
+        if (!currentUser || currentUser.role !== 'conductor' || !isAvailable) return null;
+        const requests = getStoredTripRequests();
+        return requests.find(req => req && req.status === 'pending') || null;
+    };
+
+    const driveMxOriginalAcceptDriverTripRequest = acceptDriverTripRequest;
+    acceptDriverTripRequest = function(encodedRequestId) {
+        const requestId = decodeURIComponent(encodedRequestId || '');
+        const driverOffer = getCurrentDriverOfferData();
+        const result = driveMxOriginalAcceptDriverTripRequest(encodedRequestId);
+        waitForDriveMxFirebase().then(async api => {
+            if (!api || !requestId || !currentUser) return;
+            await api.fs.setDoc(api.fs.doc(api.db, 'solicitudes', String(requestId)), driveMxCleanForFirestore({
+                status: 'accepted',
+                driver: driverOffer,
+                driverId: String(currentUser.id),
+                driverName: currentUser.name || 'Conductor',
+                acceptedAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            }), { merge: true });
+            await api.fs.setDoc(api.fs.doc(api.db, 'viajes', String(requestId)), driveMxCleanForFirestore({
+                id: String(requestId),
+                status: 'accepted',
+                driver: driverOffer,
+                driverId: String(currentUser.id),
+                driverName: currentUser.name || 'Conductor',
+                startedAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            }), { merge: true });
+        }).catch(console.warn);
+        return result;
+    };
+
+    const driveMxOriginalRejectDriverTripRequest = rejectDriverTripRequest;
+    rejectDriverTripRequest = function(encodedRequestId) {
+        const requestId = decodeURIComponent(encodedRequestId || '');
+        const result = driveMxOriginalRejectDriverTripRequest(encodedRequestId);
+        waitForDriveMxFirebase().then(async api => {
+            if (!api || !requestId || !currentUser) return;
+            await api.fs.setDoc(api.fs.doc(api.db, 'solicitudes', String(requestId)), driveMxCleanForFirestore({
+                status: 'rejected',
+                rejectedBy: String(currentUser.id),
+                rejectedAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            }), { merge: true });
+        }).catch(console.warn);
+        return result;
+    };
+
+    const driveMxOriginalSendPassengerMessageToDriver = sendPassengerMessageToDriver;
+    sendPassengerMessageToDriver = function() {
+        const input = document.getElementById('passenger-driver-message');
+        const text = (input?.value || '').trim();
+        const driver = activeTripData || {};
+        const tripId = appState?.pendingTrip?.requestId || driver.activeRequestId || `CHAT_${currentUser?.id || 'pasajero'}_${driver.id || 'driver'}`;
+        driveMxOriginalSendPassengerMessageToDriver();
+        if (!text) return;
+        waitForDriveMxFirebase().then(async api => {
+            if (!api) return;
+            const messageId = 'MSG_' + Date.now();
+            await api.fs.setDoc(api.fs.doc(api.db, 'chats', messageId), driveMxCleanForFirestore({
+                id: messageId,
+                tripId,
+                tripDriverId: driver.id || '',
+                driverName: driver.name || 'Conductor',
+                passengerId: currentUser?.id || '',
+                passengerName: currentUser?.name || 'Pasajero',
+                message: text,
+                createdAt: new Date().toISOString(),
+                panel: 'passenger'
+            }), { merge: true });
+        }).catch(console.warn);
+    };
+
+    const driveMxOriginalGuardarEdicionServicioUrbano = guardarEdicionServicioUrbano;
+    guardarEdicionServicioUrbano = async function() {
+        const serviceId = selectedUrbanServiceId;
+        const pendingImage = urbanEditPhotoBase64;
+        driveMxOriginalGuardarEdicionServicioUrbano();
+        if (!serviceId) return;
+        try {
+            const api = await waitForDriveMxFirebase();
+            if (!api) return;
+            const data = getServiciosUrbanosAdminData();
+            const serviceData = data[serviceId] || {};
+            if (pendingImage) {
+                serviceData.imagen = await driveMxUploadBase64IfNeeded(pendingImage, `servicios/imagenes/${serviceId}/imagen_${Date.now()}.jpg`);
+            }
+            await api.fs.setDoc(api.fs.doc(api.db, 'serviciosUrbanos', String(serviceId)), driveMxCleanForFirestore({
+                id: serviceId,
+                ...serviceData,
+                storageImagenPath: `servicios/imagenes/${serviceId}`,
+                storageVideosPath: `servicios/videos/${serviceId}`,
+                updatedAt: new Date().toISOString()
+            }), { merge: true });
+        } catch (error) {
+            console.warn('No se pudo sincronizar servicio urbano:', error);
+        }
+    };
+
+    const driveMxOriginalEliminarSeleccionados = eliminarSeleccionados;
+    eliminarSeleccionados = function() {
+        const ids = [...selectedIds].map(String);
+        const view = currentAdminView;
+        driveMxOriginalEliminarSeleccionados();
+        waitForDriveMxFirebase().then(async api => {
+            if (!api) return;
+            for (const id of ids) {
+                if (view === 'passengers') await api.fs.deleteDoc(api.fs.doc(api.db, 'pasajeros', id));
+                if (view === 'requests') await api.fs.deleteDoc(api.fs.doc(api.db, 'conductores', id));
+                await api.fs.deleteDoc(api.fs.doc(api.db, 'cartera', id)).catch(() => {});
+            }
+        }).catch(console.warn);
+    };
+
+    async function driveMxLogout() {
+        try {
+            const api = await waitForDriveMxFirebase();
+            if (api) await api.authFns.signOut(api.auth);
+        } catch (error) {
+            console.warn('No se pudo cerrar Firebase Auth:', error);
+        }
+        localStorage.removeItem('drive_mx_active_session');
+        localStorage.removeItem('drive_mx_passenger_session');
+        localStorage.removeItem('drive_mx_driver_session');
+        location.reload();
+    }
+
     window.addEventListener('storage', (event) => {
         if (event.key === getTripRequestsStorageKey()) renderDriverTripRequestCard();
     });

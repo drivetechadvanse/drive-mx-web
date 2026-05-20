@@ -4499,8 +4499,43 @@
 
   const COLLECTION_BY_ROLE = {
     pasajero: 'pasajeros',
-    conductor: 'conductores'
+    conductor: 'conductores',
+    admin: 'admins'
   };
+
+  const ROLE_STORAGE_ROOT = {
+    pasajero: 'pasajeros',
+    conductor: 'conductores',
+    admin: 'admins'
+  };
+
+  const ROLE_WALLET_COLLECTION = {
+    pasajero: 'carterasPasajeros',
+    conductor: 'carterasConductores',
+    admin: 'carterasAdmins'
+  };
+
+  const ROLE_TRIPS_COLLECTION = {
+    pasajero: 'viajesPasajeros',
+    conductor: 'viajesConductores',
+    admin: 'viajesAdmins'
+  };
+
+  function normalizeRole(role) {
+    if (role === 'driver') return 'conductor';
+    if (role === 'passenger') return 'pasajero';
+    if (role === 'administrador') return 'admin';
+    return ['pasajero', 'conductor', 'admin'].includes(role) ? role : 'pasajero';
+  }
+
+  function safeStorageSegment(value) {
+    return String(value || Date.now()).replace(/[^a-zA-Z0-9_-]/g, '_');
+  }
+
+  function imageContentType(dataUrl) {
+    const match = String(dataUrl || '').match(/^data:(image\/[^;]+);base64,/i);
+    return match ? match[1] : 'image/jpeg';
+  }
 
   function isDataImage(value) {
     return typeof value === 'string' && value.startsWith('data:image/');
@@ -4508,13 +4543,37 @@
 
   async function uploadDataImage(path, dataUrl) {
     if (!isDataImage(dataUrl)) return dataUrl || '';
+    await ensureFirebaseSession();
+    const cleanPath = String(path || '').replace(/^\/+/, '');
     try {
-      const storageRef = ref(storage, path);
-      await uploadString(storageRef, dataUrl, 'data_url');
+      const storageRef = ref(storage, cleanPath);
+      await uploadString(storageRef, dataUrl, 'data_url', {
+        contentType: imageContentType(dataUrl),
+        customMetadata: {
+          app: 'drive_mx',
+          storagePath: cleanPath,
+          uploadedAt: new Date().toISOString()
+        }
+      });
       return await getDownloadURL(storageRef);
     } catch (error) {
-      console.warn('Storage no confirmó la carga:', path, error.code || error.message);
-      return '';
+      console.error('Storage no guardó la imagen:', cleanPath, error.code || error.message);
+      throw error;
+    }
+  }
+
+  async function uploadRoleImage(role, userId, imageKey, dataUrl) {
+    if (!isDataImage(dataUrl)) return { url: dataUrl || '', path: '', error: '' };
+    const safeRole = normalizeRole(role);
+    const safeId = safeStorageSegment(userId);
+    const safeKey = safeStorageSegment(imageKey);
+    const extension = imageContentType(dataUrl).includes('png') ? 'png' : 'jpg';
+    const path = `${ROLE_STORAGE_ROOT[safeRole]}/${safeId}/imagenes/${safeKey}.${extension}`;
+    try {
+      const url = await uploadDataImage(path, dataUrl);
+      return { url, path, error: '' };
+    } catch (error) {
+      return { url: '', path, error: error.code || error.message || String(error) };
     }
   }
 
@@ -4566,27 +4625,52 @@
     const id = String(copy.id || Date.now());
     const role = copy.role || 'pasajero';
 
-    if (role === 'pasajero') {
-      const photoUrl = await uploadDataImage(`perfiles/pasajeros/${id}/perfil.jpg`, copy.passengerFoto || copy.foto || '');
-      if (photoUrl) {
-        copy.foto = photoUrl;
-        copy.passengerFoto = photoUrl;
+    copy.role = normalizeRole(role);
+    copy.storageStatus = copy.storageStatus || {};
+    copy.storagePaths = copy.storagePaths || {};
+
+    if (copy.role === 'pasajero') {
+      const photo = await uploadRoleImage('pasajero', id, 'perfil_pasajero', copy.passengerFoto || copy.foto || '');
+      if (photo.url) {
+        copy.foto = photo.url;
+        copy.passengerFoto = photo.url;
+        copy.storagePaths.passengerFoto = photo.path;
+        copy.storageStatus.passengerFoto = 'guardada';
+      } else if (photo.error) {
+        copy.storageStatus.passengerFoto = `error:${photo.error}`;
       }
+      delete copy.driverFoto;
+      delete copy.ineFrontal;
+      delete copy.ineTrasera;
+      delete copy.tarjetaCirculacion;
+      delete copy.fotoVehiculo;
     }
 
-    if (role === 'conductor') {
-      const profileUrl = await uploadDataImage(`perfiles/conductores/${id}/perfil.jpg`, copy.driverFoto || copy.foto || '');
-      const ineFrontUrl = await uploadDataImage(`documentos/conductores/${id}/ine_frontal.jpg`, copy.ineFrontal || '');
-      const ineBackUrl = await uploadDataImage(`documentos/conductores/${id}/ine_trasera.jpg`, copy.ineTrasera || '');
-      const circUrl = await uploadDataImage(`documentos/conductores/${id}/tarjeta_circulacion.jpg`, copy.tarjetaCirculacion || '');
-      const vehicleUrl = await uploadDataImage(`vehiculos/fotos/${id}/vehiculo.jpg`, copy.fotoVehiculo || '');
-      if (profileUrl) { copy.foto = profileUrl; copy.driverFoto = profileUrl; }
-      if (ineFrontUrl) copy.ineFrontal = ineFrontUrl;
-      if (ineBackUrl) copy.ineTrasera = ineBackUrl;
-      if (circUrl) copy.tarjetaCirculacion = circUrl;
-      if (vehicleUrl) copy.fotoVehiculo = vehicleUrl;
+    if (copy.role === 'conductor') {
+      const profile = await uploadRoleImage('conductor', id, 'perfil_conductor', copy.driverFoto || copy.foto || '');
+      const ineFront = await uploadRoleImage('conductor', id, 'ine_frontal', copy.ineFrontal || '');
+      const ineBack = await uploadRoleImage('conductor', id, 'ine_trasera', copy.ineTrasera || '');
+      const circ = await uploadRoleImage('conductor', id, 'tarjeta_circulacion', copy.tarjetaCirculacion || '');
+      const vehicle = await uploadRoleImage('conductor', id, 'vehiculo', copy.fotoVehiculo || '');
+      if (profile.url) { copy.foto = profile.url; copy.driverFoto = profile.url; copy.storagePaths.driverFoto = profile.path; copy.storageStatus.driverFoto = 'guardada'; }
+      else if (profile.error) copy.storageStatus.driverFoto = `error:${profile.error}`;
+      if (ineFront.url) { copy.ineFrontal = ineFront.url; copy.storagePaths.ineFrontal = ineFront.path; copy.storageStatus.ineFrontal = 'guardada'; }
+      else if (ineFront.error) copy.storageStatus.ineFrontal = `error:${ineFront.error}`;
+      if (ineBack.url) { copy.ineTrasera = ineBack.url; copy.storagePaths.ineTrasera = ineBack.path; copy.storageStatus.ineTrasera = 'guardada'; }
+      else if (ineBack.error) copy.storageStatus.ineTrasera = `error:${ineBack.error}`;
+      if (circ.url) { copy.tarjetaCirculacion = circ.url; copy.storagePaths.tarjetaCirculacion = circ.path; copy.storageStatus.tarjetaCirculacion = 'guardada'; }
+      else if (circ.error) copy.storageStatus.tarjetaCirculacion = `error:${circ.error}`;
+      if (vehicle.url) { copy.fotoVehiculo = vehicle.url; copy.storagePaths.fotoVehiculo = vehicle.path; copy.storageStatus.fotoVehiculo = 'guardada'; }
+      else if (vehicle.error) copy.storageStatus.fotoVehiculo = `error:${vehicle.error}`;
       copy.disponible = Boolean(copy.disponible);
       copy.estadoConductor = copy.disponible ? 'disponible' : (copy.estadoConductor || 'no_disponible');
+      delete copy.passengerFoto;
+    }
+
+    if (copy.role === 'admin') {
+      const photo = await uploadRoleImage('admin', id, 'perfil_admin', copy.adminFoto || copy.foto || '');
+      if (photo.url) { copy.foto = photo.url; copy.adminFoto = photo.url; copy.storagePaths.adminFoto = photo.path; copy.storageStatus.adminFoto = 'guardada'; }
+      else if (photo.error) copy.storageStatus.adminFoto = `error:${photo.error}`;
     }
 
     copy.firebaseSyncedAt = new Date().toISOString();
@@ -4607,7 +4691,8 @@
       updatedAtServer: serverTimestamp()
     }, { merge: true });
 
-    await setDoc(doc(db, 'usuarios', String(prepared.id)), {
+    // Índice mínimo para login/admin. Los datos sensibles y fotos viven solo en su colección por rol.
+    await setDoc(doc(db, 'usuariosIndice', `${prepared.role}_${String(prepared.id)}`), {
       id: String(prepared.id),
       role: prepared.role,
       name: prepared.name || '',
@@ -4615,6 +4700,7 @@
       correo: prepared.correo || '',
       phone: prepared.phone || '',
       status: prepared.status || 'activo',
+      collectionName,
       updatedAtServer: serverTimestamp()
     }, { merge: true });
 
@@ -4624,7 +4710,7 @@
 
   async function loadUsersGlobal() {
     const merged = localUsers();
-    for (const collectionName of ['pasajeros', 'conductores']) {
+    for (const collectionName of ['pasajeros', 'conductores', 'admins']) {
       const snap = await getDocs(collection(db, collectionName));
       snap.forEach(d => {
         const data = { id: d.id, ...d.data() };
@@ -4657,7 +4743,7 @@
   function installRealtimeUsers() {
     if (window.driveMxFirebaseUsersInstalled) return;
     window.driveMxFirebaseUsersInstalled = true;
-    ['pasajeros', 'conductores'].forEach(collectionName => {
+    ['pasajeros', 'conductores', 'admins'].forEach(collectionName => {
       onSnapshot(collection(db, collectionName), snap => {
         snap.docChanges().forEach(change => {
           if (change.type === 'removed') return;
@@ -4674,7 +4760,7 @@
   function installRealtimeSolicitudes() {
     if (window.driveMxFirebaseSolicitudesInstalled) return;
     window.driveMxFirebaseSolicitudesInstalled = true;
-    const q = query(collection(db, 'solicitudes'), where('status', 'in', ['pending', 'accepted']), orderBy('createdAt', 'desc'), limit(30));
+    const q = query(collection(db, 'solicitudesViaje'), where('status', 'in', ['pending', 'accepted']), orderBy('createdAt', 'desc'), limit(30));
     onSnapshot(q, snap => {
       const requests = [];
       snap.forEach(d => requests.push({ id: d.id, ...d.data() }));
@@ -4714,7 +4800,7 @@
       localStorage.setItem('drive_mx_driver_location_' + user.id, JSON.stringify(ubicacion));
       localStorage.setItem('drive_mx_last_driver_location', JSON.stringify(ubicacion));
       mergeLocalUser(user);
-      await setDoc(doc(db, 'ubicaciones', String(user.id)), { ...ubicacion, updatedAtServer: serverTimestamp() }, { merge: true });
+      await setDoc(doc(db, 'ubicacionesConductores', String(user.id)), { ...ubicacion, updatedAtServer: serverTimestamp() }, { merge: true });
       await setDoc(doc(db, 'conductores', String(user.id)), { ubicacion, updatedAtServer: serverTimestamp() }, { merge: true });
     }, () => {}, { enableHighAccuracy: true, maximumAge: 20000, timeout: 8000 });
   }
@@ -4754,7 +4840,7 @@
         window.saveWalletData?.(userId, { saldo: 0.00, historial: [], trips: 0 });
         await registerFirebaseAuthIfPossible(newPassenger);
         await saveUserGlobal(newPassenger);
-        await setDoc(doc(db, 'cartera', userId), { userId, role: 'pasajero', saldo: 0, historial: [], trips: 0, updatedAtServer: serverTimestamp() }, { merge: true });
+        await setDoc(doc(db, ROLE_WALLET_COLLECTION.pasajero, userId), { userId, role: 'pasajero', saldo: 0, historial: [], trips: 0, updatedAtServer: serverTimestamp() }, { merge: true });
         alert('Cuenta de pasajero creada y guardada en Firebase.');
         location.reload();
       } catch (error) {
@@ -4813,7 +4899,7 @@
         window.saveWalletData?.(driverId, { saldo: 0.00, historial: [], trips: 0 });
         await registerFirebaseAuthIfPossible(newDriver);
         const synced = await saveUserGlobal(newDriver);
-        await setDoc(doc(db, 'cartera', String(driverId)), { userId: String(driverId), role: 'conductor', saldo: 0, historial: [], trips: 0, updatedAtServer: serverTimestamp() }, { merge: true });
+        await setDoc(doc(db, ROLE_WALLET_COLLECTION.conductor, String(driverId)), { userId: String(driverId), role: 'conductor', saldo: 0, historial: [], trips: 0, updatedAtServer: serverTimestamp() }, { merge: true });
         window.currentUser = synced;
         window.persistPanelSession?.(synced);
         window.showDriverPanel?.();
@@ -4868,7 +4954,18 @@
         createdAt: new Date().toISOString(),
         createdAtServer: serverTimestamp()
       };
-      try { await setDoc(doc(db, 'solicitudes', requestId), request, { merge: true }); }
+      try {
+        await setDoc(doc(db, 'solicitudesViaje', requestId), request, { merge: true });
+        if (request.passengerId) {
+          await setDoc(doc(db, ROLE_TRIPS_COLLECTION.pasajero, `${request.passengerId}_${requestId}`), {
+            ...request,
+            solicitudId: requestId,
+            ownerRole: 'pasajero',
+            ownerId: String(request.passengerId),
+            updatedAtServer: serverTimestamp()
+          }, { merge: true });
+        }
+      }
       catch (e) { console.warn('Solicitud Firebase:', e.message); }
     };
 
@@ -4879,7 +4976,7 @@
       const driverOffer = window.getCurrentDriverOfferData?.();
       if (!requestId || !driverOffer) return;
       try {
-        await updateDoc(doc(db, 'solicitudes', requestId), {
+        await updateDoc(doc(db, 'solicitudesViaje', requestId), {
           status: 'accepted',
           acceptedAt: new Date().toISOString(),
           acceptedAtServer: serverTimestamp(),
@@ -4887,9 +4984,11 @@
           driverId: driverOffer.id,
           driverName: driverOffer.name
         });
-        await setDoc(doc(db, 'viajes', requestId), {
+        await setDoc(doc(db, ROLE_TRIPS_COLLECTION.conductor, `${driverOffer.id}_${requestId}`), {
           solicitudId: requestId,
           status: 'accepted',
+          ownerRole: 'conductor',
+          ownerId: String(driverOffer.id),
           driver: driverOffer,
           driverId: driverOffer.id,
           createdAtServer: serverTimestamp()
@@ -4902,7 +5001,7 @@
       originalRejectRequest?.apply(this, arguments);
       const requestId = decodeURIComponent(encodedRequestId || '');
       if (!requestId) return;
-      try { await updateDoc(doc(db, 'solicitudes', requestId), { status: 'rejected', rejectedBy: window.currentUser?.id || '', rejectedAt: new Date().toISOString() }); }
+      try { await updateDoc(doc(db, 'solicitudesViaje', requestId), { status: 'rejected', rejectedBy: window.currentUser?.id || '', rejectedAt: new Date().toISOString() }); }
       catch (e) { console.warn('Rechazar solicitud Firebase:', e.message); }
     };
 
@@ -4914,7 +5013,7 @@
       const driver = window.activeTripData || {};
       if (text) {
         try {
-          await setDoc(doc(db, 'chats', `${tripId}_${Date.now()}`), {
+          await setDoc(doc(db, 'chatsPasajeros', `${window.currentUser?.id || 'pasajero'}_${tripId}_${Date.now()}`), {
             tripId,
             driverId: driver.id || '',
             passengerId: window.currentUser?.id || '',
@@ -4935,7 +5034,7 @@
       Object.entries(data || {}).forEach(async ([id, service]) => {
         try {
           const copy = { ...service, id, updatedAt: new Date().toISOString(), updatedAtServer: serverTimestamp() };
-          if (isDataImage(copy.imagen)) copy.imagen = await uploadDataImage(`servicios/imagenes/${id}.jpg`, copy.imagen);
+          if (isDataImage(copy.imagen)) copy.imagen = await uploadDataImage(`admins/serviciosUrbanos/${safeStorageSegment(id)}/imagenes/servicio.jpg`, copy.imagen);
           copy.videoPathPreparado = `servicios/videos/${id}/`;
           await setDoc(doc(db, 'serviciosUrbanos', id), copy, { merge: true });
         } catch (e) { console.warn('Servicio Firebase:', e.message); }

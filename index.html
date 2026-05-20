@@ -279,6 +279,26 @@
             #cost-sheet.minimized #btn-confirmar { left: 1rem; right: 1rem; }
         }
 
+
+        /* Primera tarjeta compacta de solicitud de viaje - Panel Conductor */
+        #driver-trip-request-list { width: 100%; }
+        .driver-trip-request-card {
+            width: 100%;
+            background: #fff;
+            border: 1px solid #eef0f3;
+            border-radius: 1.65rem;
+            padding: .8rem;
+            box-shadow: 0 14px 34px rgba(15, 23, 42, .10);
+        }
+        .driver-request-avatar { width: 52px; height: 52px; border-radius: 999px; object-fit: cover; flex: 0 0 52px; }
+        .driver-request-avatar-fallback { width: 52px; height: 52px; border-radius: 999px; flex: 0 0 52px; }
+        .driver-request-pill { display: inline-flex; align-items: center; gap: .25rem; padding: .35rem .5rem; border-radius: 999px; background: #f9fafb; border: 1px solid #edf0f2; font-size: 8px; line-height: 1; font-weight: 900; text-transform: uppercase; font-style: italic; color: #374151; white-space: nowrap; }
+        .driver-request-route-row { display: grid; grid-template-columns: 12px minmax(0, 1fr); gap: .45rem; align-items: start; }
+        .driver-request-route-dot { width: 9px; height: 9px; border-radius: 999px; margin-top: .25rem; border: 2px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,.08); }
+        .driver-request-route-text { font-size: 9px; line-height: 1.22; font-weight: 800; text-transform: uppercase; font-style: italic; color: #4b5563; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+        .driver-request-action { border-radius: 1rem; padding: .75rem .5rem; font-size: 10px; line-height: 1; font-weight: 900; text-transform: uppercase; font-style: italic; transition: transform .16s ease, opacity .16s ease; }
+        .driver-request-action:active { transform: scale(.96); }
+
 </style>
 </head>
 <body>
@@ -1493,6 +1513,7 @@
             statusText.classList.add('text-red-600');
             statusText.innerText = 'No Disponible';
         }
+        renderDriverTripRequestCard();
     }
 
     function configureSharedSidebarFor(panel) {
@@ -1624,6 +1645,9 @@
         updateCurrentDriverLocation();
         if (window.driveMxDriverLocationInterval) clearInterval(window.driveMxDriverLocationInterval);
         window.driveMxDriverLocationInterval = setInterval(updateCurrentDriverLocation, 5000);
+        renderDriverTripRequestCard();
+        if (window.driveMxDriverRequestsInterval) clearInterval(window.driveMxDriverRequestsInterval);
+        window.driveMxDriverRequestsInterval = setInterval(renderDriverTripRequestCard, 2500);
         refreshDriverPassengerNotifications();
         lucide.createIcons();
     }
@@ -1977,6 +2001,7 @@
             
         }
 
+        renderDriverTripRequestCard();
         lucide.createIcons();
     }
 
@@ -3366,6 +3391,14 @@
         appState.precioViaje = finalCost;
         appState.pendingTrip = {
             passengerId: currentUser.id,
+            passengerName: currentUser.name || currentUser.nombre || 'Pasajero',
+            passengerPhoto: getUserPhotoSource(currentUser),
+            passengerRating: currentUser.rating || currentUser.calificacion || '5.0',
+            passengerTrips: getWalletData(currentUser.id).trips || 0,
+            passengerLocation: appState.passengerLocation || JSON.parse(localStorage.getItem('drive_mx_passenger_location') || 'null'),
+            pickupAddress: appState.passengerAddress || 'Ubicación actual del pasajero',
+            destinationAddress: appState.destinationAddress || 'Destino del pasajero',
+            destinationLocation: appState.destinationLocation || null,
             serviceId: appState.selectedServiceId,
             paymentMethod: appState.selectedPayment,
             finalCost,
@@ -3375,9 +3408,204 @@
             createdAt: new Date().toISOString(),
             charged: false
         };
+        publishPassengerTripRequest(appState.pendingTrip);
 
         refreshWalletViews(currentUser.id);
         startRadar();
+    }
+
+    function getTripRequestsStorageKey() {
+        return 'drive_mx_pending_trip_requests';
+    }
+
+    function getStoredTripRequests() {
+        try {
+            const requests = JSON.parse(localStorage.getItem(getTripRequestsStorageKey()) || '[]');
+            return Array.isArray(requests) ? requests : [];
+        } catch (error) {
+            return [];
+        }
+    }
+
+    function saveStoredTripRequests(requests) {
+        localStorage.setItem(getTripRequestsStorageKey(), JSON.stringify(Array.isArray(requests) ? requests : []));
+        window.dispatchEvent(new CustomEvent('drive_mx_trip_requests_updated'));
+    }
+
+    function publishPassengerTripRequest(trip) {
+        if (!currentUser || currentUser.role !== 'pasajero' || !trip) return;
+        const requestId = `REQ_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+        const request = {
+            ...trip,
+            id: requestId,
+            status: 'pending',
+            passengerId: currentUser.id,
+            passengerName: trip.passengerName || currentUser.name || currentUser.nombre || 'Pasajero',
+            passengerPhoto: trip.passengerPhoto || getUserPhotoSource(currentUser),
+            passengerRating: trip.passengerRating || currentUser.rating || currentUser.calificacion || '5.0',
+            passengerTrips: Number(trip.passengerTrips || getWalletData(currentUser.id).trips || 0),
+            pickupAddress: trip.pickupAddress || appState.passengerAddress || 'Ubicación actual del pasajero',
+            destinationAddress: trip.destinationAddress || appState.destinationAddress || 'Destino del pasajero',
+            passengerLocation: trip.passengerLocation || appState.passengerLocation || JSON.parse(localStorage.getItem('drive_mx_passenger_location') || 'null'),
+            finalCost: Number(trip.finalCost || appState.precioViaje || 0),
+            distanceKm: Number(trip.distanceKm || appState.routeDistanceKm || 0),
+            createdAt: new Date().toISOString()
+        };
+        appState.pendingTrip.requestId = requestId;
+        const activeRequests = getStoredTripRequests().filter(req => req && req.status === 'pending' && String(req.passengerId) !== String(currentUser.id));
+        activeRequests.unshift(request);
+        saveStoredTripRequests(activeRequests.slice(0, 12));
+    }
+
+    function escapeHtml(value) {
+        return String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
+    }
+
+    function formatDriverPickupDistance(request) {
+        const driverLocation = currentUser?.ubicacion || null;
+        const passengerLocation = request?.passengerLocation || JSON.parse(localStorage.getItem('drive_mx_passenger_location') || 'null');
+        if (driverLocation && passengerLocation && driverLocation.lat && driverLocation.lng && passengerLocation.lat && passengerLocation.lng) {
+            const km = getDistanceKm(driverLocation.lat, driverLocation.lng, passengerLocation.lat, passengerLocation.lng);
+            return `A ${km.toFixed(km < 10 ? 1 : 0)} km`;
+        }
+        const routeKm = Number(request?.distanceKm || 0);
+        return routeKm > 0 ? `A ${routeKm.toFixed(routeKm < 10 ? 1 : 0)} km` : 'A -- km';
+    }
+
+    function getLatestPendingTripRequestForCurrentDriver() {
+        if (!currentUser || currentUser.role !== 'conductor') return null;
+        const requests = getStoredTripRequests();
+        return requests.find(req => req && req.status === 'pending') || null;
+    }
+
+    function renderDriverTripRequestCard() {
+        const container = document.getElementById('driver-trip-request-list');
+        const mainMsg = document.getElementById('driver-main-msg');
+        if (!container) return;
+
+        const request = getLatestPendingTripRequestForCurrentDriver();
+        if (!request || !isAvailable) {
+            container.classList.add('hidden');
+            container.innerHTML = '';
+            if (mainMsg && activePanel === 'driver') mainMsg.innerText = isAvailable ? 'Buscando viajes cercanos' : 'Actívate para recibir viajes';
+            return;
+        }
+
+        const initial = escapeHtml((request.passengerName || 'P').charAt(0).toUpperCase());
+        const photo = isValidImageSource(request.passengerPhoto)
+            ? `<img src="${escapeHtml(request.passengerPhoto)}" onerror="this.outerHTML='<div class=&quot;driver-request-avatar-fallback bg-gray-900 text-white flex items-center justify-center font-black italic shadow-lg&quot;>${initial}</div>'" class="driver-request-avatar shadow-lg border-2 border-white" alt="Foto del pasajero">`
+            : `<div class="driver-request-avatar-fallback bg-gray-900 text-white flex items-center justify-center font-black italic shadow-lg">${initial}</div>`;
+        const encodedId = encodeURIComponent(request.id);
+        const cost = Number(request.finalCost || 0);
+        container.innerHTML = `
+            <div class="driver-trip-request-card">
+                <div class="flex items-start gap-3">
+                    ${photo}
+                    <div class="min-w-0 flex-1">
+                        <div class="flex items-start justify-between gap-2">
+                            <div class="min-w-0">
+                                <p class="text-[8px] font-black text-red-600 uppercase italic tracking-widest">Nueva solicitud</p>
+                                <h4 class="text-sm leading-none font-black italic uppercase text-gray-900 truncate">${escapeHtml(request.passengerName || 'Pasajero')}</h4>
+                            </div>
+                            <div class="text-right shrink-0">
+                                <p class="text-base leading-none font-black italic text-gray-900">$${cost.toFixed(0)}</p>
+                                <p class="text-[8px] font-black uppercase italic text-gray-400">MXN</p>
+                            </div>
+                        </div>
+                        <div class="flex flex-wrap gap-1.5 mt-2">
+                            <span class="driver-request-pill text-yellow-600">★ ${escapeHtml(request.passengerRating || '5.0')}</span>
+                            <span class="driver-request-pill">${Number(request.passengerTrips || 0)} viajes</span>
+                            <span class="driver-request-pill">${escapeHtml(formatDriverPickupDistance(request))}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-3 bg-gray-50 rounded-2xl border border-gray-100 p-3 space-y-2">
+                    <div class="driver-request-route-row">
+                        <span class="driver-request-route-dot bg-green-500"></span>
+                        <p class="driver-request-route-text">${escapeHtml(request.pickupAddress || 'Ubicación actual del pasajero')}</p>
+                    </div>
+                    <div class="driver-request-route-row">
+                        <span class="driver-request-route-dot bg-red-600"></span>
+                        <p class="driver-request-route-text">${escapeHtml(request.destinationAddress || 'Destino del pasajero')}</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2 mt-3">
+                    <button type="button" onclick="acceptDriverTripRequest('${encodedId}')" class="driver-request-action bg-green-600 text-white shadow-lg shadow-green-600/20">Aceptar</button>
+                    <button type="button" onclick="rejectDriverTripRequest('${encodedId}')" class="driver-request-action bg-gray-200 text-gray-700">Rechazar</button>
+                </div>
+            </div>`;
+        container.classList.remove('hidden');
+        if (mainMsg) mainMsg.innerText = 'Solicitud de viaje cercana';
+        lucide.createIcons();
+    }
+
+    function getCurrentDriverOfferData() {
+        if (!currentUser || currentUser.role !== 'conductor') return null;
+        const vehicle = currentUser.vehiculo || {};
+        const brand = vehicle.marca || currentUser.brand || 'Vehículo';
+        const model = vehicle.modelo || currentUser.model || 'Modelo';
+        const color = vehicle.color || currentUser.color || 'Color';
+        const plate = vehicle.placa || currentUser.plate || 'N/A';
+        return {
+            id: currentUser.id,
+            name: currentUser.name || 'Conductor',
+            rating: currentUser.rating || currentUser.calificacion || '5.0',
+            color,
+            brand,
+            model,
+            vehicle: `${brand} ${model}`.trim(),
+            plate,
+            phone: currentUser.phone || currentUser.telefono || '',
+            photo: getUserPhotoSource(currentUser),
+            ubicacion: currentUser.ubicacion || null
+        };
+    }
+
+    function acceptDriverTripRequest(encodedRequestId) {
+        const requestId = decodeURIComponent(encodedRequestId || '');
+        const driverOffer = getCurrentDriverOfferData();
+        const requests = getStoredTripRequests();
+        const request = requests.find(req => req && req.id === requestId);
+        if (!request || !driverOffer) return;
+        request.status = 'accepted';
+        request.acceptedAt = new Date().toISOString();
+        request.driver = driverOffer;
+        request.driverId = driverOffer.id;
+        request.driverName = driverOffer.name;
+        saveStoredTripRequests(requests);
+        renderDriverTripRequestCard();
+        const mainMsg = document.getElementById('driver-main-msg');
+        if (mainMsg) mainMsg.innerText = 'Viaje aceptado';
+    }
+
+    function rejectDriverTripRequest(encodedRequestId) {
+        const requestId = decodeURIComponent(encodedRequestId || '');
+        const requests = getStoredTripRequests().map(req => req && req.id === requestId ? { ...req, status: 'rejected', rejectedBy: currentUser?.id || '', rejectedAt: new Date().toISOString() } : req);
+        saveStoredTripRequests(requests.filter(req => req && req.status === 'pending'));
+        renderDriverTripRequestCard();
+    }
+
+    function getAcceptedDriverForPassengerRequest() {
+        const requestId = appState.pendingTrip?.requestId;
+        if (!requestId) return null;
+        const request = getStoredTripRequests().find(req => req && req.id === requestId && req.status === 'accepted' && req.driver);
+        if (!request) return null;
+        return request.driver;
+    }
+
+    function startPassengerPendingRequestWatcher() {
+        if (window.driveMxPassengerRequestWatcher) clearInterval(window.driveMxPassengerRequestWatcher);
+        window.driveMxPassengerRequestWatcher = setInterval(() => {
+            if (activePanel !== 'passenger' && activePanel !== 'passenger-offers') return;
+            const acceptedDriver = getAcceptedDriverForPassengerRequest();
+            if (acceptedDriver) {
+                clearInterval(window.driveMxPassengerRequestWatcher);
+                window.driveMxPassengerRequestWatcher = null;
+                acceptDriverOffer(acceptedDriver);
+            }
+        }, 1500);
     }
 
     function applyAutomaticTripWalletDiscount(tripData = null) {
@@ -3434,7 +3662,12 @@
         document.getElementById('p-banners').classList.add('hidden-view');
         document.getElementById('p-wallet').classList.add('hidden-view');
         document.getElementById('p-header').classList.add('hidden-view');
-        setTimeout(() => { showDriverSelection(); }, 3000);
+        startPassengerPendingRequestWatcher();
+        setTimeout(() => {
+            const acceptedDriver = getAcceptedDriverForPassengerRequest();
+            if (acceptedDriver) acceptDriverOffer(acceptedDriver);
+            else showDriverSelection();
+        }, 3000);
     }
 
     function showDriverSelection() {
@@ -4205,11 +4438,15 @@
     }
 
     function handleDriverBack() { activePanel = null; document.getElementById('driver-registration-view').classList.add('hidden'); document.getElementById('login-screen').classList.remove('hidden'); }
+    window.addEventListener('storage', (event) => {
+        if (event.key === getTripRequestsStorageKey()) renderDriverTripRequestCard();
+    });
+    window.addEventListener('drive_mx_trip_requests_updated', renderDriverTripRequestCard);
+
 </script>
 
 <script async defer
-src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDIE4zI4nIoNtMY-VUGvm0mtDSm5r6cMMo&libraries=places&callback=onGoogleMapsReady">
-</script>
+src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDIE4zI4nIoNtMY-VUGvm0mtDSm5r6cMMo&libraries=places&callback=onGoogleMapsReady"></script>
 
 </body>
 </html>

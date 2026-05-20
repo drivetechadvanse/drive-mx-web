@@ -4456,7 +4456,8 @@
     browserLocalPersistence,
     createUserWithEmailAndPassword,
     signInWithEmailAndPassword,
-    onAuthStateChanged
+    onAuthStateChanged,
+    signInAnonymously
   } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
   import {
     getFirestore,
@@ -4507,9 +4508,35 @@
 
   async function uploadDataImage(path, dataUrl) {
     if (!isDataImage(dataUrl)) return dataUrl || '';
-    const storageRef = ref(storage, path);
-    await uploadString(storageRef, dataUrl, 'data_url');
-    return await getDownloadURL(storageRef);
+    try {
+      const storageRef = ref(storage, path);
+      await uploadString(storageRef, dataUrl, 'data_url');
+      return await getDownloadURL(storageRef);
+    } catch (error) {
+      console.warn('Storage no confirmó la carga:', path, error.code || error.message);
+      return '';
+    }
+  }
+
+  function removeUndefinedAndLargeImages(obj) {
+    const clean = Array.isArray(obj) ? [] : {};
+    Object.entries(obj || {}).forEach(([key, value]) => {
+      if (value === undefined) return;
+      if (typeof value === 'string' && value.startsWith('data:image/')) return;
+      if (value && typeof value === 'object' && !(value instanceof Date)) clean[key] = removeUndefinedAndLargeImages(value);
+      else clean[key] = value;
+    });
+    return clean;
+  }
+
+  async function ensureFirebaseSession() {
+    if (auth.currentUser) return auth.currentUser;
+    try {
+      return (await signInAnonymously(auth)).user;
+    } catch (error) {
+      console.warn('Auth anónimo no disponible:', error.code || error.message);
+      return null;
+    }
   }
 
   function localUsers() {
@@ -4572,9 +4599,11 @@
     const collectionName = COLLECTION_BY_ROLE[user.role];
     if (!collectionName) return user;
 
+    await ensureFirebaseSession();
     const prepared = await prepareUserForFirebase(user);
+    const firestoreUser = removeUndefinedAndLargeImages(prepared);
     await setDoc(doc(db, collectionName, String(prepared.id)), {
-      ...prepared,
+      ...firestoreUser,
       updatedAtServer: serverTimestamp()
     }, { merge: true });
 
@@ -4730,7 +4759,7 @@
         location.reload();
       } catch (error) {
         console.error('Registro pasajero Firebase:', error);
-        alert('Se guardó localmente, pero Firebase no confirmó el guardado. Revisa reglas/conexión de Firebase.');
+        alert('Se guardó localmente, pero Firebase no confirmó el guardado: ' + (error.code || error.message || error) + '. Revisa reglas/conexión de Firebase.');
         return originalSavePassenger?.apply(this, arguments);
       }
     };
@@ -4791,7 +4820,7 @@
         alert('Conductor creado, guardado en Firebase y activado en panel Driver.');
       } catch (error) {
         console.error('Registro conductor Firebase:', error);
-        alert('No se pudo guardar el conductor en Firebase. Revisa reglas/conexión. No se eliminó el flujo local.');
+        alert('No se pudo guardar el conductor en Firebase: ' + (error.code || error.message || error) + '. Revisa reglas/conexión. No se eliminó el flujo local.');
         return originalSaveDriver?.apply(this, arguments);
       } finally {
         window.isSavingDriverRequest = false;

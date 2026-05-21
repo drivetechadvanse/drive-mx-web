@@ -4469,7 +4469,7 @@
 </script>
 
 
-<!-- Firebase Bridge NO invasivo: conserva el flujo local original y sincroniza en Firebase -->
+<!-- Firebase Bridge CORREGIDO: UID como llave única, Auth persistente, Firestore como fuente de verdad -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
   import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-analytics.js";
@@ -4480,13 +4480,16 @@
     createUserWithEmailAndPassword,
     signInWithEmailAndPassword,
     onAuthStateChanged,
+    signOut,
     signInAnonymously
   } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
   import {
     getFirestore,
     doc,
     setDoc,
+    getDoc,
     getDocs,
+    deleteDoc,
     collection,
     onSnapshot,
     serverTimestamp,
@@ -4520,29 +4523,10 @@
   const storage = getStorage(app);
   await setPersistence(auth, browserLocalPersistence);
 
-  const COLLECTION_BY_ROLE = {
-    pasajero: 'pasajeros',
-    conductor: 'conductores',
-    admin: 'admins'
-  };
-
-  const ROLE_STORAGE_ROOT = {
-    pasajero: 'pasajeros',
-    conductor: 'conductores',
-    admin: 'admins'
-  };
-
-  const ROLE_WALLET_COLLECTION = {
-    pasajero: 'carterasPasajeros',
-    conductor: 'carterasConductores',
-    admin: 'carterasAdmins'
-  };
-
-  const ROLE_TRIPS_COLLECTION = {
-    pasajero: 'viajesPasajeros',
-    conductor: 'viajesConductores',
-    admin: 'viajesAdmins'
-  };
+  const COLLECTION_BY_ROLE = { pasajero: 'pasajeros', conductor: 'conductores', admin: 'admins' };
+  const ROLE_STORAGE_ROOT = { pasajero: 'pasajeros', conductor: 'conductores', admin: 'admins' };
+  const ROLE_WALLET_COLLECTION = { pasajero: 'carterasPasajeros', conductor: 'carterasConductores', admin: 'carterasAdmins' };
+  const ROLE_TRIPS_COLLECTION = { pasajero: 'viajesPasajeros', conductor: 'viajesConductores', admin: 'viajesAdmins' };
 
   function normalizeRole(role) {
     if (role === 'driver') return 'conductor';
@@ -4551,53 +4535,104 @@
     return ['pasajero', 'conductor', 'admin'].includes(role) ? role : 'pasajero';
   }
 
-  function safeStorageSegment(value) {
-    return String(value || Date.now()).replace(/[^a-zA-Z0-9_-]/g, '_');
-  }
-
+  function isDataImage(value) { return typeof value === 'string' && value.startsWith('data:image/'); }
   function imageContentType(dataUrl) {
     const match = String(dataUrl || '').match(/^data:(image\/[^;]+);base64,/i);
     return match ? match[1] : 'image/jpeg';
   }
+  function safeStorageSegment(value) { return String(value || Date.now()).replace(/[^a-zA-Z0-9_-]/g, '_'); }
+  function normalizeEmail(email) { return String(email || '').trim().toLowerCase(); }
+  function normalizeLogin(login) { return String(login || '').trim().toLowerCase(); }
 
-  function isDataImage(value) {
-    return typeof value === 'string' && value.startsWith('data:image/');
+  function getAppVar(name, fallback = undefined) {
+    try {
+      const value = Function(`try { return typeof ${name} !== "undefined" ? ${name} : undefined; } catch (_) { return undefined; }`)();
+      return value === undefined ? fallback : value;
+    } catch (_) { return fallback; }
   }
 
-  async function uploadDataImage(path, dataUrl) {
-    if (!isDataImage(dataUrl)) return dataUrl || '';
-    await ensureFirebaseSession();
-    const cleanPath = String(path || '').replace(/^\/+/, '');
-    try {
-      const storageRef = ref(storage, cleanPath);
-      await uploadString(storageRef, dataUrl, 'data_url', {
-        contentType: imageContentType(dataUrl),
-        customMetadata: {
-          app: 'drive_mx',
-          storagePath: cleanPath,
-          uploadedAt: new Date().toISOString()
-        }
-      });
-      return await getDownloadURL(storageRef);
-    } catch (error) {
-      console.error('Storage no guardó la imagen:', cleanPath, error.code || error.message);
-      throw error;
-    }
+  function setAppVar(name, value) {
+    try { Function('value', `${name} = value;`)(value); } catch (_) {}
+    try { window[name] = value; } catch (_) {}
+    return value;
   }
 
-  async function uploadRoleImage(role, userId, imageKey, dataUrl) {
-    if (!isDataImage(dataUrl)) return { url: dataUrl || '', path: '', error: '' };
-    const safeRole = normalizeRole(role);
-    const safeId = safeStorageSegment(userId);
-    const safeKey = safeStorageSegment(imageKey);
-    const extension = imageContentType(dataUrl).includes('png') ? 'png' : 'jpg';
-    const path = `${ROLE_STORAGE_ROOT[safeRole]}/${safeId}/imagenes/${safeKey}.${extension}`;
-    try {
-      const url = await uploadDataImage(path, dataUrl);
-      return { url, path, error: '' };
-    } catch (error) {
-      return { url: '', path, error: error.code || error.message || String(error) };
-    }
+  function getCurrentAppUser() {
+    return getAppVar('currentUser', getCurrentAppUser() || null);
+  }
+
+  function setCurrentAppUser(user) {
+    return setAppVar('currentUser', user);
+  }
+
+  function getSelectedAdminIds() {
+    const fromGlobal = getAppVar('selectedIds', window.selectedIds || []);
+    if (Array.isArray(fromGlobal) && fromGlobal.length) return [...fromGlobal].map(String);
+    return [...document.querySelectorAll('#admin-requests-container .card-selected')]
+      .map(card => String(card.id || '').replace(/^card-/, ''))
+      .filter(Boolean);
+  }
+
+  function setSelectedAdminIds(ids) {
+    setAppVar('selectedIds', ids || []);
+    window.selectedIds = ids || [];
+  }
+
+  function getCurrentAdminViewSafe() {
+    const value = getAppVar('currentAdminView', window.currentAdminView || '');
+    if (value) return value;
+    const title = (document.getElementById('admin-list-title')?.innerText || '').toLowerCase();
+    if (title.includes('pasaj')) return 'passengers';
+    if (title.includes('conductor') || title.includes('solicitudes')) return 'requests';
+    return '';
+  }
+
+  function getLocalUsersSafe() {
+    try { return Array.isArray(window.getUsersDb?.()) ? window.getUsersDb() : []; }
+    catch (_) { return []; }
+  }
+
+  function saveLocalUsersSafe(users) {
+    if (typeof window.saveUsersDb === 'function') return window.saveUsersDb(users || []);
+    localStorage.setItem('db_usuarios_permanente', JSON.stringify(users || []));
+    return users || [];
+  }
+
+  function normalizeUserForLocal(user) {
+    const role = normalizeRole(user?.role);
+    const id = String(user?.uid || user?.id || '').trim();
+    return { ...(user || {}), uid: id, id, role };
+  }
+
+  function localUserMatches(a, b) {
+    if (!a || !b) return false;
+    const aRole = normalizeRole(a.role), bRole = normalizeRole(b.role);
+    const aUid = String(a.uid || a.id || ''), bUid = String(b.uid || b.id || '');
+    if (aUid && bUid && aUid === bUid && aRole === bRole) return true;
+    const aEmail = normalizeEmail(a.correo), bEmail = normalizeEmail(b.correo);
+    if (aEmail && bEmail && aEmail === bEmail && aRole === bRole) return true;
+    const aUser = normalizeLogin(a.usuario), bUser = normalizeLogin(b.usuario);
+    if (aUser && bUser && aUser === bUser && aRole === bRole) return true;
+    return false;
+  }
+
+  function mergeLocalUser(user) {
+    const clean = normalizeUserForLocal(user);
+    if (!clean.id || !clean.role) return clean;
+    const users = getLocalUsersSafe();
+    const idx = users.findIndex(u => localUserMatches(u, clean));
+    if (idx >= 0) users[idx] = { ...users[idx], ...clean, id: clean.id, uid: clean.id, role: clean.role };
+    else users.push(clean);
+    saveLocalUsersSafe(users);
+    return clean;
+  }
+
+  function removeLocalUser(role, uid) {
+    const cleanRole = normalizeRole(role);
+    const cleanUid = String(uid || '');
+    const users = getLocalUsersSafe().filter(u => !(normalizeRole(u.role) === cleanRole && String(u.uid || u.id || '') === cleanUid));
+    saveLocalUsersSafe(users);
+    localStorage.removeItem(`wallet_${cleanUid}`);
   }
 
   function removeUndefinedAndLargeImages(obj) {
@@ -4611,112 +4646,143 @@
     return clean;
   }
 
-  async function ensureFirebaseSession() {
+  async function ensureFirebaseSessionForSystemWrite() {
     if (auth.currentUser) return auth.currentUser;
+    try { return (await signInAnonymously(auth)).user; }
+    catch (error) { console.warn('Auth anónimo no disponible:', error.code || error.message); return null; }
+  }
+
+  async function uploadDataImage(path, dataUrl) {
+    if (!isDataImage(dataUrl)) return dataUrl || '';
+    await ensureFirebaseSessionForSystemWrite();
+    const cleanPath = String(path || '').replace(/^\/+/, '');
+    const storageRef = ref(storage, cleanPath);
+    await uploadString(storageRef, dataUrl, 'data_url', {
+      contentType: imageContentType(dataUrl),
+      customMetadata: { app: 'drive_mx', storagePath: cleanPath, uploadedAt: new Date().toISOString() }
+    });
+    return await getDownloadURL(storageRef);
+  }
+
+  async function uploadRoleImage(role, userId, imageKey, dataUrl) {
+    if (!isDataImage(dataUrl)) return { url: dataUrl || '', path: '', error: '' };
+    const safeRole = normalizeRole(role);
+    const safeId = safeStorageSegment(userId);
+    const safeKey = safeStorageSegment(imageKey);
+    const extension = imageContentType(dataUrl).includes('png') ? 'png' : 'jpg';
+    const path = `${ROLE_STORAGE_ROOT[safeRole]}/${safeId}/imagenes/${safeKey}.${extension}`;
+    try { return { url: await uploadDataImage(path, dataUrl), path, error: '' }; }
+    catch (error) { return { url: '', path, error: error.code || error.message || String(error) }; }
+  }
+
+  function getTempImageValue(key, previewId = '') {
+    const direct = window[key];
+    if (isDataImage(direct)) return direct;
+    const previewValue = previewId ? (document.getElementById(previewId)?.src || '') : '';
+    if (isDataImage(previewValue)) return previewValue;
     try {
-      return (await signInAnonymously(auth)).user;
-    } catch (error) {
-      console.warn('Auth anónimo no disponible:', error.code || error.message);
-      return null;
+      const globalValue = Function(`try { return typeof ${key} !== "undefined" ? ${key} : ""; } catch (_) { return ""; }`)();
+      return isDataImage(globalValue) ? globalValue : '';
+    } catch (_) { return ''; }
+  }
+
+  async function getOrCreateEmailUser(email, pass) {
+    const cleanEmail = normalizeEmail(email);
+    const cleanPass = String(pass || '').trim();
+    if (!cleanEmail || !cleanEmail.includes('@') || cleanPass.length < 6) {
+      throw new Error('El correo debe ser válido y la contraseña debe tener mínimo 6 caracteres.');
+    }
+    try { return (await createUserWithEmailAndPassword(auth, cleanEmail, cleanPass)).user; }
+    catch (error) {
+      if (error.code === 'auth/email-already-in-use') return (await signInWithEmailAndPassword(auth, cleanEmail, cleanPass)).user;
+      throw error;
     }
   }
 
-  function localUsers() {
-    try { return Array.isArray(window.getUsersDb?.()) ? window.getUsersDb() : []; }
-    catch (_) { return []; }
+  async function signInFirebaseIfPossible(login, pass) {
+    const email = normalizeEmail(login);
+    if (!email.includes('@') || !pass) return null;
+    try { return (await signInWithEmailAndPassword(auth, email, pass)).user; }
+    catch (error) { console.warn('Auth login:', error.code || error.message); return null; }
   }
 
-  function saveLocalUsers(users) {
-    if (typeof window.saveUsersDb === 'function') window.saveUsersDb(users);
-    else localStorage.setItem('db_usuarios_permanente', JSON.stringify(users));
+  async function findUserByUid(uid, preferredRole = '') {
+    const cleanUid = String(uid || '');
+    const roles = preferredRole ? [normalizeRole(preferredRole)] : ['pasajero', 'conductor', 'admin'];
+    for (const role of roles) {
+      const collectionName = COLLECTION_BY_ROLE[role];
+      const snap = await getDoc(doc(db, collectionName, cleanUid));
+      if (snap.exists()) return normalizeUserForLocal({ id: snap.id, uid: snap.id, ...snap.data(), role });
+    }
+    return null;
   }
 
-  function mergeLocalUser(user) {
-    if (!user || !user.id) return;
-    const users = localUsers();
-    const idx = users.findIndex(u => String(u.id) === String(user.id) ||
-      (u.role === user.role && u.correo && user.correo && String(u.correo).toLowerCase() === String(user.correo).toLowerCase()) ||
-      (u.role === user.role && u.usuario && user.usuario && String(u.usuario).toLowerCase() === String(user.usuario).toLowerCase())
-    );
-    if (idx >= 0) users[idx] = { ...users[idx], ...user };
-    else users.push(user);
-    saveLocalUsers(users);
+  async function findUserByLoginInFirestore(login, pass) {
+    const needle = normalizeLogin(login);
+    if (!needle) return null;
+    for (const role of ['pasajero', 'conductor', 'admin']) {
+      const collectionName = COLLECTION_BY_ROLE[role];
+      const snap = await getDocs(collection(db, collectionName));
+      let found = null;
+      snap.forEach(d => {
+        const data = { id: d.id, uid: d.id, ...d.data(), role };
+        if ((normalizeLogin(data.usuario) === needle || normalizeEmail(data.correo) === needle) && String(data.pass || '') === String(pass || '')) found = normalizeUserForLocal(data);
+      });
+      if (found) return found;
+    }
+    return null;
   }
 
   async function prepareUserForFirebase(user) {
-    const copy = { ...user };
-    const id = String(copy.id || Date.now());
-    const role = copy.role || 'pasajero';
+    const copy = normalizeUserForLocal({ ...(user || {}) });
+    copy.uid = String(copy.uid || copy.id || auth.currentUser?.uid || '');
+    copy.id = copy.uid;
+    copy.role = normalizeRole(copy.role);
+    copy.storagePaths = { ...(copy.storagePaths || {}) };
+    copy.storageStatus = { ...(copy.storageStatus || {}) };
 
-    copy.role = normalizeRole(role);
-    copy.storageStatus = copy.storageStatus || {};
-    copy.storagePaths = copy.storagePaths || {};
+    const imageMapByRole = {
+      pasajero: [['foto', copy.foto || copy.passengerFoto || ''], ['passengerFoto', copy.passengerFoto || copy.foto || '']],
+      conductor: [['foto', copy.foto || copy.driverFoto || ''], ['driverFoto', copy.driverFoto || copy.foto || ''], ['ineFrontal', copy.ineFrontal || ''], ['ineTrasera', copy.ineTrasera || ''], ['tarjetaCirculacion', copy.tarjetaCirculacion || ''], ['fotoVehiculo', copy.fotoVehiculo || '']],
+      admin: [['foto', copy.foto || copy.adminFoto || ''], ['adminFoto', copy.adminFoto || copy.foto || '']]
+    };
 
-    if (copy.role === 'pasajero') {
-      const photo = await uploadRoleImage('pasajero', id, 'perfil_pasajero', copy.passengerFoto || copy.foto || '');
-      if (photo.url) {
-        copy.foto = photo.url;
-        copy.passengerFoto = photo.url;
-        copy.storagePaths.passengerFoto = photo.path;
-        copy.storageStatus.passengerFoto = 'guardada';
-      } else if (photo.error) {
-        copy.storageStatus.passengerFoto = `error:${photo.error}`;
-      }
-      delete copy.driverFoto;
-      delete copy.ineFrontal;
-      delete copy.ineTrasera;
-      delete copy.tarjetaCirculacion;
-      delete copy.fotoVehiculo;
+    for (const [key, value] of imageMapByRole[copy.role] || []) {
+      if (!isDataImage(value)) continue;
+      const uploaded = await uploadRoleImage(copy.role, copy.id, key, value);
+      if (uploaded.url) {
+        copy[key] = uploaded.url;
+        if (key === 'foto') {
+          if (copy.role === 'pasajero') copy.passengerFoto = uploaded.url;
+          if (copy.role === 'conductor') copy.driverFoto = uploaded.url;
+          if (copy.role === 'admin') copy.adminFoto = uploaded.url;
+        }
+        copy.storagePaths[key] = uploaded.path;
+        copy.storageStatus[key] = 'guardada';
+      } else if (uploaded.error) copy.storageStatus[key] = `error:${uploaded.error}`;
     }
 
-    if (copy.role === 'conductor') {
-      const profile = await uploadRoleImage('conductor', id, 'perfil_conductor', copy.driverFoto || copy.foto || '');
-      const ineFront = await uploadRoleImage('conductor', id, 'ine_frontal', copy.ineFrontal || '');
-      const ineBack = await uploadRoleImage('conductor', id, 'ine_trasera', copy.ineTrasera || '');
-      const circ = await uploadRoleImage('conductor', id, 'tarjeta_circulacion', copy.tarjetaCirculacion || '');
-      const vehicle = await uploadRoleImage('conductor', id, 'vehiculo', copy.fotoVehiculo || '');
-      if (profile.url) { copy.foto = profile.url; copy.driverFoto = profile.url; copy.storagePaths.driverFoto = profile.path; copy.storageStatus.driverFoto = 'guardada'; }
-      else if (profile.error) copy.storageStatus.driverFoto = `error:${profile.error}`;
-      if (ineFront.url) { copy.ineFrontal = ineFront.url; copy.storagePaths.ineFrontal = ineFront.path; copy.storageStatus.ineFrontal = 'guardada'; }
-      else if (ineFront.error) copy.storageStatus.ineFrontal = `error:${ineFront.error}`;
-      if (ineBack.url) { copy.ineTrasera = ineBack.url; copy.storagePaths.ineTrasera = ineBack.path; copy.storageStatus.ineTrasera = 'guardada'; }
-      else if (ineBack.error) copy.storageStatus.ineTrasera = `error:${ineBack.error}`;
-      if (circ.url) { copy.tarjetaCirculacion = circ.url; copy.storagePaths.tarjetaCirculacion = circ.path; copy.storageStatus.tarjetaCirculacion = 'guardada'; }
-      else if (circ.error) copy.storageStatus.tarjetaCirculacion = `error:${circ.error}`;
-      if (vehicle.url) { copy.fotoVehiculo = vehicle.url; copy.storagePaths.fotoVehiculo = vehicle.path; copy.storageStatus.fotoVehiculo = 'guardada'; }
-      else if (vehicle.error) copy.storageStatus.fotoVehiculo = `error:${vehicle.error}`;
-      copy.disponible = Boolean(copy.disponible);
-      copy.estadoConductor = copy.disponible ? 'disponible' : (copy.estadoConductor || 'no_disponible');
-      delete copy.passengerFoto;
-    }
-
-    if (copy.role === 'admin') {
-      const photo = await uploadRoleImage('admin', id, 'perfil_admin', copy.adminFoto || copy.foto || '');
-      if (photo.url) { copy.foto = photo.url; copy.adminFoto = photo.url; copy.storagePaths.adminFoto = photo.path; copy.storageStatus.adminFoto = 'guardada'; }
-      else if (photo.error) copy.storageStatus.adminFoto = `error:${photo.error}`;
-    }
-
-    copy.firebaseSyncedAt = new Date().toISOString();
     copy.updatedAt = new Date().toISOString();
     return copy;
   }
 
   async function saveUserGlobal(user) {
-    if (!user || !user.id || !user.role) return user;
-    const collectionName = COLLECTION_BY_ROLE[user.role];
-    if (!collectionName) return user;
-
-    await ensureFirebaseSession();
+    if (!user || !user.role) return user;
     const prepared = await prepareUserForFirebase(user);
+    if (!prepared.id) throw new Error('No hay UID autenticado para guardar el usuario.');
+    const collectionName = COLLECTION_BY_ROLE[prepared.role];
     const firestoreUser = removeUndefinedAndLargeImages(prepared);
-    await setDoc(doc(db, collectionName, String(prepared.id)), {
+
+    await setDoc(doc(db, collectionName, prepared.id), {
       ...firestoreUser,
+      uid: prepared.id,
+      id: prepared.id,
       updatedAtServer: serverTimestamp()
     }, { merge: true });
 
-    // Índice mínimo para login/admin. Los datos sensibles y fotos viven solo en su colección por rol.
-    await setDoc(doc(db, 'usuariosIndice', `${prepared.role}_${String(prepared.id)}`), {
-      id: String(prepared.id),
+    await setDoc(doc(db, 'usuariosIndice', `${prepared.role}_${prepared.id}`), {
+      id: prepared.id,
+      uid: prepared.id,
       role: prepared.role,
       name: prepared.name || '',
       usuario: prepared.usuario || '',
@@ -4731,52 +4797,42 @@
     return prepared;
   }
 
+  async function ensureWallet(role, uid) {
+    const collectionName = ROLE_WALLET_COLLECTION[normalizeRole(role)];
+    if (!collectionName || !uid) return;
+    await setDoc(doc(db, collectionName, String(uid)), {
+      userId: String(uid), uid: String(uid), role: normalizeRole(role), saldo: 0, historial: [], trips: 0, updatedAtServer: serverTimestamp()
+    }, { merge: true });
+  }
+
   async function loadUsersGlobal() {
-    const merged = localUsers();
-    for (const collectionName of ['pasajeros', 'conductores', 'admins']) {
+    const merged = [];
+    for (const role of ['pasajero', 'conductor', 'admin']) {
+      const collectionName = COLLECTION_BY_ROLE[role];
       const snap = await getDocs(collection(db, collectionName));
-      snap.forEach(d => {
-        const data = { id: d.id, ...d.data() };
-        const idx = merged.findIndex(u => String(u.id) === String(data.id));
-        if (idx >= 0) merged[idx] = { ...merged[idx], ...data };
-        else merged.push(data);
-      });
+      snap.forEach(d => merged.push(normalizeUserForLocal({ id: d.id, uid: d.id, ...d.data(), role })));
     }
-    saveLocalUsers(merged);
+    saveLocalUsersSafe(merged);
     return merged;
-  }
-
-  async function registerFirebaseAuthIfPossible(user) {
-    const email = String(user?.correo || '').trim();
-    const pass = String(user?.pass || '').trim();
-    if (!email || !pass || !email.includes('@') || pass.length < 6) return;
-    try { await createUserWithEmailAndPassword(auth, email, pass); }
-    catch (error) {
-      if (!['auth/email-already-in-use', 'auth/invalid-email'].includes(error.code)) console.warn('Auth registro:', error.code || error.message);
-    }
-  }
-
-  async function signInFirebaseIfPossible(login, pass) {
-    const email = String(login || '').trim();
-    if (!email.includes('@') || !pass) return;
-    try { await signInWithEmailAndPassword(auth, email, pass); }
-    catch (error) { console.warn('Auth login:', error.code || error.message); }
   }
 
   function installRealtimeUsers() {
     if (window.driveMxFirebaseUsersInstalled) return;
     window.driveMxFirebaseUsersInstalled = true;
-    ['pasajeros', 'conductores', 'admins'].forEach(collectionName => {
+    ['pasajero', 'conductor', 'admin'].forEach(role => {
+      const collectionName = COLLECTION_BY_ROLE[role];
       onSnapshot(collection(db, collectionName), snap => {
         snap.docChanges().forEach(change => {
-          if (change.type === 'removed') return;
-          mergeLocalUser({ id: change.doc.id, ...change.doc.data() });
+          const uid = change.doc.id;
+          if (change.type === 'removed') removeLocalUser(role, uid);
+          else mergeLocalUser({ id: uid, uid, ...change.doc.data(), role });
         });
-        if (window.activePanel === 'admin') {
-          if (window.currentAdminView === 'passengers') window.renderAdminPassengers?.();
-          else if (window.currentAdminView === 'requests') window.renderAdminRequests?.();
+        if (getAppVar('activePanel', window.activePanel) === 'admin') {
+          const adminView = getCurrentAdminViewSafe();
+          if (adminView === 'passengers') window.renderAdminPassengers?.();
+          else if (adminView === 'requests') window.renderAdminRequests?.();
         }
-      });
+      }, error => console.warn(`Realtime ${collectionName}:`, error.message));
     });
   }
 
@@ -4793,66 +4849,51 @@
     }, error => console.warn('Solicitudes realtime:', error.message));
   }
 
+  async function deleteUserEverywhere(role, uid) {
+    const cleanRole = normalizeRole(role);
+    const cleanUid = String(uid || '');
+    if (!cleanUid) return;
+    await deleteDoc(doc(db, COLLECTION_BY_ROLE[cleanRole], cleanUid));
+    await deleteDoc(doc(db, 'usuariosIndice', `${cleanRole}_${cleanUid}`)).catch(() => {});
+    if (ROLE_WALLET_COLLECTION[cleanRole]) await deleteDoc(doc(db, ROLE_WALLET_COLLECTION[cleanRole], cleanUid)).catch(() => {});
+    removeLocalUser(cleanRole, cleanUid);
+  }
+
   async function saveDriverAvailability(disponible) {
-    const user = window.currentUser;
+    const user = getCurrentAppUser();
     if (!user || user.role !== 'conductor') return;
     user.disponible = Boolean(disponible);
     user.estadoConductor = disponible ? 'disponible' : 'no_disponible';
     mergeLocalUser(user);
-    await setDoc(doc(db, 'conductores', String(user.id)), {
-      disponible: Boolean(disponible),
-      estadoConductor: user.estadoConductor,
-      activoEnServicios: Boolean(disponible),
-      updatedAtServer: serverTimestamp()
+    await setDoc(doc(db, 'conductores', String(user.uid || user.id)), {
+      uid: String(user.uid || user.id), disponible: Boolean(disponible), estadoConductor: user.estadoConductor,
+      activoEnServicios: Boolean(disponible), updatedAtServer: serverTimestamp()
     }, { merge: true });
   }
 
   async function saveDriverLocation() {
-    const user = window.currentUser;
+    const user = getCurrentAppUser();
     if (!user || user.role !== 'conductor' || !navigator.geolocation) return;
     navigator.geolocation.getCurrentPosition(async pos => {
-      const ubicacion = {
-        lat: pos.coords.latitude,
-        lng: pos.coords.longitude,
-        accuracy: pos.coords.accuracy,
-        driverId: String(user.id),
-        disponible: Boolean(window.isAvailable),
-        updatedAt: new Date().toISOString()
-      };
+      const uid = String(user.uid || user.id);
+      const ubicacion = { lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: pos.coords.accuracy, driverId: uid, uid, disponible: Boolean(window.isAvailable), updatedAt: new Date().toISOString() };
       user.ubicacion = ubicacion;
-      localStorage.setItem('drive_mx_driver_location_' + user.id, JSON.stringify(ubicacion));
+      localStorage.setItem('drive_mx_driver_location_' + uid, JSON.stringify(ubicacion));
       localStorage.setItem('drive_mx_last_driver_location', JSON.stringify(ubicacion));
       mergeLocalUser(user);
-      await setDoc(doc(db, 'ubicacionesConductores', String(user.id)), { ...ubicacion, updatedAtServer: serverTimestamp() }, { merge: true });
-      await setDoc(doc(db, 'conductores', String(user.id)), { ubicacion, updatedAtServer: serverTimestamp() }, { merge: true });
+      await setDoc(doc(db, 'ubicacionesConductores', uid), { ...ubicacion, updatedAtServer: serverTimestamp() }, { merge: true });
+      await setDoc(doc(db, 'conductores', uid), { ubicacion, updatedAtServer: serverTimestamp() }, { merge: true });
     }, () => {}, { enableHighAccuracy: true, maximumAge: 20000, timeout: 8000 });
   }
 
-  function getTempImageValue(key, previewId = '') {
-    const direct = window[key];
-    if (isDataImage(direct)) return direct;
-    if (previewId) {
-      const previewValue = document.getElementById(previewId)?.src || '';
-      if (isDataImage(previewValue)) return previewValue;
-    }
-    try {
-      const globalValue = Function(`try { return typeof ${key} !== "undefined" ? ${key} : ""; } catch (_) { return ""; }`)();
-      return isDataImage(globalValue) ? globalValue : '';
-    } catch (_) {
-      return '';
-    }
-  }
-
   async function saveServiceToFirebase(id, service) {
-    const copy = { ...(service || {}), id, updatedAt: new Date().toISOString(), updatedAtServer: serverTimestamp() };
+    await ensureFirebaseSessionForSystemWrite();
+    const copy = { ...(service || {}), id, updatedAt: new Date().toISOString(), updatedAtServer: serverTimestamp(), ownerRole: 'admin', panel: 'panel-control' };
     if (isDataImage(copy.imagen)) {
-      const url = await uploadDataImage(`admins/panel-control/servicios-urbanos/${safeStorageSegment(id)}/imagenes/servicio_${Date.now()}.jpg`, copy.imagen);
-      copy.imagen = url;
+      copy.imagen = await uploadDataImage(`admins/panel-control/servicios-urbanos/${safeStorageSegment(id)}/imagenes/servicio_${Date.now()}.jpg`, copy.imagen);
       copy.storagePath = `admins/panel-control/servicios-urbanos/${safeStorageSegment(id)}/imagenes/`;
       copy.storageStatus = 'guardada';
     }
-    copy.ownerRole = 'admin';
-    copy.panel = 'panel-control';
     await setDoc(doc(db, 'admins', 'panelControl', 'serviciosUrbanos', id), copy, { merge: true });
     await setDoc(doc(db, 'serviciosUrbanos', id), copy, { merge: true });
     return copy;
@@ -4866,39 +4907,66 @@
     window.handleAuth = async function() {
       const login = document.getElementById('login-email')?.value?.trim() || '';
       const pass = document.getElementById('login-pass')?.value?.trim() || '';
-      try { await loadUsersGlobal(); } catch (e) { console.warn('Carga Firebase:', e.message); }
-      await signInFirebaseIfPossible(login, pass);
+      if (login === 'admincentral' && pass === '9271@') {
+        await ensureFirebaseSessionForSystemWrite();
+        return originalHandleAuth?.apply(this, arguments);
+      }
+      try {
+        let authUser = await signInFirebaseIfPossible(login, pass);
+        let user = authUser ? await findUserByUid(authUser.uid) : null;
+        if (!user) user = await findUserByLoginInFirestore(login, pass);
+        if (user) {
+          setCurrentAppUser(user);
+          window.persistPanelSession?.(user);
+          if (user.role === 'conductor') window.showDriverPanel?.();
+          else window.showPassengerPanel?.();
+          lucide.createIcons();
+          return;
+        }
+        await loadUsersGlobal();
+      } catch (e) { console.warn('Login Firebase corregido:', e.message); }
       return originalHandleAuth?.apply(this, arguments);
     };
 
     const originalSavePassenger = window.savePassengerRequest;
     window.savePassengerRequest = async function() {
-      const userId = String(Date.now());
-      const newPassenger = {
-        id: userId,
-        name: document.getElementById('dr-name')?.value || '',
-        usuario: (document.getElementById('reg-user')?.value || '').toLowerCase().trim(),
-        pass: document.getElementById('reg-pass')?.value || '',
-        correo: (document.getElementById('reg-email')?.value || '').toLowerCase().trim(),
-        phone: document.getElementById('dr-phone')?.value || '',
-        foto: getTempImageValue('tempBase64Photo', 'driver-photo-preview'),
-        passengerFoto: getTempImageValue('tempBase64Photo', 'driver-photo-preview'),
-        status: 'activo',
-        role: 'pasajero',
-        date: new Date().toLocaleDateString(),
-        createdAt: new Date().toISOString()
-      };
+      const email = normalizeEmail(document.getElementById('reg-email')?.value || '');
+      const pass = document.getElementById('reg-pass')?.value || '';
       try {
-        window.upsertUser?.(newPassenger);
-        window.saveWalletData?.(userId, { saldo: 0.00, historial: [], trips: 0 });
-        await registerFirebaseAuthIfPossible(newPassenger);
-        await saveUserGlobal(newPassenger);
-        await setDoc(doc(db, ROLE_WALLET_COLLECTION.pasajero, userId), { userId, role: 'pasajero', saldo: 0, historial: [], trips: 0, updatedAtServer: serverTimestamp() }, { merge: true });
+        const authUser = await getOrCreateEmailUser(email, pass);
+        const existing = await findUserByUid(authUser.uid, 'pasajero');
+        if (existing) {
+          setCurrentAppUser(existing);
+          window.persistPanelSession?.(existing);
+          mergeLocalUser(existing);
+          window.showPassengerPanel?.();
+          alert('Tu cuenta ya existe. Se cargaron tus datos desde Firebase.');
+          return;
+        }
+        const uid = authUser.uid;
+        const newPassenger = {
+          uid, id: uid, role: 'pasajero',
+          name: document.getElementById('dr-name')?.value || '',
+          usuario: normalizeLogin(document.getElementById('reg-user')?.value || ''),
+          pass,
+          correo: email,
+          phone: document.getElementById('dr-phone')?.value || '',
+          foto: getTempImageValue('tempBase64Photo', 'driver-photo-preview'),
+          passengerFoto: getTempImageValue('tempBase64Photo', 'driver-photo-preview'),
+          status: 'activo',
+          date: new Date().toLocaleDateString(),
+          createdAt: new Date().toISOString()
+        };
+        const synced = await saveUserGlobal(newPassenger);
+        await ensureWallet('pasajero', uid);
+        window.saveWalletData?.(uid, { saldo: 0.00, historial: [], trips: 0 });
+        setCurrentAppUser(synced);
+        window.persistPanelSession?.(synced);
+        window.showPassengerPanel?.();
         alert('Cuenta de pasajero creada y guardada en Firebase.');
-        location.reload();
       } catch (error) {
         console.error('Registro pasajero Firebase:', error);
-        alert('Se guardó localmente, pero Firebase no confirmó el guardado: ' + (error.code || error.message || error) + '. Revisa reglas/conexión de Firebase.');
+        alert('No se pudo registrar con Firebase: ' + (error.code || error.message || error));
         return originalSavePassenger?.apply(this, arguments);
       }
     };
@@ -4908,23 +4976,34 @@
       if (window.isSavingDriverRequest) return;
       window.isSavingDriverRequest = true;
       try {
-        const dbLocal = localUsers();
-        const driverId = window.buildUniqueDriverId ? window.buildUniqueDriverId(dbLocal) : `DRV_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
         const get = id => (document.getElementById(id)?.value || '').trim();
+        const email = normalizeEmail(get('reg-email') || getCurrentAppUser()?.correo || '');
+        const pass = get('reg-pass') || getCurrentAppUser()?.pass || `DRV${Date.now().toString().slice(-6)}`;
+        const authUser = auth.currentUser && !auth.currentUser.isAnonymous ? auth.currentUser : await getOrCreateEmailUser(email, pass);
+        const uid = authUser.uid;
+        const existing = await findUserByUid(uid, 'conductor');
+        if (existing) {
+          setCurrentAppUser(existing);
+          window.persistPanelSession?.(existing);
+          mergeLocalUser(existing);
+          window.showDriverPanel?.();
+          alert('Ya tienes registro de conductor. Se cargaron tus datos desde Firebase.');
+          return;
+        }
         const driverName = get('dr-name');
         const phoneValue = get('dr-phone');
         const plateValue = get('v-plate').toUpperCase();
         if (!driverName || !phoneValue || !plateValue) {
           alert('Completa nombre, teléfono y placa para finalizar el registro del conductor.');
-          window.isSavingDriverRequest = false;
           return;
         }
         const newDriver = {
-          id: driverId,
+          uid, id: uid, role: 'conductor',
+          parentPassengerId: getCurrentAppUser()?.role === 'pasajero' ? String(getCurrentAppUser()?.uid || getCurrentAppUser()?.id || '') : '',
           name: driverName,
-          usuario: window.createDriverLoginValue ? window.createDriverLoginValue(driverId) : `driver_${String(driverId).slice(-8)}`,
-          pass: get('reg-pass') || `DRV${String(driverId).slice(-6)}`,
-          correo: get('reg-email').toLowerCase(),
+          usuario: window.createDriverLoginValue ? window.createDriverLoginValue(uid) : `driver_${String(uid).slice(-8)}`,
+          pass,
+          correo: email,
           phone: phoneValue,
           foto: getTempImageValue('tempBase64Photo', 'driver-photo-preview'),
           driverFoto: getTempImageValue('tempBase64Photo', 'driver-photo-preview'),
@@ -4932,38 +5011,42 @@
           ineTrasera: getTempImageValue('tempIneBackPhoto', 'ine-b-preview'),
           tarjetaCirculacion: getTempImageValue('tempCirculationPhoto', 'circ-preview'),
           fotoVehiculo: getTempImageValue('tempVehiclePhoto', 'v-photo-preview'),
-          status: 'activo',
-          role: 'conductor',
-          disponible: false,
-          estadoConductor: 'no_disponible',
-          activoEnServicios: false,
-          date: new Date().toLocaleDateString(),
-          createdAt: new Date().toISOString(),
-          vehiculo: {
-            marca: get('v-brand'),
-            modelo: get('v-model'),
-            color: get('v-color'),
-            year: get('v-year'),
-            placa: plateValue
-          }
+          status: 'activo', disponible: false, estadoConductor: 'no_disponible', activoEnServicios: false,
+          date: new Date().toLocaleDateString(), createdAt: new Date().toISOString(),
+          vehiculo: { marca: get('v-brand'), modelo: get('v-model'), color: get('v-color'), year: get('v-year'), placa: plateValue }
         };
-        dbLocal.push(newDriver);
-        saveLocalUsers(dbLocal);
-        window.saveWalletData?.(driverId, { saldo: 0.00, historial: [], trips: 0 });
-        await registerFirebaseAuthIfPossible(newDriver);
         const synced = await saveUserGlobal(newDriver);
-        await setDoc(doc(db, ROLE_WALLET_COLLECTION.conductor, String(driverId)), { userId: String(driverId), role: 'conductor', saldo: 0, historial: [], trips: 0, updatedAtServer: serverTimestamp() }, { merge: true });
-        window.currentUser = synced;
+        await ensureWallet('conductor', uid);
+        window.saveWalletData?.(uid, { saldo: 0.00, historial: [], trips: 0 });
+        setCurrentAppUser(synced);
         window.persistPanelSession?.(synced);
         window.showDriverPanel?.();
         alert('Conductor creado, guardado en Firebase y activado en panel Driver.');
       } catch (error) {
         console.error('Registro conductor Firebase:', error);
-        alert('No se pudo guardar el conductor en Firebase: ' + (error.code || error.message || error) + '. Revisa reglas/conexión. No se eliminó el flujo local.');
+        alert('No se pudo guardar el conductor en Firebase: ' + (error.code || error.message || error));
         return originalSaveDriver?.apply(this, arguments);
-      } finally {
-        window.isSavingDriverRequest = false;
-      }
+      } finally { window.isSavingDriverRequest = false; }
+    };
+
+    const originalApplyToBeDriver = window.applyToBeDriver;
+    window.applyToBeDriver = async function() {
+      try {
+        const uid = auth.currentUser?.uid || getCurrentAppUser()?.uid || getCurrentAppUser()?.id;
+        if (uid) {
+          const existing = await findUserByUid(uid, 'conductor');
+          if (existing) {
+            setCurrentAppUser(existing);
+            window.persistPanelSession?.(existing);
+            mergeLocalUser(existing);
+            window.closeAll?.();
+            window.showDriverPanel?.();
+            return;
+          }
+        }
+        await loadUsersGlobal();
+      } catch (e) { console.warn('Buscar conductor existente:', e.message); }
+      return originalApplyToBeDriver?.apply(this, arguments);
     };
 
     const originalShowAdmin = window.showAdminPanel;
@@ -4976,7 +5059,7 @@
     window.showDriverPanel = function() {
       installRealtimeSolicitudes();
       originalShowDriver?.apply(this, arguments);
-      saveUserGlobal(window.currentUser).catch(() => {});
+      if (getCurrentAppUser()?.role === 'conductor') saveUserGlobal(getCurrentAppUser()).catch(() => {});
     };
 
     const originalToggleAvailability = window.toggleDriverAvailability;
@@ -4992,34 +5075,42 @@
       if (window.isAvailable) saveDriverLocation();
     };
 
+    window.eliminarSeleccionados = async function() {
+      const adminView = getCurrentAdminViewSafe();
+      const selected = getSelectedAdminIds();
+      if (adminView === 'urban-trips') return window.eliminarServicioUrbanoSeleccionado?.();
+      if (adminView === 'urban-taximeter') return;
+      if (!selected.length) { alert('Selecciona registros para eliminar'); return; }
+      const roleToDelete = adminView === 'passengers' ? 'pasajero' : 'conductor';
+      const idsToDelete = selected.map(String);
+      try {
+        await Promise.all(idsToDelete.map(id => deleteUserEverywhere(roleToDelete, id)));
+        setSelectedAdminIds([]);
+        if (adminView === 'passengers') window.renderAdminPassengers?.();
+        else window.renderAdminRequests?.();
+        alert('Registros eliminados en Firestore.');
+      } catch (error) {
+        console.error('Eliminar Firestore:', error);
+        alert('No se pudo eliminar en Firestore: ' + (error.code || error.message || error));
+      }
+    };
+
     const originalPublishRequest = window.publishPassengerTripRequest;
     window.publishPassengerTripRequest = async function(trip) {
       originalPublishRequest?.apply(this, arguments);
       const requestId = window.appState?.pendingTrip?.requestId || `REQ_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
       if (window.appState?.pendingTrip) window.appState.pendingTrip.requestId = requestId;
       const request = {
-        ...(trip || {}),
-        id: requestId,
-        status: 'pending',
-        passengerId: window.currentUser?.id || trip?.passengerId || '',
-        passengerName: trip?.passengerName || window.currentUser?.name || 'Pasajero',
-        passengerPhoto: trip?.passengerPhoto || window.getUserPhotoSource?.(window.currentUser) || '',
-        createdAt: new Date().toISOString(),
-        createdAtServer: serverTimestamp()
+        ...(trip || {}), id: requestId, status: 'pending',
+        passengerId: getCurrentAppUser()?.uid || getCurrentAppUser()?.id || trip?.passengerId || '',
+        passengerName: trip?.passengerName || getCurrentAppUser()?.name || 'Pasajero',
+        passengerPhoto: trip?.passengerPhoto || window.getUserPhotoSource?.(getCurrentAppUser()) || '',
+        createdAt: new Date().toISOString(), createdAtServer: serverTimestamp()
       };
       try {
         await setDoc(doc(db, 'solicitudesViaje', requestId), request, { merge: true });
-        if (request.passengerId) {
-          await setDoc(doc(db, ROLE_TRIPS_COLLECTION.pasajero, `${request.passengerId}_${requestId}`), {
-            ...request,
-            solicitudId: requestId,
-            ownerRole: 'pasajero',
-            ownerId: String(request.passengerId),
-            updatedAtServer: serverTimestamp()
-          }, { merge: true });
-        }
-      }
-      catch (e) { console.warn('Solicitud Firebase:', e.message); }
+        if (request.passengerId) await setDoc(doc(db, ROLE_TRIPS_COLLECTION.pasajero, `${request.passengerId}_${requestId}`), { ...request, solicitudId: requestId, ownerRole: 'pasajero', ownerId: String(request.passengerId), updatedAtServer: serverTimestamp() }, { merge: true });
+      } catch (e) { console.warn('Solicitud Firebase:', e.message); }
     };
 
     const originalAcceptRequest = window.acceptDriverTripRequest;
@@ -5029,23 +5120,8 @@
       const driverOffer = window.getCurrentDriverOfferData?.();
       if (!requestId || !driverOffer) return;
       try {
-        await updateDoc(doc(db, 'solicitudesViaje', requestId), {
-          status: 'accepted',
-          acceptedAt: new Date().toISOString(),
-          acceptedAtServer: serverTimestamp(),
-          driver: driverOffer,
-          driverId: driverOffer.id,
-          driverName: driverOffer.name
-        });
-        await setDoc(doc(db, ROLE_TRIPS_COLLECTION.conductor, `${driverOffer.id}_${requestId}`), {
-          solicitudId: requestId,
-          status: 'accepted',
-          ownerRole: 'conductor',
-          ownerId: String(driverOffer.id),
-          driver: driverOffer,
-          driverId: driverOffer.id,
-          createdAtServer: serverTimestamp()
-        }, { merge: true });
+        await updateDoc(doc(db, 'solicitudesViaje', requestId), { status: 'accepted', acceptedAt: new Date().toISOString(), acceptedAtServer: serverTimestamp(), driver: driverOffer, driverId: driverOffer.id, driverName: driverOffer.name });
+        await setDoc(doc(db, ROLE_TRIPS_COLLECTION.conductor, `${driverOffer.id}_${requestId}`), { solicitudId: requestId, status: 'accepted', ownerRole: 'conductor', ownerId: String(driverOffer.id), driver: driverOffer, driverId: driverOffer.id, createdAtServer: serverTimestamp() }, { merge: true });
       } catch (e) { console.warn('Aceptar solicitud Firebase:', e.message); }
     };
 
@@ -5054,7 +5130,7 @@
       originalRejectRequest?.apply(this, arguments);
       const requestId = decodeURIComponent(encodedRequestId || '');
       if (!requestId) return;
-      try { await updateDoc(doc(db, 'solicitudesViaje', requestId), { status: 'rejected', rejectedBy: window.currentUser?.id || '', rejectedAt: new Date().toISOString() }); }
+      try { await updateDoc(doc(db, 'solicitudesViaje', requestId), { status: 'rejected', rejectedBy: getCurrentAppUser()?.uid || getCurrentAppUser()?.id || '', rejectedAt: new Date().toISOString() }); }
       catch (e) { console.warn('Rechazar solicitud Firebase:', e.message); }
     };
 
@@ -5066,15 +5142,8 @@
       const driver = window.activeTripData || {};
       if (text) {
         try {
-          await setDoc(doc(db, 'chatsPasajeros', `${window.currentUser?.id || 'pasajero'}_${tripId}_${Date.now()}`), {
-            tripId,
-            driverId: driver.id || '',
-            passengerId: window.currentUser?.id || '',
-            passengerName: window.currentUser?.name || 'Pasajero',
-            message: text,
-            panel: 'passenger',
-            createdAt: new Date().toISOString(),
-            createdAtServer: serverTimestamp()
+          await setDoc(doc(db, 'chatsPasajeros', `${getCurrentAppUser()?.uid || getCurrentAppUser()?.id || 'pasajero'}_${tripId}_${Date.now()}`), {
+            tripId, driverId: driver.id || '', passengerId: getCurrentAppUser()?.uid || getCurrentAppUser()?.id || '', passengerName: getCurrentAppUser()?.name || 'Pasajero', message: text, panel: 'passenger', createdAt: new Date().toISOString(), createdAtServer: serverTimestamp()
           });
         } catch (e) { console.warn('Chat Firebase:', e.message); }
       }
@@ -5094,33 +5163,48 @@
             const img = document.getElementById(`service-image-${id}`);
             if (img) img.src = saved.imagen;
           }
-          console.info('Servicio urbano guardado en Firebase/Storage:', id);
         } catch (e) {
-          console.error('Servicio Firebase/Storage no guardó imagen:', id, e.code || e.message || e);
-          alert('Firebase no guardó la foto del servicio: ' + (e.code || e.message || e) + '. Revisa reglas de Storage/Firestore. La imagen local no se eliminó.');
+          console.error('Servicio Firebase/Storage:', id, e.code || e.message || e);
+          alert('Firebase no guardó la foto del servicio: ' + (e.code || e.message || e));
         }
       });
     };
+
+    document.querySelectorAll('button[onclick="location.reload()"]').forEach(btn => {
+      btn.onclick = async () => {
+        try { await signOut(auth); } catch (_) {}
+        localStorage.removeItem('drive_mx_active_session');
+        localStorage.removeItem('drive_mx_passenger_session');
+        localStorage.removeItem('drive_mx_driver_session');
+        location.reload();
+      };
+    });
   }
 
-  window.DriveMXFirebase = {
-    app,
-    auth,
-    db,
-    storage,
-    saveUserGlobal,
-    loadUsersGlobal,
-    saveDriverAvailability,
-    saveDriverLocation,
-    uploadDataImage,
-    saveServiceToFirebase
-  };
+  window.DriveMXFirebase = { app, auth, db, storage, saveUserGlobal, loadUsersGlobal, saveDriverAvailability, saveDriverLocation, uploadDataImage, saveServiceToFirebase, deleteUserEverywhere };
 
   installOverrides();
   installRealtimeUsers();
   installRealtimeSolicitudes();
-  loadUsersGlobal().catch(error => console.warn('Firebase inicial:', error.message));
-  onAuthStateChanged(auth, () => {});
+
+  let authBootstrapped = false;
+  onAuthStateChanged(auth, async firebaseUser => {
+    if (authBootstrapped) return;
+    authBootstrapped = true;
+    try {
+      await loadUsersGlobal();
+      if (firebaseUser && !firebaseUser.isAnonymous) {
+        const user = await findUserByUid(firebaseUser.uid);
+        if (user) {
+          setCurrentAppUser(user);
+          window.persistPanelSession?.(user);
+          if (user.role === 'conductor') window.showDriverPanel?.();
+          else if (user.role === 'pasajero') window.showPassengerPanel?.();
+          else window.showAdminPanel?.();
+        }
+      }
+    } catch (error) { console.warn('Arranque Firebase:', error.message); }
+  });
 </script>
 
 <script async defer

@@ -4469,6 +4469,15 @@
 </script>
 
 
+<!--
+CORRECCIÓN REAL APLICADA 2026-05-22:
+1) Eliminada recursión infinita en getCurrentAppUser() que causaba "Maximum call stack size exceeded".
+2) Registro de conductor usa UID de Firebase Auth como único ID en Firestore: conductores/{uid}.
+3) Si el conductor ya existe, no se crea otro: se carga directamente desde Firestore.
+4) Se bloqueó el fallback local cuando falla Firebase para evitar duplicados y estados falsos.
+5) Listeners onSnapshot quedan protegidos con banderas y unsubscribers para no duplicarse.
+6) Disponibilidad del conductor se lee del estado real de la app y se guarda en Firestore.
+-->
 <!-- Firebase Bridge CORREGIDO: UID como llave única, Auth persistente, Firestore como fuente de verdad -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
@@ -4558,7 +4567,20 @@
   }
 
   function getCurrentAppUser() {
-    return getAppVar('currentUser', getCurrentAppUser() || null);
+    // CORRECCIÓN CRÍTICA: antes esta función se llamaba a sí misma como fallback:
+    // getAppVar('currentUser', getCurrentAppUser() || null) => Maximum call stack size exceeded.
+    // Ahora lee una sola vez la sesión activa sin recursión.
+    const userFromApp = getAppVar('currentUser', undefined);
+    if (userFromApp) return userFromApp;
+    if (window.currentUser) return window.currentUser;
+    try {
+      const active = JSON.parse(localStorage.getItem('drive_mx_active_session') || 'null');
+      const users = getLocalUsersSafe();
+      if (active?.id && active?.role) {
+        return users.find(u => String(u.uid || u.id || '') === String(active.id) && normalizeRole(u.role) === normalizeRole(active.role)) || null;
+      }
+    } catch (_) {}
+    return null;
   }
 
   function setCurrentAppUser(user) {
@@ -4635,29 +4657,14 @@
     localStorage.removeItem(`wallet_${cleanUid}`);
   }
 
-  function removeUndefinedAndLargeImages(obj, seen = new WeakSet()) {
-    // Firestore no acepta undefined, funciones, nodos DOM ni objetos circulares.
-    // Esta versión evita "Maximum call stack size exceeded" cuando un estado/objeto
-    // trae referencias internas o imágenes base64 grandes.
-    if (obj === null || obj === undefined) return undefined;
-    if (typeof obj === 'function') return undefined;
-    if (typeof obj !== 'object') {
-      if (typeof obj === 'string' && obj.startsWith('data:image/')) return undefined;
-      return obj;
-    }
-    if (obj instanceof Date) return obj;
-    if (typeof Element !== 'undefined' && obj instanceof Element) return undefined;
-    if (typeof Blob !== 'undefined' && obj instanceof Blob) return undefined;
-    if (seen.has(obj)) return undefined;
-    seen.add(obj);
-
+  function removeUndefinedAndLargeImages(obj) {
     const clean = Array.isArray(obj) ? [] : {};
     Object.entries(obj || {}).forEach(([key, value]) => {
-      if (key === '__proto__' || key === 'constructor' || key === 'prototype') return;
-      const sanitized = removeUndefinedAndLargeImages(value, seen);
-      if (sanitized !== undefined) clean[key] = sanitized;
+      if (value === undefined) return;
+      if (typeof value === 'string' && value.startsWith('data:image/')) return;
+      if (value && typeof value === 'object' && !(value instanceof Date)) clean[key] = removeUndefinedAndLargeImages(value);
+      else clean[key] = value;
     });
-    seen.delete(obj);
     return clean;
   }
 
@@ -4781,26 +4788,19 @@
     return copy;
   }
 
-  const activeUserWrites = new Map();
-
   async function saveUserGlobal(user) {
     if (!user || !user.role) return user;
-    const base = normalizeUserForLocal(user);
-    const writeKey = `${base.role}_${base.uid || base.id || ''}`;
-    if (activeUserWrites.has(writeKey)) return activeUserWrites.get(writeKey);
+    const prepared = await prepareUserForFirebase(user);
+    if (!prepared.id) throw new Error('No hay UID autenticado para guardar el usuario.');
+    const collectionName = COLLECTION_BY_ROLE[prepared.role];
+    const firestoreUser = removeUndefinedAndLargeImages(prepared);
 
-    const writePromise = (async () => {
-      const prepared = await prepareUserForFirebase(base);
-      if (!prepared.id) throw new Error('No hay UID autenticado para guardar el usuario.');
-      const collectionName = COLLECTION_BY_ROLE[prepared.role];
-      const firestoreUser = removeUndefinedAndLargeImages(prepared) || {};
-
-      await setDoc(doc(db, collectionName, prepared.id), {
-        ...firestoreUser,
-        uid: prepared.id,
-        id: prepared.id,
-        updatedAtServer: serverTimestamp()
-      }, { merge: true });
+    await setDoc(doc(db, collectionName, prepared.id), {
+      ...firestoreUser,
+      uid: prepared.id,
+      id: prepared.id,
+      updatedAtServer: serverTimestamp()
+    }, { merge: true });
 
     await setDoc(doc(db, 'usuariosIndice', `${prepared.role}_${prepared.id}`), {
       id: prepared.id,
@@ -4815,13 +4815,8 @@
       updatedAtServer: serverTimestamp()
     }, { merge: true });
 
-      mergeLocalUser(prepared);
-      return prepared;
-    })();
-
-    activeUserWrites.set(writeKey, writePromise);
-    try { return await writePromise; }
-    finally { activeUserWrites.delete(writeKey); }
+    mergeLocalUser(prepared);
+    return prepared;
   }
 
   async function ensureWallet(role, uid) {
@@ -4843,29 +4838,24 @@
     return merged;
   }
 
-  let realtimeRenderTimer = null;
-  function scheduleAdminRealtimeRender() {
-    clearTimeout(realtimeRenderTimer);
-    realtimeRenderTimer = setTimeout(() => {
-      if (getAppVar('activePanel', window.activePanel) !== 'admin') return;
-      const adminView = getCurrentAdminViewSafe();
-      if (adminView === 'passengers') window.renderAdminPassengers?.();
-      else if (adminView === 'requests') window.renderAdminRequests?.();
-    }, 120);
-  }
-
   function installRealtimeUsers() {
     if (window.driveMxFirebaseUsersInstalled) return;
     window.driveMxFirebaseUsersInstalled = true;
+    window.driveMxFirebaseUnsubscribers = window.driveMxFirebaseUnsubscribers || {};
     ['pasajero', 'conductor', 'admin'].forEach(role => {
       const collectionName = COLLECTION_BY_ROLE[role];
-      onSnapshot(collection(db, collectionName), snap => {
+      if (window.driveMxFirebaseUnsubscribers[collectionName]) return;
+      window.driveMxFirebaseUnsubscribers[collectionName] = onSnapshot(collection(db, collectionName), snap => {
         snap.docChanges().forEach(change => {
           const uid = change.doc.id;
           if (change.type === 'removed') removeLocalUser(role, uid);
           else mergeLocalUser({ id: uid, uid, ...change.doc.data(), role });
         });
-        scheduleAdminRealtimeRender();
+        if (getAppVar('activePanel', window.activePanel) === 'admin') {
+          const adminView = getCurrentAdminViewSafe();
+          if (adminView === 'passengers') window.renderAdminPassengers?.();
+          else if (adminView === 'requests') window.renderAdminRequests?.();
+        }
       }, error => console.warn(`Realtime ${collectionName}:`, error.message));
     });
   }
@@ -4873,8 +4863,10 @@
   function installRealtimeSolicitudes() {
     if (window.driveMxFirebaseSolicitudesInstalled) return;
     window.driveMxFirebaseSolicitudesInstalled = true;
+    window.driveMxFirebaseUnsubscribers = window.driveMxFirebaseUnsubscribers || {};
+    if (window.driveMxFirebaseUnsubscribers.solicitudesViaje) return;
     const q = query(collection(db, 'solicitudesViaje'), where('status', 'in', ['pending', 'accepted']), orderBy('createdAt', 'desc'), limit(30));
-    onSnapshot(q, snap => {
+    window.driveMxFirebaseUnsubscribers.solicitudesViaje = onSnapshot(q, snap => {
       const requests = [];
       snap.forEach(d => requests.push({ id: d.id, ...d.data() }));
       if (typeof window.saveStoredTripRequests === 'function') window.saveStoredTripRequests(requests);
@@ -5001,7 +4993,8 @@
       } catch (error) {
         console.error('Registro pasajero Firebase:', error);
         alert('No se pudo registrar con Firebase: ' + (error.code || error.message || error));
-        return originalSavePassenger?.apply(this, arguments);
+        // No se ejecuta el guardado local de respaldo para evitar duplicados y estados desincronizados.
+        return;
       }
     };
 
@@ -5059,8 +5052,7 @@
       } catch (error) {
         console.error('Registro conductor Firebase:', error);
         alert('No se pudo guardar el conductor en Firebase: ' + (error.code || error.message || error));
-        // No ejecutar el guardado local anterior como respaldo: podía crear duplicados
-        // y reabrir flujos de registro. Firestore debe ser la fuente de verdad.
+        // No se ejecuta el guardado local de respaldo para evitar duplicados y estados desincronizados.
         return;
       } finally { window.isSavingDriverRequest = false; }
     };
@@ -5093,23 +5085,23 @@
 
     const originalShowDriver = window.showDriverPanel;
     window.showDriverPanel = function() {
-      // No guardar al renderizar: el panel solo carga datos. Esto evita escrituras
-      // repetidas al cambiar entre pasajero/conductor o recibir snapshots.
       installRealtimeSolicitudes();
       originalShowDriver?.apply(this, arguments);
+      if (getCurrentAppUser()?.role === 'conductor') saveUserGlobal(getCurrentAppUser()).catch(() => {});
     };
 
     const originalToggleAvailability = window.toggleDriverAvailability;
     window.toggleDriverAvailability = function() {
       originalToggleAvailability?.apply(this, arguments);
-      saveDriverAvailability(window.isAvailable).catch(e => console.warn('Disponibilidad Firebase:', e.message));
-      if (window.isAvailable) saveDriverLocation();
+      const currentAvailability = Boolean(getAppVar('isAvailable', window.isAvailable || false));
+      saveDriverAvailability(currentAvailability).catch(e => console.warn('Disponibilidad Firebase:', e.message));
+      if (currentAvailability) saveDriverLocation();
     };
 
     const originalUpdateLocation = window.updateCurrentDriverLocation;
     window.updateCurrentDriverLocation = function() {
       originalUpdateLocation?.apply(this, arguments);
-      if (window.isAvailable) saveDriverLocation();
+      if (Boolean(getAppVar('isAvailable', window.isAvailable || false))) saveDriverLocation();
     };
 
     window.eliminarSeleccionados = async function() {
@@ -5135,8 +5127,9 @@
     const originalPublishRequest = window.publishPassengerTripRequest;
     window.publishPassengerTripRequest = async function(trip) {
       originalPublishRequest?.apply(this, arguments);
-      const requestId = window.appState?.pendingTrip?.requestId || `REQ_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-      if (window.appState?.pendingTrip) window.appState.pendingTrip.requestId = requestId;
+      const liveAppState = getAppVar('appState', window.appState || {});
+      const requestId = liveAppState?.pendingTrip?.requestId || `REQ_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+      if (liveAppState?.pendingTrip) liveAppState.pendingTrip.requestId = requestId;
       const request = {
         ...(trip || {}), id: requestId, status: 'pending',
         passengerId: getCurrentAppUser()?.uid || getCurrentAppUser()?.id || trip?.passengerId || '',
@@ -5175,7 +5168,8 @@
     window.sendPassengerMessageToDriver = async function() {
       const input = document.getElementById('passenger-driver-message');
       const text = (input?.value || '').trim();
-      const tripId = window.appState?.pendingTrip?.requestId || 'general';
+      const liveAppState = getAppVar('appState', window.appState || {});
+      const tripId = liveAppState?.pendingTrip?.requestId || 'general';
       const driver = window.activeTripData || {};
       if (text) {
         try {

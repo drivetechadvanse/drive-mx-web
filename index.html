@@ -4635,14 +4635,29 @@
     localStorage.removeItem(`wallet_${cleanUid}`);
   }
 
-  function removeUndefinedAndLargeImages(obj) {
+  function removeUndefinedAndLargeImages(obj, seen = new WeakSet()) {
+    // Firestore no acepta undefined, funciones, nodos DOM ni objetos circulares.
+    // Esta versión evita "Maximum call stack size exceeded" cuando un estado/objeto
+    // trae referencias internas o imágenes base64 grandes.
+    if (obj === null || obj === undefined) return undefined;
+    if (typeof obj === 'function') return undefined;
+    if (typeof obj !== 'object') {
+      if (typeof obj === 'string' && obj.startsWith('data:image/')) return undefined;
+      return obj;
+    }
+    if (obj instanceof Date) return obj;
+    if (typeof Element !== 'undefined' && obj instanceof Element) return undefined;
+    if (typeof Blob !== 'undefined' && obj instanceof Blob) return undefined;
+    if (seen.has(obj)) return undefined;
+    seen.add(obj);
+
     const clean = Array.isArray(obj) ? [] : {};
     Object.entries(obj || {}).forEach(([key, value]) => {
-      if (value === undefined) return;
-      if (typeof value === 'string' && value.startsWith('data:image/')) return;
-      if (value && typeof value === 'object' && !(value instanceof Date)) clean[key] = removeUndefinedAndLargeImages(value);
-      else clean[key] = value;
+      if (key === '__proto__' || key === 'constructor' || key === 'prototype') return;
+      const sanitized = removeUndefinedAndLargeImages(value, seen);
+      if (sanitized !== undefined) clean[key] = sanitized;
     });
+    seen.delete(obj);
     return clean;
   }
 
@@ -4766,19 +4781,26 @@
     return copy;
   }
 
+  const activeUserWrites = new Map();
+
   async function saveUserGlobal(user) {
     if (!user || !user.role) return user;
-    const prepared = await prepareUserForFirebase(user);
-    if (!prepared.id) throw new Error('No hay UID autenticado para guardar el usuario.');
-    const collectionName = COLLECTION_BY_ROLE[prepared.role];
-    const firestoreUser = removeUndefinedAndLargeImages(prepared);
+    const base = normalizeUserForLocal(user);
+    const writeKey = `${base.role}_${base.uid || base.id || ''}`;
+    if (activeUserWrites.has(writeKey)) return activeUserWrites.get(writeKey);
 
-    await setDoc(doc(db, collectionName, prepared.id), {
-      ...firestoreUser,
-      uid: prepared.id,
-      id: prepared.id,
-      updatedAtServer: serverTimestamp()
-    }, { merge: true });
+    const writePromise = (async () => {
+      const prepared = await prepareUserForFirebase(base);
+      if (!prepared.id) throw new Error('No hay UID autenticado para guardar el usuario.');
+      const collectionName = COLLECTION_BY_ROLE[prepared.role];
+      const firestoreUser = removeUndefinedAndLargeImages(prepared) || {};
+
+      await setDoc(doc(db, collectionName, prepared.id), {
+        ...firestoreUser,
+        uid: prepared.id,
+        id: prepared.id,
+        updatedAtServer: serverTimestamp()
+      }, { merge: true });
 
     await setDoc(doc(db, 'usuariosIndice', `${prepared.role}_${prepared.id}`), {
       id: prepared.id,
@@ -4793,8 +4815,13 @@
       updatedAtServer: serverTimestamp()
     }, { merge: true });
 
-    mergeLocalUser(prepared);
-    return prepared;
+      mergeLocalUser(prepared);
+      return prepared;
+    })();
+
+    activeUserWrites.set(writeKey, writePromise);
+    try { return await writePromise; }
+    finally { activeUserWrites.delete(writeKey); }
   }
 
   async function ensureWallet(role, uid) {
@@ -4816,6 +4843,17 @@
     return merged;
   }
 
+  let realtimeRenderTimer = null;
+  function scheduleAdminRealtimeRender() {
+    clearTimeout(realtimeRenderTimer);
+    realtimeRenderTimer = setTimeout(() => {
+      if (getAppVar('activePanel', window.activePanel) !== 'admin') return;
+      const adminView = getCurrentAdminViewSafe();
+      if (adminView === 'passengers') window.renderAdminPassengers?.();
+      else if (adminView === 'requests') window.renderAdminRequests?.();
+    }, 120);
+  }
+
   function installRealtimeUsers() {
     if (window.driveMxFirebaseUsersInstalled) return;
     window.driveMxFirebaseUsersInstalled = true;
@@ -4827,11 +4865,7 @@
           if (change.type === 'removed') removeLocalUser(role, uid);
           else mergeLocalUser({ id: uid, uid, ...change.doc.data(), role });
         });
-        if (getAppVar('activePanel', window.activePanel) === 'admin') {
-          const adminView = getCurrentAdminViewSafe();
-          if (adminView === 'passengers') window.renderAdminPassengers?.();
-          else if (adminView === 'requests') window.renderAdminRequests?.();
-        }
+        scheduleAdminRealtimeRender();
       }, error => console.warn(`Realtime ${collectionName}:`, error.message));
     });
   }
@@ -5025,7 +5059,9 @@
       } catch (error) {
         console.error('Registro conductor Firebase:', error);
         alert('No se pudo guardar el conductor en Firebase: ' + (error.code || error.message || error));
-        return originalSaveDriver?.apply(this, arguments);
+        // No ejecutar el guardado local anterior como respaldo: podía crear duplicados
+        // y reabrir flujos de registro. Firestore debe ser la fuente de verdad.
+        return;
       } finally { window.isSavingDriverRequest = false; }
     };
 
@@ -5057,9 +5093,10 @@
 
     const originalShowDriver = window.showDriverPanel;
     window.showDriverPanel = function() {
+      // No guardar al renderizar: el panel solo carga datos. Esto evita escrituras
+      // repetidas al cambiar entre pasajero/conductor o recibir snapshots.
       installRealtimeSolicitudes();
       originalShowDriver?.apply(this, arguments);
-      if (getCurrentAppUser()?.role === 'conductor') saveUserGlobal(getCurrentAppUser()).catch(() => {});
     };
 
     const originalToggleAvailability = window.toggleDriverAvailability;

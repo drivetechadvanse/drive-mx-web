@@ -4708,16 +4708,34 @@ CORRECCIÓN REAL APLICADA 2026-05-22:
     } catch (_) { return ''; }
   }
 
+  function normalizeFirebaseAuthError(error) {
+    const code = error?.code || '';
+    if (code === 'auth/invalid-credential' || code === 'auth/wrong-password' || code === 'auth/user-not-found') {
+      return new Error('Correo o contraseña incorrectos. Verifica que Email/Password esté activado en Firebase Authentication y que las credenciales sean válidas.');
+    }
+    if (code === 'auth/operation-not-allowed') {
+      return new Error('Email/Password no está activado en Firebase Authentication. Actívalo en Firebase Console > Authentication > Sign-in method.');
+    }
+    if (code === 'auth/email-already-in-use') {
+      return new Error('Este correo ya existe. Inicia sesión con la contraseña correcta para evitar duplicar usuarios.');
+    }
+    return error instanceof Error ? error : new Error(String(error || 'Error de Firebase Authentication.'));
+  }
+
   async function getOrCreateEmailUser(email, pass) {
     const cleanEmail = normalizeEmail(email);
     const cleanPass = String(pass || '').trim();
     if (!cleanEmail || !cleanEmail.includes('@') || cleanPass.length < 6) {
       throw new Error('El correo debe ser válido y la contraseña debe tener mínimo 6 caracteres.');
     }
-    try { return (await createUserWithEmailAndPassword(auth, cleanEmail, cleanPass)).user; }
-    catch (error) {
-      if (error.code === 'auth/email-already-in-use') return (await signInWithEmailAndPassword(auth, cleanEmail, cleanPass)).user;
-      throw error;
+    try {
+      return (await createUserWithEmailAndPassword(auth, cleanEmail, cleanPass)).user;
+    } catch (error) {
+      if (error.code === 'auth/email-already-in-use') {
+        try { return (await signInWithEmailAndPassword(auth, cleanEmail, cleanPass)).user; }
+        catch (signInError) { throw normalizeFirebaseAuthError(signInError); }
+      }
+      throw normalizeFirebaseAuthError(error);
     }
   }
 
@@ -4725,7 +4743,11 @@ CORRECCIÓN REAL APLICADA 2026-05-22:
     const email = normalizeEmail(login);
     if (!email.includes('@') || !pass) return null;
     try { return (await signInWithEmailAndPassword(auth, email, pass)).user; }
-    catch (error) { console.warn('Auth login:', error.code || error.message); return null; }
+    catch (error) {
+      const normalized = normalizeFirebaseAuthError(error);
+      console.warn('Auth login:', normalized.message);
+      return null;
+    }
   }
 
   async function findUserByUid(uid, preferredRole = '') {
@@ -4992,7 +5014,7 @@ CORRECCIÓN REAL APLICADA 2026-05-22:
         alert('Cuenta de pasajero creada y guardada en Firebase.');
       } catch (error) {
         console.error('Registro pasajero Firebase:', error);
-        alert('No se pudo registrar con Firebase: ' + (error.code || error.message || error));
+        alert('No se pudo registrar con Firebase: ' + (error.message || error.code || error));
         // No se ejecuta el guardado local de respaldo para evitar duplicados y estados desincronizados.
         return;
       }
@@ -5051,7 +5073,7 @@ CORRECCIÓN REAL APLICADA 2026-05-22:
         alert('Conductor creado, guardado en Firebase y activado en panel Driver.');
       } catch (error) {
         console.error('Registro conductor Firebase:', error);
-        alert('No se pudo guardar el conductor en Firebase: ' + (error.code || error.message || error));
+        alert('No se pudo guardar el conductor en Firebase: ' + (error.message || error.code || error));
         // No se ejecuta el guardado local de respaldo para evitar duplicados y estados desincronizados.
         return;
       } finally { window.isSavingDriverRequest = false; }
@@ -5265,9 +5287,9 @@ CORRECCIÓN REAL APLICADA 2026-05-22:
     authDomain: "drivemx-app.firebaseapp.com",
     projectId: "drivemx-app",
     storageBucket: "drivemx-app.firebasestorage.app",
-    messagingSenderId: "1077118928896",
-    appId: "1:1077118928896:web:2522a65d4b02f2ed0dced9",
-    measurementId: "G-6YVQZDDSC4"
+    messagingSenderId: "488734017418",
+    appId: "1:488734017418:web:a175638b14637bfa78ea73",
+    measurementId: "G-FKFZ5TTV52"
   };
 
   const appGlobalSync = getApps().length ? getApp() : initializeApp(firebaseConfigGlobalSync);
@@ -5303,6 +5325,15 @@ CORRECCIÓN REAL APLICADA 2026-05-22:
   const isDataImageSync = src => typeof src === 'string' && src.startsWith('data:image/');
   const isValidImageSourceSync = src => typeof src === 'string' && (src.startsWith('http') || src.startsWith('data:image/') || src.startsWith('blob:'));
   const safeSegmentSync = value => String(value || 'archivo').toLowerCase().replace(/[^a-z0-9_-]+/g, '-').replace(/^-+|-+$/g, '') || 'archivo';
+
+  function getAppVarSync(name, fallback = undefined) {
+    try {
+      const value = Function(`try { return typeof ${name} !== \"undefined\" ? ${name} : undefined; } catch (_) { return undefined; }`)();
+      return value === undefined ? fallback : value;
+    } catch (_) {
+      return fallback;
+    }
+  }
 
   const DEFAULT_TAXIMETER_SCHEDULES_SYNC = {
     'taxi-expres': [{ id: 'default_24_7', serviceId: 'taxi-expres', nombre: '24/7', desde: '00:00', hasta: '23:59', globalDefault: true }],
@@ -5369,8 +5400,8 @@ CORRECCIÓN REAL APLICADA 2026-05-22:
 
   function repaintTaximeterSync() {
     if (typeof window.updateTaximeterRealtimeStatus === 'function') window.updateTaximeterRealtimeStatus();
-    if (getGlobalVarSync('currentAdminView') === 'urban-taximeter' && typeof window.renderHorariosTaximetroViajesUrbanos === 'function') window.renderHorariosTaximetroViajesUrbanos(false);
-    if (getGlobalVarSync('currentAdminView') === 'urban-taximeter-config' && typeof window.renderPantallaConfiguracionTaximetroUrbano === 'function') window.renderPantallaConfiguracionTaximetroUrbano(false);
+    if (getAppVarSync('currentAdminView') === 'urban-taximeter' && typeof window.renderHorariosTaximetroViajesUrbanos === 'function') window.renderHorariosTaximetroViajesUrbanos(false);
+    if (getAppVarSync('currentAdminView') === 'urban-taximeter-config' && typeof window.renderPantallaConfiguracionTaximetroUrbano === 'function') window.renderPantallaConfiguracionTaximetroUrbano(false);
     if (typeof window.refreshPassengerServicePricesAndEta === 'function') window.refreshPassengerServicePricesAndEta();
   }
 
@@ -5565,7 +5596,7 @@ CORRECCIÓN REAL APLICADA 2026-05-22:
   window.showPassengerPanel = function() {
     installGlobalListenersSync();
     originalShowPassengerSync?.apply(this, arguments);
-    const activeUser = getGlobalVarSync('currentUser', window.currentUser || null);
+    const activeUser = getAppVarSync('currentUser', window.currentUser || null);
     const uid = activeUser?.uid || activeUser?.id;
     if (uid) getDoc(walletRefSync(uid)).then(snap => {
       if (snap.exists()) GLOBAL_SYNC.wallets.set(String(uid), normalizeWalletSync(snap.data()));

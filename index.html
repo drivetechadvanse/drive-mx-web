@@ -4478,6 +4478,7 @@ CORRECCIÓN REAL APLICADA 2026-05-22:
 5) Listeners onSnapshot quedan protegidos con banderas y unsubscribers para no duplicarse.
 6) Disponibilidad del conductor se lee del estado real de la app y se guarda en Firestore.
 -->
+<!-- Firebase Bridge CORREGIDO 2026-05-23: Auth separado login/registro, sin fallback de credenciales, sesión persistente. -->
 <!-- Firebase Bridge CORREGIDO: UID como llave única, Auth persistente, Firestore como fuente de verdad -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
@@ -4532,6 +4533,22 @@ CORRECCIÓN REAL APLICADA 2026-05-22:
   const storage = getStorage(app);
   await setPersistence(auth, browserLocalPersistence);
 
+  // DRIVE MX: sesión Firebase persistente corregida
+  onAuthStateChanged(auth, async (firebaseUser) => {
+    try {
+      if (!firebaseUser || firebaseUser.isAnonymous) return;
+      localStorage.setItem('drive_mx_auth_uid', firebaseUser.uid);
+      const profile = await findUserByUid(firebaseUser.uid);
+      if (profile) {
+        setCurrentAppUser(profile);
+        mergeLocalUser(profile);
+        window.persistPanelSession?.(profile);
+      }
+    } catch (error) {
+      console.warn('Restaurar sesión Firebase:', error.message || error);
+    }
+  });
+
   const COLLECTION_BY_ROLE = { pasajero: 'pasajeros', conductor: 'conductores', admin: 'admins' };
   const ROLE_STORAGE_ROOT = { pasajero: 'pasajeros', conductor: 'conductores', admin: 'admins' };
   const ROLE_WALLET_COLLECTION = { pasajero: 'carterasPasajeros', conductor: 'carterasConductores', admin: 'carterasAdmins' };
@@ -4567,20 +4584,19 @@ CORRECCIÓN REAL APLICADA 2026-05-22:
   }
 
   function getCurrentAppUser() {
-    // CORRECCIÓN CRÍTICA: antes esta función se llamaba a sí misma como fallback:
-    // getAppVar('currentUser', getCurrentAppUser() || null) => Maximum call stack size exceeded.
-    // Ahora lee una sola vez la sesión activa sin recursión.
-    const userFromApp = getAppVar('currentUser', undefined);
-    if (userFromApp) return userFromApp;
-    if (window.currentUser) return window.currentUser;
-    try {
-      const active = JSON.parse(localStorage.getItem('drive_mx_active_session') || 'null');
-      const users = getLocalUsersSafe();
-      if (active?.id && active?.role) {
-        return users.find(u => String(u.uid || u.id || '') === String(active.id) && normalizeRole(u.role) === normalizeRole(active.role)) || null;
-      }
-    } catch (_) {}
-    return null;
+    const firebaseUser = auth.currentUser;
+    const userFromApp = getAppVar('currentUser', undefined) || window.currentUser || null;
+
+    if (firebaseUser && userFromApp) {
+      return normalizeUserForLocal({
+        ...userFromApp,
+        uid: firebaseUser.uid,
+        id: firebaseUser.uid,
+        correo: normalizeEmail(userFromApp.correo || firebaseUser.email || '')
+      });
+    }
+
+    return userFromApp || null;
   }
 
   function setCurrentAppUser(user) {
@@ -4722,32 +4738,55 @@ CORRECCIÓN REAL APLICADA 2026-05-22:
     return error instanceof Error ? error : new Error(String(error || 'Error de Firebase Authentication.'));
   }
 
-  async function getOrCreateEmailUser(email, pass) {
+  async function registerPassengerFirebase(email, pass) {
     const cleanEmail = normalizeEmail(email);
     const cleanPass = String(pass || '').trim();
-    if (!cleanEmail || !cleanEmail.includes('@') || cleanPass.length < 6) {
-      throw new Error('El correo debe ser válido y la contraseña debe tener mínimo 6 caracteres.');
+
+    if (!cleanEmail || !cleanEmail.includes('@')) {
+      throw new Error('Ingresa un correo válido para crear la cuenta del pasajero.');
     }
+    if (cleanPass.length < 6) {
+      throw new Error('La contraseña debe tener mínimo 6 caracteres.');
+    }
+
     try {
       return (await createUserWithEmailAndPassword(auth, cleanEmail, cleanPass)).user;
     } catch (error) {
-      if (error.code === 'auth/email-already-in-use') {
-        try { return (await signInWithEmailAndPassword(auth, cleanEmail, cleanPass)).user; }
-        catch (signInError) { throw normalizeFirebaseAuthError(signInError); }
-      }
       throw normalizeFirebaseAuthError(error);
     }
+  }
+
+  async function loginFirebase(email, pass) {
+    const cleanEmail = normalizeEmail(email);
+    const cleanPass = String(pass || '').trim();
+
+    if (!cleanEmail || !cleanEmail.includes('@')) {
+      throw new Error('Ingresa un correo válido para iniciar sesión.');
+    }
+    if (!cleanPass) {
+      throw new Error('Ingresa tu contraseña.');
+    }
+
+    try {
+      return (await signInWithEmailAndPassword(auth, cleanEmail, cleanPass)).user;
+    } catch (error) {
+      throw normalizeFirebaseAuthError(error);
+    }
+  }
+
+  // Compatibilidad para conductor/admin: crea cuenta nueva, sin iniciar sesión como fallback.
+  // Evita mezclar registro con login y elimina el origen típico de auth/invalid-credential.
+  async function getOrCreateEmailUser(email, pass) {
+    const cleanEmail = normalizeEmail(email);
+    const cleanPass = String(pass || '').trim();
+    if (auth.currentUser && !auth.currentUser.isAnonymous) return auth.currentUser;
+    return registerPassengerFirebase(cleanEmail, cleanPass);
   }
 
   async function signInFirebaseIfPossible(login, pass) {
     const email = normalizeEmail(login);
     if (!email.includes('@') || !pass) return null;
-    try { return (await signInWithEmailAndPassword(auth, email, pass)).user; }
-    catch (error) {
-      const normalized = normalizeFirebaseAuthError(error);
-      console.warn('Auth login:', normalized.message);
-      return null;
-    }
+    return loginFirebase(email, pass);
   }
 
   async function findUserByUid(uid, preferredRole = '') {
@@ -4953,27 +4992,53 @@ CORRECCIÓN REAL APLICADA 2026-05-22:
 
     const originalHandleAuth = window.handleAuth;
     window.handleAuth = async function() {
-      const login = document.getElementById('login-email')?.value?.trim() || '';
-      const pass = document.getElementById('login-pass')?.value?.trim() || '';
+      const login = normalizeLogin(document.getElementById('login-email')?.value || '');
+      const pass = String(document.getElementById('login-pass')?.value || '').trim();
+
       if (login === 'admincentral' && pass === '9271@') {
         await ensureFirebaseSessionForSystemWrite();
         return originalHandleAuth?.apply(this, arguments);
       }
+
+      if (!login || !pass) {
+        alert('Ingresa usuario/correo y contraseña.');
+        return;
+      }
+
       try {
-        let authUser = await signInFirebaseIfPossible(login, pass);
-        let user = authUser ? await findUserByUid(authUser.uid) : null;
-        if (!user) user = await findUserByLoginInFirestore(login, pass);
-        if (user) {
-          setCurrentAppUser(user);
-          window.persistPanelSession?.(user);
-          if (user.role === 'conductor') window.showDriverPanel?.();
-          else window.showPassengerPanel?.();
-          lucide.createIcons();
-          return;
+        let authUser = null;
+        let firestoreUser = null;
+
+        if (login.includes('@')) {
+          authUser = await loginFirebase(login, pass);
+          firestoreUser = await findUserByUid(authUser.uid);
+        } else {
+          // Soporta login con usuario sin mezclarlo con registro.
+          // Primero encuentra el perfil por usuario+pass en Firestore y luego autentica con su correo real.
+          const indexedUser = await findUserByLoginInFirestore(login, pass);
+          if (!indexedUser?.correo) throw new Error('Usuario no encontrado en Firebase.');
+          authUser = await loginFirebase(indexedUser.correo, pass);
+          firestoreUser = await findUserByUid(authUser.uid, indexedUser.role) || indexedUser;
         }
-        await loadUsersGlobal();
-      } catch (e) { console.warn('Login Firebase corregido:', e.message); }
-      return originalHandleAuth?.apply(this, arguments);
+
+        if (!firestoreUser) {
+          throw new Error('La autenticación fue correcta, pero no se encontró el perfil en Firestore.');
+        }
+
+        const normalizedUser = normalizeUserForLocal({ ...firestoreUser, uid: authUser.uid, id: authUser.uid });
+        setCurrentAppUser(normalizedUser);
+        mergeLocalUser(normalizedUser);
+        window.persistPanelSession?.(normalizedUser);
+
+        if (normalizedUser.role === 'conductor') window.showDriverPanel?.();
+        else if (normalizedUser.role === 'admin') window.showAdminPanel?.();
+        else window.showPassengerPanel?.();
+
+        lucide.createIcons();
+      } catch (error) {
+        console.error('Login Firebase:', error);
+        alert(error.message || 'No se pudo iniciar sesión con Firebase.');
+      }
     };
 
     const originalSavePassenger = window.savePassengerRequest;
@@ -4981,24 +5046,32 @@ CORRECCIÓN REAL APLICADA 2026-05-22:
       const email = normalizeEmail(document.getElementById('reg-email')?.value || '');
       const pass = document.getElementById('reg-pass')?.value || '';
       try {
-        const authUser = await getOrCreateEmailUser(email, pass);
-        const existing = await findUserByUid(authUser.uid, 'pasajero');
-        if (existing) {
-          setCurrentAppUser(existing);
-          window.persistPanelSession?.(existing);
-          mergeLocalUser(existing);
-          window.showPassengerPanel?.();
-          alert('Tu cuenta ya existe. Se cargaron tus datos desde Firebase.');
+        const name = String(document.getElementById('dr-name')?.value || '').trim();
+        const usuario = normalizeLogin(document.getElementById('reg-user')?.value || '');
+        const phone = String(document.getElementById('dr-phone')?.value || '').trim();
+
+        if (!name || !usuario || !phone || !email || !pass) {
+          alert('Completa nombre, usuario, teléfono, correo y contraseña.');
           return;
         }
+        if (!email.includes('@')) {
+          alert('Ingresa un correo válido.');
+          return;
+        }
+        if (String(pass).trim().length < 6) {
+          alert('La contraseña debe tener mínimo 6 caracteres.');
+          return;
+        }
+
+        const authUser = await registerPassengerFirebase(email, pass);
         const uid = authUser.uid;
         const newPassenger = {
           uid, id: uid, role: 'pasajero',
-          name: document.getElementById('dr-name')?.value || '',
-          usuario: normalizeLogin(document.getElementById('reg-user')?.value || ''),
+          name,
+          usuario,
           pass,
           correo: email,
-          phone: document.getElementById('dr-phone')?.value || '',
+          phone,
           foto: getTempImageValue('tempBase64Photo', 'driver-photo-preview'),
           passengerFoto: getTempImageValue('tempBase64Photo', 'driver-photo-preview'),
           status: 'activo',
